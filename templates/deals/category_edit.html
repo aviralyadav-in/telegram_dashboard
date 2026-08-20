@@ -1,0 +1,324 @@
+{% extends "base/base.html" %}
+
+{% block title %}
+Edit Category
+{% endblock %}
+
+{% block page_title %}
+Edit Category
+{% endblock %}
+
+{% block extra_css %}
+
+<style>
+
+    .form-card {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        max-width: 750px;
+    }
+
+    .form-card h2 {
+        margin-top: 0;
+        margin-bottom: 8px;
+    }
+
+    .form-description {
+        color: #6b7280;
+        margin-bottom: 25px;
+    }
+
+    .form-group {
+        margin-bottom: 22px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #374151;
+    }
+
+    .form-group input,
+    .form-group textarea {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 7px;
+        font-size: 14px;
+        font-family: Arial, sans-serif;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+    }
+
+    .form-group textarea {
+        min-height: 110px;
+        resize: vertical;
+    }
+
+    .help-text {
+        margin-top: 7px;
+        font-size: 13px;
+        color: #6b7280;
+        line-height: 1.5;
+    }
+
+    .keyword-preview {
+        margin-top: 12px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+    }
+
+    .keyword {
+        background: #eff6ff;
+        color: #2563eb;
+        border: 1px solid #bfdbfe;
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 12px;
+    }
+
+    .status-box {
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 22px;
+    }
+
+    .status-label {
+        font-size: 13px;
+        color: #6b7280;
+        margin-bottom: 5px;
+    }
+
+    .status-value {
+        font-weight: 600;
+    }
+
+    .active {
+        color: #15803d;
+    }
+
+    .inactive {
+        color: #b91c1c;
+    }
+
+    .button-row {
+        display: flex;
+        gap: 10px;
+        margin-top: 28px;
+    }
+
+    .save-btn {
+        background: #2563eb;
+        color: white;
+        border: none;
+        padding: 11px 20px;
+        border-radius: 7px;
+        cursor: pointer;
+        font-weight: 600;
+    }
+
+    .save-btn:hover {
+        background: #1d4ed8;
+    }
+
+    .cancel-btn {
+        background: #6b7280;
+        color: white;
+        text-decoration: none;
+        padding: 11px 20px;
+        border-radius: 7px;
+    }
+
+    .cancel-btn:hover {
+        background: #4b5563;
+    }
+
+    .back-btn {
+        display: inline-block;
+        margin-bottom: 20px;
+        color: #2563eb;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .back-btn:hover {
+        text-decoration: underline;
+    }
+
+    @media (max-width: 700px) {
+
+        .form-card {
+            padding: 20px;
+        }
+
+        .button-row {
+            flex-direction: column;
+        }
+
+        .save-btn,
+        .cancel-btn {
+            text-align: center;
+        }
+
+    }
+
+</style>
+
+{% endblock %}
+
+{% block content %}
+
+<a
+href="{% url 'category-list' %}"
+class="back-btn"
+
+>
+
+```
+← Back to Categories
+```
+
+</a>
+
+<div class="form-card">
+
+```
+<h2>
+    Edit Category
+</h2>
+
+<p class="form-description">
+    Update the category name and keywords used to identify
+    matching deals.
+</p>
+
+
+<form method="POST">
+
+    {% csrf_token %}
+
+
+    <!-- CATEGORY NAME -->
+
+    <div class="form-group">
+
+        <label for="name">
+            Category Name
+        </label>
+
+        <input
+            type="text"
+            id="name"
+            name="name"
+            value="{{ category.name }}"
+            placeholder="Example: Electronics"
+            required
+        >
+
+    </div>
+
+
+    <!-- KEYWORDS -->
+
+    <div class="form-group">
+
+        <label for="keywords">
+            Keywords
+        </label>
+
+        <textarea
+            id="keywords"
+            name="keywords"
+            placeholder="Example: mobile, laptop, phone, earphones"
+        >{{ category.keywords|default:"" }}</textarea>
+
+        <div class="help-text">
+            Add multiple keywords separated by commas.
+            For example:
+            mobile, smartphone, laptop, headphones
+        </div>
+
+
+        {% if category.keywords %}
+
+            <div class="keyword-preview">
+
+                {% for keyword in category.get_keywords_list %}
+
+                    <span class="keyword">
+                        {{ keyword }}
+                    </span>
+
+                {% endfor %}
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- CURRENT STATUS -->
+
+    <div class="status-box">
+
+        <div class="status-label">
+            Current Status
+        </div>
+
+        {% if category.is_active %}
+
+            <div class="status-value active">
+                ● Active
+            </div>
+
+        {% else %}
+
+            <div class="status-value inactive">
+                ● Inactive
+            </div>
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- BUTTONS -->
+
+    <div class="button-row">
+
+        <button
+            type="submit"
+            class="save-btn"
+        >
+            Save Changes
+        </button>
+
+
+        <a
+            href="{% url 'category-list' %}"
+            class="cancel-btn"
+        >
+            Cancel
+        </a>
+
+    </div>
+
+</form>
+
+
+</div>
+
+{% endblock %}

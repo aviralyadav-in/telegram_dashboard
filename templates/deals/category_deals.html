@@ -1,0 +1,870 @@
+{% extends "base/base.html" %}
+
+{% block title %}
+{{ category.name }} - Category Deals
+{% endblock %}
+
+
+{% block page_title %}
+Category Deals
+{% endblock %}
+
+
+{% block extra_css %}
+
+<style>
+
+    /* =========================================================
+       CATEGORY HEADER
+    ========================================================= */
+
+    .category-header {
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        margin-bottom: 20px;
+    }
+
+    .category-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+
+    .category-info h1 {
+        margin: 0 0 8px;
+        font-size: 25px;
+        color: #111827;
+    }
+
+    .category-info p {
+        margin: 0;
+        color: #6b7280;
+        line-height: 1.5;
+    }
+
+    .category-status {
+        padding: 7px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .status-active {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .status-inactive {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    /* =========================================================
+       KEYWORDS
+    ========================================================= */
+
+    .keyword-title {
+        margin-top: 20px;
+        margin-bottom: 8px;
+        font-size: 13px;
+        font-weight: 700;
+        color: #374151;
+    }
+
+    .keyword-box {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .keyword {
+        background: #eef2ff;
+        color: #3730a3;
+        padding: 6px 11px;
+        border-radius: 15px;
+        font-size: 12px;
+        font-weight: 600;
+        border: 1px solid #e0e7ff;
+    }
+
+    /* =========================================================
+       BACK BUTTON
+    ========================================================= */
+
+    .back-btn {
+        display: inline-block;
+        margin-bottom: 20px;
+        background: #6b7280;
+        color: white;
+        text-decoration: none;
+        padding: 10px 16px;
+        border-radius: 7px;
+        font-size: 14px;
+    }
+
+    .back-btn:hover {
+        background: #4b5563;
+    }
+
+    /* =========================================================
+       STATS
+    ========================================================= */
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(180px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .stats-card {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+
+    .stats-label {
+        color: #6b7280;
+        font-size: 13px;
+        margin-bottom: 6px;
+    }
+
+    .stats-number {
+        font-size: 30px;
+        font-weight: bold;
+        color: #2563eb;
+    }
+
+    /* =========================================================
+       FILTER
+    ========================================================= */
+
+    .filter-card {
+        background: white;
+        padding: 18px;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        margin-bottom: 20px;
+    }
+
+    .filter-form {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .filter-form input,
+    .filter-form select {
+        padding: 10px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 7px;
+        font-size: 14px;
+        background: white;
+    }
+
+    .filter-form input {
+        min-width: 260px;
+    }
+
+    .filter-btn {
+        background: #2563eb;
+        color: white;
+        border: none;
+        padding: 10px 16px;
+        border-radius: 7px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+    .filter-btn:hover {
+        background: #1d4ed8;
+    }
+
+    .clear-btn {
+        background: #6b7280;
+        color: white;
+        text-decoration: none;
+        padding: 10px 16px;
+        border-radius: 7px;
+        font-size: 14px;
+    }
+
+    /* =========================================================
+       TABLE
+    ========================================================= */
+
+    .table-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+
+    .table-wrapper {
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        min-width: 1100px;
+        border-collapse: collapse;
+    }
+
+    th {
+        background: #1f2937;
+        color: white;
+        padding: 13px;
+        text-align: left;
+        font-size: 14px;
+    }
+
+    td {
+        padding: 13px;
+        border-bottom: 1px solid #e5e7eb;
+        vertical-align: middle;
+        font-size: 14px;
+    }
+
+    tr:hover {
+        background: #fafafa;
+    }
+
+    /* =========================================================
+       IMAGE
+    ========================================================= */
+
+    .deal-image {
+        width: 70px;
+        height: 70px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+    }
+
+    .no-image {
+        width: 70px;
+        height: 70px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f1f3f5;
+        color: #777;
+        border-radius: 8px;
+        font-size: 11px;
+        text-align: center;
+    }
+
+    /* =========================================================
+       CONTENT
+    ========================================================= */
+
+    .content-cell {
+        max-width: 380px;
+        line-height: 1.5;
+    }
+
+    .product-link {
+        color: #2563eb;
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    .product-link:hover {
+        text-decoration: underline;
+    }
+
+    /* =========================================================
+       STATUS
+    ========================================================= */
+
+    .status-badge {
+        display: inline-block;
+        padding: 5px 9px;
+        border-radius: 20px;
+        background: #e5e7eb;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    /* =========================================================
+       EDIT
+    ========================================================= */
+
+    .edit-btn {
+        background: #f59e0b;
+        color: white;
+        text-decoration: none;
+        padding: 7px 11px;
+        border-radius: 5px;
+        font-size: 12px;
+    }
+
+    .edit-btn:hover {
+        background: #d97706;
+    }
+
+    /* =========================================================
+       EMPTY
+    ========================================================= */
+
+    .empty {
+        text-align: center;
+        padding: 50px;
+        color: #777;
+    }
+
+    /* =========================================================
+       PAGINATION
+    ========================================================= */
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+        padding: 20px;
+        flex-wrap: wrap;
+    }
+
+    .pagination a,
+    .pagination span {
+        padding: 8px 12px;
+        border-radius: 6px;
+        text-decoration: none;
+        border: 1px solid #ddd;
+        background: white;
+        color: #374151;
+        font-size: 13px;
+    }
+
+    .pagination a:hover {
+        background: #eff6ff;
+        color: #2563eb;
+    }
+
+    .pagination .current {
+        background: #2563eb;
+        color: white;
+        border-color: #2563eb;
+    }
+
+    /* =========================================================
+       MOBILE
+    ========================================================= */
+
+    @media (max-width: 700px) {
+
+        .category-header {
+            padding: 18px;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .filter-form {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .filter-form input {
+            min-width: 100%;
+        }
+
+    }
+
+</style>
+
+{% endblock %}
+
+
+{% block content %}
+
+
+<!-- =========================================================
+     BACK
+========================================================= -->
+
+<a
+    href="{% url 'category-list' %}"
+    class="back-btn"
+>
+    ← Back to Categories
+</a>
+
+
+<!-- =========================================================
+     CATEGORY HEADER
+========================================================= -->
+
+<div class="category-header">
+
+    <div class="category-top">
+
+        <div class="category-info">
+
+            <h1>
+                {{ category.name }}
+            </h1>
+
+            {% if category.description %}
+
+                <p>
+                    {{ category.description }}
+                </p>
+
+            {% else %}
+
+                <p>
+                    Deals matching this category's configured keywords.
+                </p>
+
+            {% endif %}
+
+        </div>
+
+
+        <div>
+
+            {% if category.status == "active" %}
+
+                <span class="category-status status-active">
+                    Active
+                </span>
+
+            {% else %}
+
+                <span class="category-status status-inactive">
+                    Inactive
+                </span>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <!-- KEYWORDS -->
+
+    {% if keywords %}
+
+        <div class="keyword-title">
+            Matching Keywords
+        </div>
+
+        <div class="keyword-box">
+
+            {% for keyword in keywords %}
+
+                <span class="keyword">
+                    {{ keyword }}
+                </span>
+
+            {% endfor %}
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+
+<!-- =========================================================
+     STATS
+========================================================= -->
+
+<div class="stats-grid">
+
+    <div class="stats-card">
+
+        <div class="stats-label">
+            Matching Deals
+        </div>
+
+        <div class="stats-number">
+            {{ matching_count }}
+        </div>
+
+    </div>
+
+
+    <div class="stats-card">
+
+        <div class="stats-label">
+            Keywords
+        </div>
+
+        <div class="stats-number">
+            {{ keywords|length }}
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     FILTER
+========================================================= -->
+
+<div class="filter-card">
+
+    <form
+        method="GET"
+        class="filter-form"
+    >
+
+        <input
+            type="text"
+            name="search"
+            value="{{ search }}"
+            placeholder="Search matching deals..."
+        >
+
+
+        <select name="status">
+
+            <option value="">
+                All Status
+            </option>
+
+            <option
+                value="new"
+                {% if selected_status == "new" %}
+                    selected
+                {% endif %}
+            >
+                New
+            </option>
+
+            <option
+                value="processed"
+                {% if selected_status == "processed" %}
+                    selected
+                {% endif %}
+            >
+                Processed
+            </option>
+
+            <option
+                value="published"
+                {% if selected_status == "published" %}
+                    selected
+                {% endif %}
+            >
+                Published
+            </option>
+
+            <option
+                value="expired"
+                {% if selected_status == "expired" %}
+                    selected
+                {% endif %}
+            >
+                Expired
+            </option>
+
+            <option
+                value="rejected"
+                {% if selected_status == "rejected" %}
+                    selected
+                {% endif %}
+            >
+                Rejected
+            </option>
+
+        </select>
+
+
+        <button
+            type="submit"
+            class="filter-btn"
+        >
+            🔎 Filter
+        </button>
+
+
+        {% if search or selected_status %}
+
+            <a
+                href="{% url 'category-deals' category.id %}"
+                class="clear-btn"
+            >
+                Clear
+            </a>
+
+        {% endif %}
+
+    </form>
+
+</div>
+
+
+<!-- =========================================================
+     DEAL TABLE
+========================================================= -->
+
+<div class="table-card">
+
+    <div class="table-wrapper">
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        ID
+                    </th>
+
+                    <th>
+                        Image
+                    </th>
+
+                    <th>
+                        Channel
+                    </th>
+
+                    <th>
+                        Deal Content
+                    </th>
+
+                    <th>
+                        Product Link
+                    </th>
+
+                    <th>
+                        Status
+                    </th>
+
+                    <th>
+                        Date
+                    </th>
+
+                    <th>
+                        Action
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                {% for deal in deals %}
+
+                    <tr>
+
+                        <!-- ID -->
+
+                        <td>
+                            {{ deal.id }}
+                        </td>
+
+
+                        <!-- IMAGE -->
+
+                        <td>
+
+                            {% if deal.image_path %}
+
+                                <img
+                                    src="/media/{{ deal.image_path }}"
+                                    alt="Deal image"
+                                    class="deal-image"
+                                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                                >
+
+                                <div
+                                    class="no-image"
+                                    style="display:none;"
+                                >
+                                    Image Error
+                                </div>
+
+                            {% else %}
+
+                                <div class="no-image">
+                                    No Image
+                                </div>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- CHANNEL -->
+
+                        <td>
+                            {{ deal.channel|default:"-" }}
+                        </td>
+
+
+                        <!-- CONTENT -->
+
+                        <td class="content-cell">
+
+                            {{ deal.content|default:"No content"|truncatechars:180 }}
+
+                        </td>
+
+
+                        <!-- PRODUCT -->
+
+                        <td>
+
+                            {% if deal.product_link %}
+
+                                <a
+                                    href="{{ deal.product_link }}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="product-link"
+                                >
+                                    Open Product
+                                </a>
+
+                            {% else %}
+
+                                -
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- STATUS -->
+
+                        <td>
+
+                            <span class="status-badge">
+
+                                {{ deal.get_status_display }}
+
+                            </span>
+
+                        </td>
+
+
+                        <!-- DATE -->
+
+                        <td>
+
+                            {{ deal.date|date:"d M Y H:i" }}
+
+                        </td>
+
+
+                        <!-- ACTION -->
+
+                        <td>
+
+                            <a
+                                href="{% url 'deal-edit' deal.id %}"
+                                class="edit-btn"
+                            >
+                                ✏️ Edit
+                            </a>
+
+                        </td>
+
+                    </tr>
+
+                {% empty %}
+
+                    <tr>
+
+                        <td colspan="8">
+
+                            <div class="empty">
+
+                                <h2>
+                                    No Matching Deals
+                                </h2>
+
+                                <p>
+                                    No deals currently match the keywords configured for this category.
+                                </p>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+    <!-- =====================================================
+         PAGINATION
+    ====================================================== -->
+
+    {% if page_obj.paginator.num_pages > 1 %}
+
+        <div class="pagination">
+
+            {% if page_obj.has_previous %}
+
+                <a
+                    href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}"
+                >
+                    ← Previous
+                </a>
+
+            {% endif %}
+
+
+            {% for num in page_obj.paginator.page_range %}
+
+                {% if page_obj.number == num %}
+
+                    <span class="current">
+                        {{ num }}
+                    </span>
+
+                {% else %}
+
+                    <a
+                        href="?page={{ num }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}"
+                    >
+                        {{ num }}
+                    </a>
+
+                {% endif %}
+
+            {% endfor %}
+
+
+            {% if page_obj.has_next %}
+
+                <a
+                    href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search|urlencode }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}"
+                >
+                    Next →
+                </a>
+
+            {% endif %}
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+
+{% endblock %}

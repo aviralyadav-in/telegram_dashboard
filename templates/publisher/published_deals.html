@@ -1,0 +1,224 @@
+{% extends "base/base.html" %}
+
+{% block title %}
+Published Deals
+{% endblock %}
+
+{% block content %}
+
+<style>
+
+.history-container {
+    width: 92%;
+    max-width: 1250px;
+    margin: 35px auto;
+}
+
+.header {
+    margin-bottom: 25px;
+}
+
+.header h1 {
+    margin: 0 0 7px;
+}
+
+.header p {
+    margin: 0;
+    color: #6b7280;
+}
+
+.card {
+    background: white;
+    padding: 25px;
+    border-radius: 16px;
+    box-shadow: 0 4px 18px rgba(0,0,0,.07);
+}
+
+.table-wrapper {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th,
+td {
+    padding: 14px;
+    border-bottom: 1px solid #eee;
+    text-align: left;
+    vertical-align: top;
+}
+
+th {
+    background: #f8fafc;
+    font-weight: 700;
+}
+
+.success {
+    color: #15803d;
+    font-weight: 700;
+}
+
+.failed {
+    color: #dc2626;
+    font-weight: 700;
+}
+
+.error-text {
+    max-width: 300px;
+    color: #991b1b;
+    font-size: 13px;
+    word-break: break-word;
+}
+
+.empty {
+    text-align: center;
+    padding: 45px;
+    color: #777;
+}
+
+@media(max-width:700px) {
+
+    .history-container {
+        width: 94%;
+    }
+
+}
+
+</style>
+
+
+<div class="history-container">
+
+    <div class="header">
+
+        <h1>📋 Published Deals</h1>
+
+        <p>
+            Complete history of deal publishing operations.
+        </p>
+
+    </div>
+
+
+    <div class="card">
+
+        {% if records %}
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>#</th>
+                            <th>Deal</th>
+                            <th>Source</th>
+                            <th>Destination</th>
+                            <th>Status</th>
+                            <th>Telegram Message ID</th>
+                            <th>Published At</th>
+                            <th>Error</th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for record in records %}
+
+                            <tr>
+
+                                <td>
+                                    {{ forloop.counter }}
+                                </td>
+
+                                <td>
+                                    #{{ record.deal.id }}
+                                </td>
+
+                                <td>
+                                    {{ record.deal.channel }}
+                                </td>
+
+                                <td>
+                                    {{ record.channel.username|default:record.channel.name }}
+                                </td>
+
+                                <td>
+
+                                    {% if record.status == "success" %}
+
+                                        <span class="success">
+                                            Success
+                                        </span>
+
+                                    {% else %}
+
+                                        <span class="failed">
+                                            Failed
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+                                <td>
+                                    {{ record.telegram_message_id|default:"-" }}
+                                </td>
+
+                                <td>
+                                    {{ record.published_at|date:"d M Y H:i:s" }}
+                                </td>
+
+                                <td>
+
+                                    {% if record.error %}
+
+                                        <div class="error-text">
+                                            {{ record.error }}
+                                        </div>
+
+                                    {% else %}
+
+                                        -
+
+                                    {% endif %}
+
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        {% else %}
+
+            <div class="empty">
+
+                <h3>No Publishing History</h3>
+
+                <p>
+                    Published deals will appear here.
+                </p>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endblock %}

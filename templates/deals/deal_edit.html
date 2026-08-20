@@ -1,0 +1,381 @@
+{% extends "base/base.html" %}
+
+{% block title %}
+    Edit Deal
+{% endblock %}
+
+{% block page_title %}
+    Edit Deal
+{% endblock %}
+
+{% block extra_css %}
+
+<style>
+
+    .edit-container {
+        width: 100%;
+        max-width: 900px;
+        margin: 30px auto;
+    }
+
+    .edit-card {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .edit-card h1 {
+        margin-top: 0;
+        margin-bottom: 25px;
+    }
+
+    .info {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 25px;
+        line-height: 1.8;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    textarea,
+    input,
+    select {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #ccc;
+        border-radius: 7px;
+        font-size: 14px;
+        font-family: Arial, sans-serif;
+    }
+
+    textarea {
+        min-height: 220px;
+        resize: vertical;
+    }
+
+    textarea:focus,
+    input:focus,
+    select:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+    }
+
+    .field-help {
+        color: #777;
+        font-size: 12px;
+        margin-top: 5px;
+    }
+
+    .current-image {
+        margin-bottom: 25px;
+    }
+
+    .current-image label {
+        margin-bottom: 10px;
+    }
+
+    .current-image img {
+        width: 180px;
+        height: 180px;
+        object-fit: cover;
+        border-radius: 10px;
+        border: 1px solid #ddd;
+    }
+
+    .actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 30px;
+    }
+
+    .save-btn {
+        background: #2563eb;
+        color: white;
+        border: none;
+        padding: 12px 22px;
+        border-radius: 7px;
+        cursor: pointer;
+        font-weight: 600;
+    }
+
+    .save-btn:hover {
+        background: #1d4ed8;
+    }
+
+    .cancel-btn {
+        background: #6b7280;
+        color: white;
+        text-decoration: none;
+        padding: 12px 22px;
+        border-radius: 7px;
+        font-weight: 600;
+    }
+
+    .cancel-btn:hover {
+        background: #4b5563;
+    }
+
+    @media (max-width: 700px) {
+
+        .edit-container {
+            width: 95%;
+            margin: 20px auto;
+        }
+
+        .edit-card {
+            padding: 20px;
+        }
+
+        .form-row {
+            grid-template-columns: 1fr;
+            gap: 0;
+        }
+
+        .actions {
+            flex-direction: column;
+        }
+
+        .save-btn,
+        .cancel-btn {
+            width: 100%;
+            text-align: center;
+        }
+
+    }
+
+</style>
+
+{% endblock %}
+
+
+{% block content %}
+
+<div class="edit-container">
+
+    <div class="edit-card">
+
+        <h1>
+            Edit Deal #{{ deal.id }}
+        </h1>
+
+
+        <!-- DEAL INFORMATION -->
+
+        <div class="info">
+
+            <strong>Message ID:</strong>
+            {{ deal.message_id }}
+
+            <br>
+
+            <strong>Source Channel:</strong>
+            {{ deal.channel }}
+
+            <br>
+
+            <strong>Date:</strong>
+            {{ deal.date|date:"d M Y H:i" }}
+
+        </div>
+
+
+        <!-- CURRENT IMAGE -->
+
+        {% if deal.image_path %}
+
+            <div class="current-image">
+
+                <label>
+                    Current Deal Image
+                </label>
+
+                <br>
+
+                <img
+                    src="/media/{{ deal.image_path }}"
+                    alt="Deal Image"
+                >
+
+            </div>
+
+        {% endif %}
+
+
+        <!-- EDIT FORM -->
+
+        <form method="POST">
+
+            {% csrf_token %}
+
+
+            <!-- CONTENT -->
+
+            <div class="form-group">
+
+                <label for="content">
+                    Deal Content
+                </label>
+
+                <textarea
+                    id="content"
+                    name="content"
+                    required
+                >{{ deal.content|default:'' }}</textarea>
+
+            </div>
+
+
+            <!-- PRODUCT LINK -->
+
+            <div class="form-group">
+
+                <label for="product_link">
+                    Product Link
+                </label>
+
+                <input
+                    type="url"
+                    id="product_link"
+                    name="product_link"
+                    value="{{ deal.product_link|default:'' }}"
+                    placeholder="https://example.com/product"
+                >
+
+            </div>
+
+
+            <!-- PRICE + RATING -->
+
+            <div class="form-row">
+
+
+                <!-- PRICE -->
+
+                <div class="form-group">
+
+                    <label for="price">
+                        Price
+                    </label>
+
+                    <input
+                        type="number"
+                        id="price"
+                        name="price"
+                        value="{{ deal.price|default:'' }}"
+                        placeholder="Enter product price"
+                        min="0"
+                        step="0.01"
+                    >
+
+                    <div class="field-help">
+                        Enter the current deal/product price.
+                    </div>
+
+                </div>
+
+
+                <!-- RATING -->
+
+                <div class="form-group">
+
+                    <label for="rating">
+                        Product Rating
+                    </label>
+
+                    <input
+                        type="number"
+                        id="rating"
+                        name="rating"
+                        value="{{ deal.rating|default:'' }}"
+                        placeholder="0.00 - 5.00"
+                        min="0"
+                        max="5"
+                        step="0.01"
+                    >
+
+                    <div class="field-help">
+                        Rating should be between 0 and 5.
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- STATUS -->
+
+            <div class="form-group">
+
+                <label for="status">
+                    Status
+                </label>
+
+                <select
+                    id="status"
+                    name="status"
+                >
+
+                    {% for value, label in deal.STATUS_CHOICES %}
+
+                        <option
+                            value="{{ value }}"
+                            {% if deal.status == value %}
+                                selected
+                            {% endif %}
+                        >
+                            {{ label }}
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            <!-- ACTIONS -->
+
+            <div class="actions">
+
+                <button
+                    type="submit"
+                    class="save-btn"
+                >
+                    💾 Save Changes
+                </button>
+
+
+                <a
+                    href="{% url 'deal-list' %}"
+                    class="cancel-btn"
+                >
+                    Cancel
+                </a>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}

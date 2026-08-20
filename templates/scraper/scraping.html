@@ -1,0 +1,1205 @@
+{% extends "base/base.html" %}
+
+{% block title %}
+
+{% endblock %}
+
+{% block page_title %}
+
+{% endblock %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Telegram Scraping</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            color: #222;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1000px;
+            margin: 40px auto;
+        }
+
+        /* =================================================
+           HEADER
+        ================================================= */
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        h1 {
+            margin: 0 0 8px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin: 0;
+        }
+
+        .guide-btn {
+            background: #0d6efd;
+            color: white;
+            white-space: nowrap;
+        }
+
+
+        /* =================================================
+           CARD
+        ================================================= */
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+
+            box-shadow:
+                0 2px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .card h2 {
+            margin-top: 0;
+        }
+
+        /* =================================================
+           FORM
+        ================================================= */
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+
+            border: 1px solid #ccc;
+            border-radius: 7px;
+
+            font-size: 15px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #0d6efd;
+
+            box-shadow:
+                0 0 0 2px rgba(
+                    13,
+                    110,
+                    253,
+                    0.1
+                );
+        }
+
+        /* =================================================
+           BUTTONS
+        ================================================= */
+
+        .buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 12px 24px;
+
+            border: none;
+            border-radius: 7px;
+
+            cursor: pointer;
+
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        #startBtn {
+            background: #198754;
+            color: white;
+        }
+
+        #startBtn:hover {
+            background: #157347;
+        }
+
+        #stopBtn {
+            background: #dc3545;
+            color: white;
+        }
+
+        #stopBtn:hover:not(:disabled) {
+            background: #bb2d3b;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* =================================================
+           MESSAGE
+        ================================================= */
+
+        #message {
+            display: none;
+
+            margin-top: 20px;
+            padding: 12px 15px;
+
+            border-radius: 7px;
+
+            line-height: 1.5;
+        }
+
+        .success {
+            background: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #842029;
+        }
+
+        .info {
+            background: #cff4fc;
+            color: #055160;
+        }
+
+        /* =================================================
+           STATUS
+        ================================================= */
+
+        .status-grid {
+            display: grid;
+
+            grid-template-columns:
+                repeat(3, 1fr);
+
+            gap: 15px;
+        }
+
+        .status-box {
+            background: #f8f9fa;
+
+            padding: 18px;
+
+            border-radius: 8px;
+
+            border: 1px solid #eee;
+        }
+
+        .status-label {
+            display: block;
+
+            color: #777;
+
+            font-size: 13px;
+
+            margin-bottom: 8px;
+        }
+
+        .status-value {
+            font-size: 18px;
+            font-weight: bold;
+
+            word-break: break-word;
+        }
+
+        /* =================================================
+           STATUS COLORS
+        ================================================= */
+
+        .status-running {
+            color: #198754;
+        }
+
+        .status-starting {
+            color: #0d6efd;
+        }
+
+        .status-stopping {
+            color: #fd7e14;
+        }
+
+        .status-completed {
+            color: #198754;
+        }
+
+        .status-stopped {
+            color: #6c757d;
+        }
+
+        .status-error {
+            color: #dc3545;
+        }
+
+       
+        /* =================================================
+           MOBILE
+        ================================================= */
+
+        @media (max-width: 700px) {
+
+            .container {
+                width: 94%;
+                margin: 25px auto;
+            }
+
+            .page-header {
+                flex-direction: column;
+            }
+
+            .guide-btn {
+                width: 100%;
+            }
+
+            .status-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .buttons {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+
+            .guide-modal {
+                padding: 10px;
+            }
+
+            .guide-content {
+                margin: 10px auto;
+            }
+
+            .guide-body {
+                padding: 18px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<div class="container">
+
+
+    <!-- =================================================
+         PAGE HEADER
+    ================================================= -->
+
+    <div class="page-header">
+
+        <div>
+
+            <h1>
+                Telegram Scraping
+            </h1>
+
+            <p class="subtitle">
+                Scrape deals from a selected Telegram channel.
+            </p>
+
+        </div>
+
+
+       
+    </div>
+
+
+    <!-- =================================================
+         SCRAPER CONTROL
+    ================================================= -->
+
+    <div class="card">
+
+        <h2>
+            Scraper Control
+        </h2>
+
+
+        <div class="form-group">
+
+            <label for="channel">
+                Telegram Source Channel
+            </label>
+
+            <input
+                type="text"
+                id="channel"
+                placeholder="@channelusername"
+                autocomplete="off"
+            >
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label for="limit">
+                Number of Messages
+            </label>
+
+            <input
+                type="number"
+                id="limit"
+                value="10"
+                min="1"
+                max="100"
+            >
+
+        </div>
+
+
+        <div class="buttons">
+
+            <button
+                id="startBtn"
+                type="button"
+                onclick="startScraping()"
+            >
+                ▶ Start Scraping
+            </button>
+
+
+            <button
+                id="stopBtn"
+                type="button"
+                onclick="stopScraping()"
+                disabled
+            >
+                ■ Stop Scraping
+            </button>
+
+        </div>
+
+
+        <div id="message"></div>
+
+    </div>
+
+
+    <!-- =================================================
+         SCRAPING STATUS
+    ================================================= -->
+
+    <div class="card">
+
+        <h2>
+            Scraping Status
+        </h2>
+
+
+        <div class="status-grid">
+
+
+            <div class="status-box">
+
+                <span class="status-label">
+                    Status
+                </span>
+
+                <span
+                    class="status-value"
+                    id="status"
+                >
+                    Idle
+                </span>
+
+            </div>
+
+
+            <div class="status-box">
+
+                <span class="status-label">
+                    Channel
+                </span>
+
+                <span
+                    class="status-value"
+                    id="currentChannel"
+                >
+                    -
+                </span>
+
+            </div>
+
+
+            <div class="status-box">
+
+                <span class="status-label">
+                    Limit
+                </span>
+
+                <span
+                    class="status-value"
+                    id="limitValue"
+                >
+                    0
+                </span>
+
+            </div>
+
+
+            <div class="status-box">
+
+                <span class="status-label">
+                    Messages Scraped
+                </span>
+
+                <span
+                    class="status-value"
+                    id="messagesScraped"
+                >
+                    0
+                </span>
+
+            </div>
+
+
+            <div class="status-box">
+
+                <span class="status-label">
+                    Messages Saved
+                </span>
+
+                <span
+                    class="status-value"
+                    id="messagesSaved"
+                >
+                    0
+                </span>
+
+            </div>
+
+
+            <div class="status-box">
+
+                <span class="status-label">
+                    Current Deal
+                </span>
+
+                <span
+                    class="status-value"
+                    id="currentDeal"
+                >
+                    -
+                </span>
+
+            </div>
+
+
+        </div>
+
+    </div>
+
+
+</div>
+
+
+
+
+<script>
+
+
+// =====================================================
+// GLOBAL STATE
+// =====================================================
+
+let pollingInterval = null;
+
+
+// =====================================================
+// MESSAGE
+// =====================================================
+
+function showMessage(
+    text,
+    type = "info"
+) {
+
+    const box =
+        document.getElementById(
+            "message"
+        );
+
+    box.innerText = text;
+
+    box.className = type;
+
+    box.style.display = "block";
+}
+
+
+// =====================================================
+// HIDE MESSAGE
+// =====================================================
+
+function hideMessage() {
+
+    const box =
+        document.getElementById(
+            "message"
+        );
+
+    box.style.display = "none";
+
+}
+
+
+// =====================================================
+// START POLLING
+// =====================================================
+
+function startPolling() {
+
+    if (
+        pollingInterval !== null
+    ) {
+        return;
+    }
+
+    pollingInterval =
+        setInterval(
+            getScrapingStatus,
+            2000
+        );
+
+}
+
+
+// =====================================================
+// STOP POLLING
+// =====================================================
+
+function stopPolling() {
+
+    if (
+        pollingInterval !== null
+    ) {
+
+        clearInterval(
+            pollingInterval
+        );
+
+        pollingInterval = null;
+
+    }
+
+}
+
+
+// =====================================================
+// START SCRAPING
+// =====================================================
+
+async function startScraping() {
+
+    const channelInput =
+        document.getElementById(
+            "channel"
+        );
+
+    const limitInput =
+        document.getElementById(
+            "limit"
+        );
+
+
+    let channel =
+        channelInput.value.trim();
+
+
+    const limit =
+        Number(
+            limitInput.value
+        );
+
+
+    // -------------------------------------------------
+    // VALIDATE CHANNEL
+    // -------------------------------------------------
+
+    if (!channel) {
+
+        showMessage(
+            "Please enter a Telegram source channel.",
+            "error"
+        );
+
+        channelInput.focus();
+
+        return;
+    }
+
+
+    // Automatically add @
+    if (
+        !channel.startsWith("@")
+        &&
+        !channel.startsWith("https://t.me/")
+        &&
+        !channel.startsWith("http://t.me/")
+    ) {
+
+        channel =
+            "@" + channel;
+
+        channelInput.value =
+            channel;
+
+    }
+
+
+    // -------------------------------------------------
+    // VALIDATE LIMIT
+    // -------------------------------------------------
+
+    if (
+        !Number.isInteger(limit)
+        ||
+        limit < 1
+        ||
+        limit > 100
+    ) {
+
+        showMessage(
+            "Number of messages must be between 1 and 100.",
+            "error"
+        );
+
+        limitInput.focus();
+
+        return;
+    }
+
+
+    const startBtn =
+        document.getElementById(
+            "startBtn"
+        );
+
+    const stopBtn =
+        document.getElementById(
+            "stopBtn"
+        );
+
+
+    startBtn.disabled = true;
+
+    stopBtn.disabled = false;
+
+
+    showMessage(
+        "Starting Telegram scraper...",
+        "info"
+    );
+
+
+    try {
+
+        const response =
+            await fetch(
+                "/scraping/start/",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+
+                        channel:
+                            channel,
+
+                        limit:
+                            limit
+
+                    })
+                }
+            );
+
+
+        let data = {};
+
+        try {
+
+            data =
+                await response.json();
+
+        }
+        catch {
+
+            data = {};
+
+        }
+
+
+        // ------------------------------------------------
+        // SERVER ERROR
+        // ------------------------------------------------
+
+        if (!response.ok) {
+
+            startBtn.disabled = false;
+
+            stopBtn.disabled = true;
+
+            showMessage(
+                data.error ||
+                "Unable to start scraping.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        showMessage(
+            data.message ||
+            "Scraping started successfully.",
+            "success"
+        );
+
+
+        startPolling();
+
+        await getScrapingStatus();
+
+    }
+    catch (error) {
+
+        console.error(
+            "Start scraping error:",
+            error
+        );
+
+
+        startBtn.disabled = false;
+
+        stopBtn.disabled = true;
+
+
+        showMessage(
+            "Could not connect to the scraping server.",
+            "error"
+        );
+
+    }
+
+}
+
+
+// =====================================================
+// STOP SCRAPING
+// =====================================================
+
+async function stopScraping() {
+
+    const stopBtn =
+        document.getElementById(
+            "stopBtn"
+        );
+
+
+    stopBtn.disabled = true;
+
+
+    showMessage(
+        "Sending stop request...",
+        "info"
+    );
+
+
+    try {
+
+        const response =
+            await fetch(
+                "/scraping/stop/",
+                {
+                    method: "POST"
+                }
+            );
+
+
+        let data = {};
+
+        try {
+
+            data =
+                await response.json();
+
+        }
+        catch {
+
+            data = {};
+
+        }
+
+
+        if (!response.ok) {
+
+            stopBtn.disabled = false;
+
+            showMessage(
+                data.error ||
+                "Unable to stop scraping.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        showMessage(
+            data.message ||
+            "Stop request sent.",
+            "success"
+        );
+
+
+        await getScrapingStatus();
+
+        startPolling();
+
+    }
+    catch (error) {
+
+        console.error(
+            "Stop scraping error:",
+            error
+        );
+
+
+        stopBtn.disabled = false;
+
+
+        showMessage(
+            "Could not connect to the scraping server.",
+            "error"
+        );
+
+    }
+
+}
+
+
+// =====================================================
+// GET SCRAPING STATUS
+// =====================================================
+
+async function getScrapingStatus() {
+
+    try {
+
+        const response =
+            await fetch(
+                "/scraping/status/",
+                {
+                    method: "GET",
+                    cache: "no-store"
+                }
+            );
+
+
+        if (!response.ok) {
+            return;
+        }
+
+
+        const data =
+            await response.json();
+
+
+        // ------------------------------------------------
+        // STATUS
+        // ------------------------------------------------
+
+        const statusElement =
+            document.getElementById(
+                "status"
+            );
+
+
+        const currentStatus =
+            data.status ||
+            "idle";
+
+
+        statusElement.innerText =
+            currentStatus;
+
+
+        statusElement.className =
+            "status-value";
+
+
+        if (
+            currentStatus ===
+            "running"
+        ) {
+
+            statusElement.classList.add(
+                "status-running"
+            );
+
+        }
+        else if (
+            currentStatus ===
+            "starting"
+        ) {
+
+            statusElement.classList.add(
+                "status-starting"
+            );
+
+        }
+        else if (
+            currentStatus ===
+            "stopping"
+        ) {
+
+            statusElement.classList.add(
+                "status-stopping"
+            );
+
+        }
+        else if (
+            currentStatus ===
+            "completed"
+        ) {
+
+            statusElement.classList.add(
+                "status-completed"
+            );
+
+        }
+        else if (
+            currentStatus ===
+            "stopped"
+        ) {
+
+            statusElement.classList.add(
+                "status-stopped"
+            );
+
+        }
+        else if (
+            currentStatus ===
+            "error"
+        ) {
+
+            statusElement.classList.add(
+                "status-error"
+            );
+
+        }
+
+
+        // ------------------------------------------------
+        // OTHER VALUES
+        // ------------------------------------------------
+
+        document.getElementById(
+            "currentChannel"
+        ).innerText =
+            data.channel ||
+            "-";
+
+
+        document.getElementById(
+            "limitValue"
+        ).innerText =
+            data.limit ??
+            0;
+
+
+        document.getElementById(
+            "messagesScraped"
+        ).innerText =
+            data.messages_scraped ??
+            0;
+
+
+        document.getElementById(
+            "messagesSaved"
+        ).innerText =
+            data.messages_saved ??
+            0;
+
+
+        document.getElementById(
+            "currentDeal"
+        ).innerText =
+            data.current_deal ||
+            "-";
+
+
+        // ------------------------------------------------
+        // BUTTON STATE
+        // ------------------------------------------------
+
+        const startBtn =
+            document.getElementById(
+                "startBtn"
+            );
+
+        const stopBtn =
+            document.getElementById(
+                "stopBtn"
+            );
+
+
+        if (
+            currentStatus ===
+            "starting"
+            ||
+            currentStatus ===
+            "running"
+            ||
+            currentStatus ===
+            "stopping"
+        ) {
+
+            startBtn.disabled = true;
+
+            stopBtn.disabled =
+                currentStatus ===
+                "stopping";
+
+        }
+        else {
+
+            startBtn.disabled = false;
+
+            stopBtn.disabled = true;
+
+        }
+
+
+        // ------------------------------------------------
+        // COMPLETED
+        // ------------------------------------------------
+
+        if (
+            currentStatus ===
+            "completed"
+        ) {
+
+            showMessage(
+                `Scraping completed successfully. ${data.messages_saved ?? 0} deals saved.`,
+                "success"
+            );
+
+            stopPolling();
+
+        }
+
+
+        // ------------------------------------------------
+        // STOPPED
+        // ------------------------------------------------
+
+        else if (
+            currentStatus ===
+            "stopped"
+        ) {
+
+            showMessage(
+                `Scraping stopped. ${data.messages_saved ?? 0} deals saved.`,
+                "success"
+            );
+
+            stopPolling();
+
+        }
+
+
+        // ------------------------------------------------
+        // ERROR
+        // ------------------------------------------------
+
+        else if (
+            currentStatus ===
+            "error"
+        ) {
+
+            showMessage(
+                data.error ||
+                "Scraping failed.",
+                "error"
+            );
+
+            stopPolling();
+
+        }
+
+    }
+    catch (error) {
+
+        console.error(
+            "Status error:",
+            error
+        );
+
+    }
+
+}
+
+
+
+// =====================================================
+// INITIAL STATUS
+// =====================================================
+
+getScrapingStatus();
+
+</script>
+
+
+</body>
+
+</html>
+{% endblock %}

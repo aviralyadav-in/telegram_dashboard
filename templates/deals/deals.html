@@ -1,0 +1,1808 @@
+{% extends "base/base.html" %}
+
+{% block title %}
+Deals Management
+{% endblock %}
+
+{% block page_title %}
+{% endblock %}
+
+{% block extra_css %}
+
+<style>
+
+/* =========================================================
+   PAGE
+========================================================= */
+
+.page-header {
+    margin-bottom: 18px;
+}
+
+.page-header h1 {
+    margin: 0 0 5px;
+    font-size: 26px;
+}
+
+.page-header p {
+    margin: 0;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   MESSAGES
+========================================================= */
+
+.message {
+    background: #d1e7dd;
+    color: #0f5132;
+    padding: 11px 14px;
+    border-radius: 7px;
+    margin-bottom: 15px;
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   FILTER CARD
+========================================================= */
+
+.filters {
+    background: white;
+    padding: 17px;
+    border-radius: 10px;
+    margin-bottom: 18px;
+    box-shadow: 0 2px 9px rgba(0, 0, 0, 0.06);
+}
+
+.filter-title {
+    margin: 0 0 13px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+
+/* =========================================================
+   FILTER GRID
+========================================================= */
+
+.filter-grid {
+    display: grid;
+    grid-template-columns:
+        minmax(220px, 2fr)
+        repeat(4, minmax(130px, 1fr));
+    gap: 10px;
+    align-items: end;
+}
+
+.filter-grid-secondary {
+    display: grid;
+    grid-template-columns:
+        repeat(5, minmax(130px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+    align-items: end;
+}
+
+.filter-field {
+    min-width: 0;
+}
+
+.filter-label {
+    display: block;
+    font-size: 11px;
+    color: #6b7280;
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+.filter-form input,
+.filter-form select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 11px;
+    border: 1px solid #d1d5db;
+    border-radius: 7px;
+    font-size: 13px;
+    background: white;
+    outline: none;
+}
+
+.filter-form input:focus,
+.filter-form select:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.08);
+}
+
+.search-input {
+    min-width: 0;
+}
+
+
+/* =========================================================
+   FILTER ACTIONS
+========================================================= */
+
+.filter-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.filter-btn,
+.clear-btn {
+    padding: 10px 15px;
+    border-radius: 7px;
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+    border: none;
+    white-space: nowrap;
+}
+
+.filter-btn {
+    background: #2563eb;
+    color: white;
+}
+
+.filter-btn:hover {
+    background: #1d4ed8;
+}
+
+.clear-btn {
+    background: #f3f4f6;
+    color: #374151;
+    border: 1px solid #d1d5db;
+}
+
+.clear-btn:hover {
+    background: #e5e7eb;
+}
+
+
+/* =========================================================
+   PRICE INPUT
+========================================================= */
+
+.price-input {
+    position: relative;
+}
+
+.price-input input {
+    padding-left: 30px;
+}
+
+.price-symbol {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6b7280;
+    font-size: 13px;
+    pointer-events: none;
+}
+
+
+/* =========================================================
+   RESULTS SUMMARY
+========================================================= */
+
+.results-summary {
+    margin-top: 12px;
+    color: #6b7280;
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   BULK PUBLISH
+========================================================= */
+
+.bulk-card {
+    background: white;
+    padding: 17px;
+    border-radius: 10px;
+    margin-bottom: 18px;
+    box-shadow: 0 2px 9px rgba(0, 0, 0, 0.06);
+}
+
+.bulk-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.bulk-card h2 {
+    margin: 0 0 4px;
+    font-size: 17px;
+}
+
+.bulk-card p {
+    color: #6b7280;
+    margin: 0;
+    font-size: 13px;
+}
+
+.channel-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 14px 0;
+}
+
+.channel-option {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 7px;
+    padding: 8px 11px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.channel-option:hover {
+    background: #eef4ff;
+    border-color: #2563eb;
+}
+
+.channel-option input {
+    margin: 0;
+}
+
+.publish-btn {
+    background: #198754;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 7px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.publish-btn:hover {
+    background: #157347;
+}
+
+.select-note {
+    color: #6b7280;
+    font-size: 12px;
+    margin-top: 9px;
+}
+
+.selection-info {
+    margin-top: 7px;
+    font-size: 12px;
+    color: #374151;
+    font-weight: 600;
+}
+
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.table-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 9px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+}
+
+.table-topbar {
+    padding: 12px 15px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.table-count {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.table-wrapper {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    min-width: 1450px;
+    border-collapse: collapse;
+}
+
+th {
+    background: #1f2937;
+    color: white;
+    padding: 11px;
+    text-align: left;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+td {
+    padding: 11px;
+    border-bottom: 1px solid #e5e7eb;
+    vertical-align: middle;
+    font-size: 13px;
+}
+
+tbody tr:hover {
+    background: #fafafa;
+}
+
+
+/* =========================================================
+   IMAGE
+========================================================= */
+
+.deal-image {
+    width: 68px;
+    height: 68px;
+    object-fit: cover;
+    border-radius: 7px;
+    border: 1px solid #ddd;
+}
+
+.no-image {
+    width: 68px;
+    height: 68px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f1f3f5;
+    color: #777;
+    border-radius: 7px;
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   CONTENT
+========================================================= */
+
+.content-cell {
+    max-width: 330px;
+    min-width: 260px;
+    line-height: 1.45;
+}
+
+.content-preview {
+    color: #374151;
+}
+
+.content-full {
+    display: none;
+    margin-top: 7px;
+    padding: 8px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    white-space: pre-wrap;
+    line-height: 1.5;
+}
+
+.content-full.show {
+    display: block;
+}
+
+.expand-btn {
+    margin-top: 5px;
+    border: none;
+    background: transparent;
+    color: #2563eb;
+    cursor: pointer;
+    padding: 0;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.expand-btn:hover {
+    text-decoration: underline;
+}
+
+
+/* =========================================================
+   PRICE / RATING
+========================================================= */
+
+.price-value {
+    font-weight: 700;
+    color: #111827;
+    white-space: nowrap;
+}
+
+.no-value {
+    color: #9ca3af;
+}
+
+.rating-value {
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.rating-star {
+    color: #f59e0b;
+}
+
+
+/* =========================================================
+   PRODUCT LINK
+========================================================= */
+
+.product-link {
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.product-link:hover {
+    text-decoration: underline;
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 20px;
+    background: #e5e7eb;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   ACTIONS
+========================================================= */
+
+.action-buttons {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.edit-btn,
+.delete-btn {
+    padding: 7px 9px;
+    border-radius: 5px;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.edit-btn {
+    background: #f59e0b;
+    color: white;
+    text-decoration: none;
+}
+
+.edit-btn:hover {
+    background: #d97706;
+}
+
+.delete-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+.delete-btn:hover {
+    background: #b02a37;
+}
+
+
+/* =========================================================
+   PAGINATION
+========================================================= */
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 7px;
+    padding: 18px;
+    flex-wrap: wrap;
+}
+
+.pagination a {
+    text-decoration: none;
+    color: #2563eb;
+    border: 1px solid #d1d5db;
+    padding: 7px 11px;
+    border-radius: 5px;
+    background: white;
+    font-size: 12px;
+}
+
+.pagination a:hover {
+    background: #2563eb;
+    color: white;
+}
+
+.page-current {
+    font-size: 12px;
+    color: #4b5563;
+    padding: 0 8px;
+}
+
+
+/* =========================================================
+   EMPTY
+========================================================= */
+
+.empty {
+    text-align: center;
+    padding: 45px;
+    color: #777;
+}
+
+.empty h2 {
+    margin-bottom: 6px;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1200px) {
+
+    .filter-grid {
+        grid-template-columns:
+            repeat(2, minmax(180px, 1fr));
+    }
+
+    .filter-grid-secondary {
+        grid-template-columns:
+            repeat(2, minmax(180px, 1fr));
+    }
+
+}
+
+
+@media (max-width: 700px) {
+
+    .filter-grid,
+    .filter-grid-secondary {
+        grid-template-columns: 1fr;
+    }
+
+    .filter-actions {
+        width: 100%;
+    }
+
+    .filter-btn,
+    .clear-btn {
+        flex: 1;
+    }
+
+    .bulk-header {
+        align-items: flex-start;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+}
+
+</style>
+
+{% endblock %}
+
+
+{% block content %}
+
+
+<!-- =========================================================
+     PAGE HEADER
+========================================================= -->
+
+<div class="page-header">
+
+    <h1>
+        Deals Management
+    </h1>
+
+    <p>
+        View, filter, manage and publish scraped Telegram deals.
+    </p>
+
+</div>
+
+
+<!-- =========================================================
+     MESSAGES
+========================================================= -->
+
+{% if messages %}
+
+    {% for message in messages %}
+
+        <div class="message">
+            {{ message }}
+        </div>
+
+    {% endfor %}
+
+{% endif %}
+
+
+<!-- =========================================================
+     FILTERS
+========================================================= -->
+
+<div class="filters">
+
+    <div class="filter-title">
+        Filter & Sort Deals
+    </div>
+
+
+    <!-- IMPORTANT:
+         ALL FILTERS ARE NOW INSIDE ONE FORM
+    -->
+
+    <form
+        method="GET"
+        action="{% url 'deal-list' %}"
+        class="filter-form"
+        id="dealFilterForm"
+    >
+
+
+        <!-- =================================================
+             FIRST ROW
+        ================================================== -->
+
+        <div class="filter-grid">
+
+
+            <!-- SEARCH -->
+
+            <div class="filter-field">
+
+                <label class="filter-label">
+                    Search
+                </label>
+
+                <input
+                    type="text"
+                    name="search"
+                    class="search-input"
+                    placeholder="Search content, channel or product link..."
+                    value="{{ search }}"
+                >
+
+            </div>
+
+
+            <!-- STATUS -->
+
+            <div class="filter-field">
+
+                <label class="filter-label">
+                    Status
+                </label>
+
+                <select name="status">
+
+                    <option value="">
+                        All Status
+                    </option>
+
+                    {% for value, label in status_choices %}
+
+                        <option
+                            value="{{ value }}"
+                            {% if selected_status == value %}
+                                selected
+                            {% endif %}
+                        >
+                            {{ label }}
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            <!-- CHANNEL -->
+
+            <div class="filter-field">
+
+                <label class="filter-label">
+                    Source Channel
+                </label>
+
+                <select name="channel">
+
+                    <option value="">
+                        All Source Channels
+                    </option>
+
+                    {% for channel_name in deal_channels %}
+
+                        <option
+                            value="{{ channel_name }}"
+                            {% if selected_channel == channel_name %}
+                                selected
+                            {% endif %}
+                        >
+                            {{ channel_name }}
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            <!-- SORT -->
+
+            <div class="filter-field">
+
+                <label class="filter-label">
+                    Sort By
+                </label>
+
+                <select name="sort">
+
+                    <option
+                        value="newest"
+                        {% if sort_by == "newest" %}
+                            selected
+                        {% endif %}
+                    >
+                        Newest First
+                    </option>
+
+                    <option
+                        value="oldest"
+                        {% if sort_by == "oldest" %}
+                            selected
+                        {% endif %}
+                    >
+                        Oldest First
+                    </option>
+
+                    <option
+                        value="price_low"
+                        {% if sort_by == "price_low" %}
+                            selected
+                        {% endif %}
+                    >
+                        Price: Low → High
+                    </option>
+
+                    <option
+                        value="price_high"
+                        {% if sort_by == "price_high" %}
+                            selected
+                        {% endif %}
+                    >
+                        Price: High → Low
+                    </option>
+
+                    <option
+                        value="rating_high"
+                        {% if sort_by == "rating_high" %}
+                            selected
+                        {% endif %}
+                    >
+                        Rating: High → Low
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <!-- PER PAGE -->
+
+            <div class="filter-field">
+
+                <label class="filter-label">
+                    Results Per Page
+                </label>
+
+                <select name="per_page">
+
+                    {% for option in allowed_per_page %}
+
+                        <option
+                            value="{{ option }}"
+                            {% if per_page == option %}
+                                selected
+                            {% endif %}
+                        >
+                            {{ option }} per page
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             SECOND ROW
+        ================================================== -->
+
+        <div class="filter-grid-secondary">
+
+
+            <!-- DATE FROM -->
+
+            <div class="filter-field">
+
+                <label class="filter-label">
+                    Date From
+                </label>
+
+                <input
+                    type="date"
+                    name="date_from"
+                    value="{{ date_from }}"
+                >
+
+            </div>
+
+
+            <!-- DATE TO -->
+
+            <div class="filter-field">
+
+                <label class="filter-label">
+                    Date To
+                </label>
+
+                <input
+                    type="date"
+                    name="date_to"
+                    value="{{ date_to }}"
+                >
+
+            </div>
+
+
+            <!-- MIN PRICE -->
+
+            <div class="filter-field">
+
+                <label class="filter-label">
+                    Minimum Price
+                </label>
+
+                <div class="price-input">
+
+                    <span class="price-symbol">
+                        ₹
+                    </span>
+
+                    <input
+                        type="number"
+                        name="min_price"
+                        step="0.01"
+                        min="0"
+                        placeholder="Minimum price"
+                        value="{{ min_price }}"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <!-- MAX PRICE -->
+
+            <div class="filter-field">
+
+                <label class="filter-label">
+                    Maximum Price
+                </label>
+
+                <div class="price-input">
+
+                    <span class="price-symbol">
+                        ₹
+                    </span>
+
+                    <input
+                        type="number"
+                        name="max_price"
+                        step="0.01"
+                        min="0"
+                        placeholder="Maximum price"
+                        value="{{ max_price }}"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <!-- MIN RATING -->
+
+            <div class="filter-field">
+
+                <label class="filter-label">
+                    Minimum Rating
+                </label>
+
+                <select name="min_rating">
+
+                    <option value="">
+                        Any Rating
+                    </option>
+
+                    <option
+                        value="5"
+                        {% if min_rating == "5" %}
+                            selected
+                        {% endif %}
+                    >
+                        ⭐ 5.0+
+                    </option>
+
+                    <option
+                        value="4.5"
+                        {% if min_rating == "4.5" %}
+                            selected
+                        {% endif %}
+                    >
+                        ⭐ 4.5+
+                    </option>
+
+                    <option
+                        value="4"
+                        {% if min_rating == "4" %}
+                            selected
+                        {% endif %}
+                    >
+                        ⭐ 4.0+
+                    </option>
+
+                    <option
+                        value="3.5"
+                        {% if min_rating == "3.5" %}
+                            selected
+                        {% endif %}
+                    >
+                        ⭐ 3.5+
+                    </option>
+
+                    <option
+                        value="3"
+                        {% if min_rating == "3" %}
+                            selected
+                        {% endif %}
+                    >
+                        ⭐ 3.0+
+                    </option>
+
+                </select>
+
+            </div>
+
+
+        </div>
+
+
+        <!-- =================================================
+             ACTION BUTTONS
+        ================================================== -->
+
+        <div
+            class="filter-actions"
+            style="margin-top: 12px;"
+        >
+
+            <button
+                type="submit"
+                class="filter-btn"
+            >
+                🔎 Apply Filters
+            </button>
+
+            <a
+                href="{% url 'deal-list' %}"
+                class="clear-btn"
+            >
+                ✕ Clear Filters
+            </a>
+
+        </div>
+
+
+    </form>
+
+
+    <!-- =====================================================
+         RESULTS SUMMARY
+    ====================================================== -->
+
+    <div class="results-summary">
+
+        Showing
+        <strong>{{ deals|length }}</strong>
+        deal(s) on this page
+
+        {% if total_deals %}
+            · {{ total_deals }} matching deal(s) total
+        {% endif %}
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     BULK PUBLISH FORM
+========================================================= -->
+
+<form
+    method="POST"
+    action="{% url 'bulk-publish-deals' %}"
+    onsubmit="return validateBulkPublish();"
+>
+
+    {% csrf_token %}
+
+
+    <div class="bulk-card">
+
+        <div class="bulk-header">
+
+            <div>
+
+                <h2>
+                    Publish Selected Deals
+                </h2>
+
+                <p>
+                    Select deals and choose one or more destination
+                    Telegram channels.
+                </p>
+
+            </div>
+
+            <div
+                class="selection-info"
+                id="selectionInfo"
+            >
+                0 deals selected
+            </div>
+
+        </div>
+
+
+        <!-- DESTINATION CHANNELS -->
+
+        <div class="channel-grid">
+
+            {% if channels %}
+
+                {% for channel in channels %}
+
+                    <label class="channel-option">
+
+                        <input
+                            type="checkbox"
+                            name="channel_ids"
+                            value="{{ channel.id }}"
+                        >
+
+                        <span>
+
+                            {{ channel.name }}
+
+                            {% if channel.username %}
+                                ({{ channel.username }})
+                            {% endif %}
+
+                        </span>
+
+                    </label>
+
+                {% endfor %}
+
+            {% else %}
+
+                <span>
+                    No active destination channels found.
+                    Add a channel first.
+                </span>
+
+            {% endif %}
+
+        </div>
+
+
+        <button
+            type="submit"
+            class="publish-btn"
+        >
+            🚀 Publish Selected Deals
+        </button>
+
+
+        <div class="select-note">
+            You can select multiple deals and multiple destination channels.
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         DEALS TABLE
+    ====================================================== -->
+
+    <div class="table-card">
+
+
+        <!-- TABLE TOPBAR -->
+
+        <div class="table-topbar">
+
+            <div class="table-count">
+
+                {% if total_deals %}
+                    {{ total_deals }} matching deal(s)
+                {% else %}
+                    No matching deals
+                {% endif %}
+
+            </div>
+
+            <div class="table-count">
+
+                Page
+                {{ page_obj.number }}
+                of
+                {{ page_obj.paginator.num_pages|default:"1" }}
+
+            </div>
+
+        </div>
+
+
+        <!-- TABLE -->
+
+        <div class="table-wrapper">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+
+                            <input
+                                type="checkbox"
+                                id="selectAllDeals"
+                                onclick="toggleAllDeals(this)"
+                            >
+
+                        </th>
+
+                        <th>
+                            ID
+                        </th>
+
+                        <th>
+                            Image
+                        </th>
+
+                        <th>
+                            Source
+                        </th>
+
+                        <th>
+                            Content
+                        </th>
+
+                        <th>
+                            Product
+                        </th>
+
+                        <th>
+                            Price
+                        </th>
+
+                        <th>
+                            Rating
+                        </th>
+
+                        <th>
+                            Status
+                        </th>
+
+                        <th>
+                            Date
+                        </th>
+
+                        <th>
+                            Actions
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+
+                    {% for deal in deals %}
+
+                    <tr>
+
+
+                        <!-- SELECT -->
+
+                        <td>
+
+                            <input
+                                type="checkbox"
+                                name="deal_ids"
+                                value="{{ deal.id }}"
+                                class="deal-checkbox"
+                                onchange="updateSelectionCount()"
+                            >
+
+                        </td>
+
+
+                        <!-- ID -->
+
+                        <td>
+                            #{{ deal.id }}
+                        </td>
+
+
+                        <!-- IMAGE -->
+
+                        <td>
+
+                            {% if deal.image_path %}
+
+                                <img
+                                    src="/media/{{ deal.image_path }}"
+                                    alt="Deal image"
+                                    class="deal-image"
+                                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                                >
+
+                                <div
+                                    class="no-image"
+                                    style="display:none;"
+                                >
+                                    Image Error
+                                </div>
+
+                            {% else %}
+
+                                <div class="no-image">
+                                    No Image
+                                </div>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- SOURCE -->
+
+                        <td>
+                            {{ deal.channel }}
+                        </td>
+
+
+                        <!-- CONTENT -->
+
+                        <td class="content-cell">
+
+                            <div class="content-preview">
+
+                                {{ deal.content|default:"No content"|truncatechars:120 }}
+
+                            </div>
+
+
+                            {% if deal.content|length > 120 %}
+
+                                <div
+                                    class="content-full"
+                                    id="content-{{ deal.id }}"
+                                >
+                                    {{ deal.content }}
+                                </div>
+
+                                <button
+                                    type="button"
+                                    class="expand-btn"
+                                    onclick="toggleContent('{{ deal.id }}', this)"
+                                >
+                                    Show more
+                                </button>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- PRODUCT -->
+
+                        <td>
+
+                            {% if deal.product_link %}
+
+                                <a
+                                    href="{{ deal.product_link }}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="product-link"
+                                >
+                                    Open Product
+                                </a>
+
+                            {% else %}
+
+                                <span class="no-value">
+                                    -
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- PRICE -->
+
+                        <td>
+
+                            {% if deal.price is not None %}
+
+                                <span class="price-value">
+                                    ₹{{ deal.price|floatformat:2 }}
+                                </span>
+
+                            {% else %}
+
+                                <span class="no-value">
+                                    -
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- RATING -->
+
+                        <td>
+
+                            {% if deal.rating is not None %}
+
+                                <span class="rating-value">
+
+                                    <span class="rating-star">
+                                        ★
+                                    </span>
+
+                                    {{ deal.rating|floatformat:1 }}
+
+                                </span>
+
+                            {% else %}
+
+                                <span class="no-value">
+                                    -
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- STATUS -->
+
+                        <td>
+
+                            <span class="status-badge">
+
+                                {{ deal.get_status_display }}
+
+                            </span>
+
+                        </td>
+
+
+                        <!-- DATE -->
+
+                        <td>
+
+                            {{ deal.date|date:"d M Y H:i" }}
+
+                        </td>
+
+
+                        <!-- ACTIONS -->
+
+                        <td>
+
+                            <div class="action-buttons">
+
+
+                                <!-- EDIT -->
+
+                                <a
+                                    href="{% url 'deal-edit' deal.id %}"
+                                    class="edit-btn"
+                                >
+                                    ✏️ Edit
+                                </a>
+
+
+                                <!-- DELETE -->
+
+                                <form
+                                    method="POST"
+                                    action="{% url 'deal-delete' deal.id %}"
+                                    onsubmit="return confirm('Are you sure you want to delete this deal?');"
+                                >
+
+                                    {% csrf_token %}
+
+                                    <button
+                                        type="submit"
+                                        class="delete-btn"
+                                    >
+                                        🗑 Delete
+                                    </button>
+
+                                </form>
+
+
+                            </div>
+
+                        </td>
+
+
+                    </tr>
+
+
+                    {% empty %}
+
+                    <tr>
+
+                        <td colspan="11">
+
+                            <div class="empty">
+
+                                <h2>
+                                    No deals found
+                                </h2>
+
+                                <p>
+                                    Try changing your filters or
+                                    scrape a Telegram channel to collect deals.
+                                </p>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        <!-- =================================================
+             PAGINATION
+        ================================================== -->
+
+        {% if page_obj.has_other_pages %}
+
+            <div class="pagination">
+
+
+                {% if page_obj.has_previous %}
+
+                    <a
+                        href="?page={{ page_obj.previous_page_number }}&search={{ search|urlencode }}&status={{ selected_status|urlencode }}&channel={{ selected_channel|urlencode }}&date_from={{ date_from|urlencode }}&date_to={{ date_to|urlencode }}&min_price={{ min_price|urlencode }}&max_price={{ max_price|urlencode }}&min_rating={{ min_rating|urlencode }}&sort={{ sort_by|urlencode }}&per_page={{ per_page }}"
+                    >
+                        ← Previous
+                    </a>
+
+                {% endif %}
+
+
+                <span class="page-current">
+
+                    Page
+                    {{ page_obj.number }}
+                    of
+                    {{ page_obj.paginator.num_pages }}
+
+                </span>
+
+
+                {% if page_obj.has_next %}
+
+                    <a
+                        href="?page={{ page_obj.next_page_number }}&search={{ search|urlencode }}&status={{ selected_status|urlencode }}&channel={{ selected_channel|urlencode }}&date_from={{ date_from|urlencode }}&date_to={{ date_to|urlencode }}&min_price={{ min_price|urlencode }}&max_price={{ max_price|urlencode }}&min_rating={{ min_rating|urlencode }}&sort={{ sort_by|urlencode }}&per_page={{ per_page }}"
+                    >
+                        Next →
+                    </a>
+
+                {% endif %}
+
+
+            </div>
+
+        {% endif %}
+
+
+    </div>
+
+
+</form>
+
+
+{% endblock %}
+
+
+{% block extra_js %}
+
+<script>
+
+
+/* ============================================================
+   SELECT ALL
+============================================================ */
+
+function toggleAllDeals(source) {
+
+    const checkboxes =
+        document.querySelectorAll(
+            ".deal-checkbox"
+        );
+
+    checkboxes.forEach(
+        function(checkbox) {
+
+            checkbox.checked =
+                source.checked;
+
+        }
+    );
+
+    updateSelectionCount();
+
+}
+
+
+/* ============================================================
+   SELECTION COUNT
+============================================================ */
+
+function updateSelectionCount() {
+
+    const selectedDeals =
+        document.querySelectorAll(
+            ".deal-checkbox:checked"
+        );
+
+    const info =
+        document.getElementById(
+            "selectionInfo"
+        );
+
+    if (info) {
+
+        info.innerText =
+            selectedDeals.length +
+            " deal(s) selected";
+
+    }
+
+}
+
+
+/* ============================================================
+   CONTENT EXPAND / COLLAPSE
+============================================================ */
+
+function toggleContent(dealId, button) {
+
+    const content =
+        document.getElementById(
+            "content-" + dealId
+        );
+
+    if (!content) {
+        return;
+    }
+
+    if (content.classList.contains("show")) {
+
+        content.classList.remove("show");
+
+        button.innerText =
+            "Show more";
+
+    } else {
+
+        content.classList.add("show");
+
+        button.innerText =
+            "Show less";
+
+    }
+
+}
+
+
+/* ============================================================
+   BULK PUBLISH VALIDATION
+============================================================ */
+
+function validateBulkPublish() {
+
+    const selectedDeals =
+        document.querySelectorAll(
+            ".deal-checkbox:checked"
+        );
+
+    const selectedChannels =
+        document.querySelectorAll(
+            'input[name="channel_ids"]:checked'
+        );
+
+
+    if (selectedDeals.length === 0) {
+
+        alert(
+            "Please select at least one deal."
+        );
+
+        return false;
+
+    }
+
+
+    if (selectedChannels.length === 0) {
+
+        alert(
+            "Please select at least one destination channel."
+        );
+
+        return false;
+
+    }
+
+
+    return confirm(
+        "Publish " +
+        selectedDeals.length +
+        " deal(s) to " +
+        selectedChannels.length +
+        " channel(s)?"
+    );
+
+}
+
+
+/* ============================================================
+   OPTIONAL PRICE VALIDATION
+============================================================ */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function() {
+
+        updateSelectionCount();
+
+
+        const filterForm =
+            document.getElementById(
+                "dealFilterForm"
+            );
+
+        if (filterForm) {
+
+            filterForm.addEventListener(
+                "submit",
+                function(event) {
+
+                    const minPrice =
+                        document.querySelector(
+                            'input[name="min_price"]'
+                        );
+
+                    const maxPrice =
+                        document.querySelector(
+                            'input[name="max_price"]'
+                        );
+
+
+                    if (
+                        minPrice &&
+                        maxPrice &&
+                        minPrice.value !== "" &&
+                        maxPrice.value !== ""
+                    ) {
+
+                        const min =
+                            parseFloat(
+                                minPrice.value
+                            );
+
+                        const max =
+                            parseFloat(
+                                maxPrice.value
+                            );
+
+
+                        if (
+                            !isNaN(min) &&
+                            !isNaN(max) &&
+                            min > max
+                        ) {
+
+                            event.preventDefault();
+
+                            alert(
+                                "Minimum price cannot be greater than maximum price."
+                            );
+
+                            minPrice.focus();
+
+                            return false;
+
+                        }
+
+                    }
+
+                }
+            );
+
+        }
+
+    }
+);
+
+</script>
+
+{% endblock %}

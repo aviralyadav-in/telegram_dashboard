@@ -1,0 +1,359 @@
+{% extends "base/base.html" %}
+
+{% block title %}
+Edit Destination
+{% endblock %}
+
+{% block content %}
+
+<style>
+
+.edit-container {
+    width: 92%;
+    max-width: 900px;
+    margin: 35px auto;
+}
+
+.card {
+    background: white;
+    padding: 28px;
+    border-radius: 16px;
+    box-shadow: 0 4px 18px rgba(0,0,0,.07);
+}
+
+.card h1 {
+    margin-top: 0;
+}
+
+.subtitle {
+    color: #6b7280;
+    margin-bottom: 25px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.form-group label {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 9px;
+    font-size: 14px;
+}
+
+.form-group textarea {
+    min-height: 110px;
+    resize: vertical;
+}
+
+.full {
+    grid-column: 1 / -1;
+}
+
+.section {
+    margin-top: 25px;
+    padding-top: 22px;
+    border-top: 1px solid #eee;
+}
+
+.section h3 {
+    margin-top: 0;
+}
+
+.checkbox {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin: 13px 0;
+    font-size: 14px;
+}
+
+.checkbox input {
+    width: auto;
+}
+
+.actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 25px;
+}
+
+.btn {
+    border: none;
+    padding: 11px 18px;
+    border-radius: 9px;
+    cursor: pointer;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.btn-primary {
+    background: #2563eb;
+    color: white;
+}
+
+.btn-secondary {
+    background: #e5e7eb;
+    color: #111827;
+}
+
+@media(max-width:700px) {
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .full {
+        grid-column: auto;
+    }
+
+    .actions {
+        flex-direction: column;
+    }
+
+}
+
+</style>
+
+
+<div class="edit-container">
+
+    <div class="card">
+
+        <h1>✏️ Edit Destination</h1>
+
+        <p class="subtitle">
+            Update Telegram channel or group configuration.
+        </p>
+
+
+        <form method="POST">
+
+            {% csrf_token %}
+
+
+            <div class="form-grid">
+
+                <div class="form-group">
+
+                    <label>Destination Name</label>
+
+                    <input
+                        name="name"
+                        value="{{ channel.name }}"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>Destination Type</label>
+
+                    <select name="chat_type">
+
+                        <option
+                            value="channel"
+                            {% if channel.chat_type == "channel" %}
+                                selected
+                            {% endif %}
+                        >
+                            📢 Channel
+                        </option>
+
+                        <option
+                            value="group"
+                            {% if channel.chat_type == "group" %}
+                                selected
+                            {% endif %}
+                        >
+                            👥 Group
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>Telegram Username</label>
+
+                    <input
+                        name="username"
+                        value="{{ channel.username|default:'' }}"
+                        placeholder="@channelusername"
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>Chat ID</label>
+
+                    <input
+                        name="chat_id"
+                        value="{{ channel.chat_id|default:'' }}"
+                        placeholder="-1001234567890"
+                    >
+
+                </div>
+
+
+                <div class="form-group full">
+
+                    <label>Connected Bot</label>
+
+                    <select name="bot_id">
+
+                        <option value="">
+                            -- No Bot --
+                        </option>
+
+                        {% for bot in bots %}
+
+                            <option
+                                value="{{ bot.id }}"
+                                {% if channel.bot_id == bot.id %}
+                                    selected
+                                {% endif %}
+                            >
+
+                                {{ bot.name }}
+
+                                {% if bot.username %}
+                                    (@{{ bot.username }})
+                                {% endif %}
+
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <div class="form-group full">
+
+                    <label>Description</label>
+
+                    <textarea
+                        name="description"
+                    >{{ channel.description|default:'' }}</textarea>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>Status</label>
+
+                    <select name="status">
+
+                        <option
+                            value="active"
+                            {% if channel.status == "active" %}
+                                selected
+                            {% endif %}
+                        >
+                            Active
+                        </option>
+
+                        <option
+                            value="inactive"
+                            {% if channel.status == "inactive" %}
+                                selected
+                            {% endif %}
+                        >
+                            Inactive
+                        </option>
+
+                    </select>
+
+                </div>
+
+            </div>
+
+
+            <div class="section">
+
+                <h3>👤 User Access Control</h3>
+
+
+                <label class="checkbox">
+
+                    <input
+                        type="checkbox"
+                        name="auto_allow_users"
+                        {% if channel.auto_allow_users %}
+                            checked
+                        {% endif %}
+                    >
+
+                    Automatically allow new users
+
+                </label>
+
+
+                <label class="checkbox">
+
+                    <input
+                        type="checkbox"
+                        name="allow_direct_messages"
+                        {% if channel.allow_direct_messages %}
+                            checked
+                        {% endif %}
+                    >
+
+                    Allow direct messages to the bot
+
+                </label>
+
+            </div>
+
+
+            <div class="actions">
+
+                <button
+                    type="submit"
+                    class="btn btn-primary"
+                >
+                    💾 Save Changes
+                </button>
+
+                <a
+                    href="{% url 'channels' %}"
+                    class="btn btn-secondary"
+                >
+                    Cancel
+                </a>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}

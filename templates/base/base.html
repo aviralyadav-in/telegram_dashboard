@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        {% block title %}
+        Telegram Deals Management
+        {% endblock %}
+    </title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            color: #222;
+        }
+
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* =====================================================
+           SIDEBAR
+        ===================================================== */
+
+        .sidebar {
+            width: 245px;
+            background: #111827;
+            color: white;
+            min-height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            padding: 22px 14px;
+            overflow-y: auto;
+        }
+
+        .brand {
+            padding: 8px 12px 24px;
+            border-bottom: 1px solid #374151;
+            margin-bottom: 18px;
+        }
+
+        .brand h2 {
+            margin: 0;
+            font-size: 20px;
+        }
+
+        .brand p {
+            margin: 6px 0 0;
+            color: #9ca3af;
+            font-size: 12px;
+        }
+
+        .menu-title {
+            color: #9ca3af;
+            font-size: 11px;
+            text-transform: uppercase;
+            margin: 18px 12px 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #d1d5db;
+            text-decoration: none;
+            padding: 12px;
+            border-radius: 7px;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .sidebar a:hover {
+            background: #1f2937;
+            color: white;
+        }
+
+        .sidebar a.active {
+            background: #2563eb;
+            color: white;
+        }
+
+        .menu-icon {
+            width: 22px;
+            text-align: center;
+        }
+
+        /* =====================================================
+           DEALS SUB MENU
+        ===================================================== */
+
+        .submenu {
+            margin: 0 0 10px 34px;
+            border-left: 1px solid #374151;
+            padding-left: 8px;
+        }
+
+        .submenu a {
+            padding: 9px 10px;
+            margin-bottom: 3px;
+            font-size: 13px;
+            color: #9ca3af;
+        }
+
+        .submenu a:hover {
+            background: #1f2937;
+            color: white;
+        }
+
+        .submenu a.active {
+            background: #1d4ed8;
+            color: white;
+        }
+
+        .submenu-icon {
+            width: 18px;
+            text-align: center;
+        }
+
+        /* =====================================================
+           MAIN CONTENT
+        ===================================================== */
+
+        .main-content {
+            margin-left: 245px;
+            width: calc(100% - 245px);
+            min-height: 100vh;
+            padding: 30px;
+        }
+
+        /* =====================================================
+           BACK TO DASHBOARD
+        ===================================================== */
+
+        .back-dashboard {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 9px 15px;
+            background: white;
+            color: #2563eb;
+            text-decoration: none;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .back-dashboard:hover {
+            background: #eff6ff;
+        }
+
+        /* =====================================================
+           MOBILE
+        ===================================================== */
+
+        @media (max-width: 800px) {
+
+            .sidebar {
+                width: 210px;
+            }
+
+            .main-content {
+                margin-left: 210px;
+                width: calc(100% - 210px);
+                padding: 20px;
+            }
+
+        }
+
+        @media (max-width: 600px) {
+
+            .layout {
+                display: block;
+            }
+
+            .sidebar {
+                position: relative;
+                width: 100%;
+                min-height: auto;
+            }
+
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+                padding: 15px;
+            }
+
+        }
+
+    </style>
+
+    {% block extra_css %}
+    {% endblock %}
+
+</head>
+
+
+<body>
+
+<div class="layout">
+
+    <!-- =====================================================
+         SIDEBAR
+    ====================================================== -->
+
+    <aside class="sidebar">
+
+        <div class="brand">
+
+            <h2>
+                Telegram Deals
+            </h2>
+
+            <p>
+                Deals Management System
+            </p>
+
+        </div>
+
+
+        <div class="menu-title">
+            Main
+        </div>
+
+
+        <!-- DASHBOARD -->
+
+        <a
+            href="/"
+            class="{% if request.path == '/' %}active{% endif %}"
+        >
+
+            <span class="menu-icon">
+                🏠
+            </span>
+
+            Dashboard
+
+        </a>
+
+
+        <!-- DEALS -->
+
+        <a
+            href="/list/"
+            class="{% if '/list/' in request.path or '/categories/' in request.path %}active{% endif %}"
+        >
+
+            <span class="menu-icon">
+                📦
+            </span>
+
+            Deals
+
+        </a>
+
+
+        <!-- DEALS SUB MENU -->
+
+        {% if '/list/' in request.path or '/categories/' in request.path %}
+
+            <div class="submenu">
+
+                <!-- ALL DEALS -->
+
+                <a
+                    href="/list/"
+                    class="{% if '/list/' in request.path %}active{% endif %}"
+                >
+
+                    <span class="submenu-icon">
+                        📋
+                    </span>
+
+                    All Deals
+
+                </a>
+
+
+                <!-- CATEGORIES -->
+
+                <a
+                    href="/categories/"
+                    class="{% if '/categories/' in request.path %}active{% endif %}"
+                >
+
+                    <span class="submenu-icon">
+                        🏷️
+                    </span>
+
+                    Categories
+
+                </a>
+
+            </div>
+
+        {% endif %}
+
+
+        <!-- SCRAPING -->
+
+        <a
+            href="/scraping/"
+            class="{% if '/scraping/' in request.path %}active{% endif %}"
+        >
+
+            <span class="menu-icon">
+                🔍
+            </span>
+
+            Scraping
+
+        </a>
+
+
+        <!-- CHANNELS -->
+
+        <a
+            href="/channels/"
+            class="{% if '/channels/' in request.path and '/publish/' not in request.path %}active{% endif %}"
+        >
+
+            <span class="menu-icon">
+                📢
+            </span>
+
+            Channels
+
+        </a>
+
+
+        <!-- PUBLISH -->
+
+        <a
+            href="/channels/publish/"
+            class="{% if '/channels/publish/' in request.path %}active{% endif %}"
+        >
+
+            <span class="menu-icon">
+                🚀
+            </span>
+
+            Publish
+
+        </a>
+
+    </aside>
+
+
+    <!-- =====================================================
+         MAIN CONTENT
+    ====================================================== -->
+
+    <main class="main-content">
+
+        {% if request.path != '/' %}
+
+            <a
+                href="/"
+                class="back-dashboard"
+            >
+                ← Back to Dashboard
+            </a>
+
+        {% endif %}
+
+
+        {% block page_title %}
+        {% endblock %}
+
+
+        {% block content %}
+        {% endblock %}
+
+    </main>
+
+</div>
+
+
+{% block extra_js %}
+{% endblock %}
+
+</body>
+
+</html>
