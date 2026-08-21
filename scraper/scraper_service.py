@@ -5,6 +5,7 @@ import random
 
 from django.conf import settings
 from django.db import transaction
+from publisher.services.publishing import auto_publish_deal
 from asgiref.sync import sync_to_async
 
 from telethon import TelegramClient
@@ -90,6 +91,10 @@ def save_deal(
             channel=channel_name,
             status="new",
         )
+        try:
+            auto_publish_deal(deal)
+        except Exception as error:
+            print(f"Auto publish error for deal {deal.id}: {error}")
 
     return deal
 
