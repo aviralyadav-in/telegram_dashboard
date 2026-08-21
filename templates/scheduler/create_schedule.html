@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Filtered Auto Publishing</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            color: #1f2937;
+        }
+
+        .page {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .heading {
+            margin-bottom: 25px;
+        }
+
+        .heading h1 {
+            margin: 0 0 8px;
+            font-size: 28px;
+        }
+
+        .heading p {
+            margin: 0;
+            color: #6b7280;
+            line-height: 1.6;
+        }
+
+        .section {
+            margin-top: 28px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .field {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 7px;
+            font-weight: 600;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 12px 13px;
+            border: 1px solid #d1d5db;
+            border-radius: 9px;
+            font-size: 15px;
+            background: #ffffff;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #4f46e5;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+
+        .hint {
+            margin-top: 6px;
+            font-size: 13px;
+            color: #6b7280;
+            line-height: 1.5;
+        }
+
+        .example {
+            margin-top: 25px;
+            padding: 18px;
+            border-radius: 10px;
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+        }
+
+        .example-title {
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .flow {
+            line-height: 1.8;
+            color: #4b5563;
+        }
+
+        .submit-btn {
+            width: 100%;
+            margin-top: 25px;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            background: #111827;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .submit-btn:hover {
+            opacity: 0.92;
+        }
+
+        .messages {
+            margin-bottom: 20px;
+        }
+
+        .message {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background: #f3f4f6;
+            line-height: 1.5;
+        }
+
+        .note {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            background: #fff7ed;
+            color: #9a3412;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 700px) {
+            .row {
+                grid-template-columns: 1fr;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .heading h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="page">
+
+    <div class="card">
+
+        <div class="heading">
+            <h1>🤖 Filtered Auto Publishing</h1>
+
+            <p>
+                Select a Telegram destination, apply your deal filters,
+                choose how many deals to publish, and let the bot publish
+                them automatically with the selected interval.
+            </p>
+        </div>
+
+
+        {% if messages %}
+
+            <div class="messages">
+
+                {% for message in messages %}
+
+                    <div class="message">
+                        {{ message }}
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+        {% endif %}
+
+
+        <form
+            method="post"
+            action="{% url 'create_schedule' %}"
+        >
+
+            {% csrf_token %}
+
+
+            <!-- DESTINATION -->
+
+            <div class="section">
+
+                <div class="section-title">
+                    1. Telegram Destination
+                </div>
+
+                <div class="field">
+
+                    <label for="destination">
+                        Channel / Group
+                    </label>
+
+                    <select
+                        id="destination"
+                        name="destination"
+                        required
+                    >
+
+                        <option value="">
+                            Select Channel / Group
+                        </option>
+
+                        {% for channel in channels %}
+
+                            <option value="{{ channel.id }}">
+
+                                {{ channel.name }}
+
+                                {% if channel.username %}
+                                    — {{ channel.username }}
+                                {% endif %}
+
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                    <div class="hint">
+                        The connected bot will publish the selected
+                        deals to this destination.
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- DATE -->
+
+            <div class="section">
+
+                <div class="section-title">
+                    2. Date Filter
+                </div>
+
+                <div class="row">
+
+                    <div class="field">
+
+                        <label for="date_from">
+                            Date From
+                        </label>
+
+                        <input
+                            type="date"
+                            id="date_from"
+                            name="date_from"
+                        >
+
+                    </div>
+
+
+                    <div class="field">
+
+                        <label for="date_to">
+                            Date To
+                        </label>
+
+                        <input
+                            type="date"
+                            id="date_to"
+                            name="date_to"
+                        >
+
+                    </div>
+
+                </div>
+
+                <div class="hint">
+                    Leave empty if you want deals from all dates.
+                </div>
+
+            </div>
+
+
+            <!-- PRICE -->
+
+            <div class="section">
+
+                <div class="section-title">
+                    3. Price Range
+                </div>
+
+                <div class="row">
+
+                    <div class="field">
+
+                        <label for="min_price">
+                            Minimum Price (₹)
+                        </label>
+
+                        <input
+                            type="number"
+                            id="min_price"
+                            name="min_price"
+                            min="0"
+                            step="0.01"
+                            placeholder="Example: 500"
+                        >
+
+                    </div>
+
+
+                    <div class="field">
+
+                        <label for="max_price">
+                            Maximum Price (₹)
+                        </label>
+
+                        <input
+                            type="number"
+                            id="max_price"
+                            name="max_price"
+                            min="0"
+                            step="0.01"
+                            placeholder="Example: 2000"
+                        >
+
+                    </div>
+
+                </div>
+
+                <div class="hint">
+                    Only deals whose stored price falls inside this
+                    range will be selected.
+                </div>
+
+            </div>
+
+
+            <!-- RATING -->
+
+            <div class="section">
+
+                <div class="section-title">
+                    4. Rating Filter
+                </div>
+
+                <div class="field">
+
+                    <label for="min_rating">
+                        Minimum Rating
+                    </label>
+
+                    <input
+                        type="number"
+                        id="min_rating"
+                        name="min_rating"
+                        min="0"
+                        max="5"
+                        step="0.1"
+                        placeholder="Example: 4"
+                    >
+
+                    <div class="hint">
+                        Example: 4 means 4.0 and above.
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- PUBLISHING -->
+
+            <div class="section">
+
+                <div class="section-title">
+                    5. Publishing Settings
+                </div>
+
+                <div class="row">
+
+                    <div class="field">
+
+                        <label for="deal_limit">
+                            Number of Deals
+                        </label>
+
+                        <input
+                            type="number"
+                            id="deal_limit"
+                            name="deal_limit"
+                            min="1"
+                            max="100"
+                            value="5"
+                            required
+                        >
+
+                        <div class="hint">
+                            Maximum number of matching deals to publish.
+                        </div>
+
+                    </div>
+
+
+                    <div class="field">
+
+                        <label for="interval_seconds">
+                            Gap Between Deals (Seconds)
+                        </label>
+
+                        <input
+                            type="number"
+                            id="interval_seconds"
+                            name="interval_seconds"
+                            min="1"
+                            value="10"
+                            required
+                        >
+
+                        <div class="hint">
+                            Example: 10 means one deal every 10 seconds.
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- EXAMPLE -->
+
+            <div class="example">
+
+                <div class="example-title">
+                    Example
+                </div>
+
+                <div class="flow">
+                    Channel: Myntra Deals<br>
+                    Price: ₹500 – ₹2000<br>
+                    Rating: 4+ ⭐<br>
+                    Deals: 5<br>
+                    Interval: 10 seconds
+                    <br><br>
+
+                    Matching deals will be published automatically:
+                    <br>
+
+                    Deal 1 → 10 sec → Deal 2 → 10 sec → Deal 3
+                    → 10 sec → Deal 4 → 10 sec → Deal 5
+                </div>
+
+            </div>
+
+
+            <div class="note">
+                You do not need to press the normal Publish button
+                for every deal. Once this schedule starts, the bot
+                handles the publishing automatically.
+            </div>
+
+
+            <button
+                type="submit"
+                class="submit-btn"
+            >
+                🚀 Filter & Start Auto Publishing
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+</body>
+
+</html>

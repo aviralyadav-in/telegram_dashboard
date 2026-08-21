@@ -13,6 +13,10 @@ urlpatterns = [
     path("scraping/", include("scraper.urls")),
 
     path("channels/", include("publisher.urls")),
+    path(
+    "schedules/",
+    include("scheduler.urls"),
+),
 ]
 
 

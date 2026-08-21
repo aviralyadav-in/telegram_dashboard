@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Schedule #{{ schedule.id }}
+    </title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            color: #1f2937;
+        }
+
+        .page {
+            max-width: 1150px;
+            margin: 35px auto;
+            padding: 0 20px;
+        }
+
+        .top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .top h1 {
+            margin: 0 0 6px;
+            font-size: 28px;
+        }
+
+        .top p {
+            margin: 0;
+            color: #6b7280;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 10px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            background: #111827;
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .danger-button {
+            background: #dc2626;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat {
+            background: #ffffff;
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 5px 22px rgba(0, 0, 0, 0.07);
+        }
+
+        .stat-label {
+            color: #6b7280;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 25px;
+            font-weight: 700;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 14px;
+            padding: 22px;
+            box-shadow: 0 5px 22px rgba(0, 0, 0, 0.07);
+        }
+
+        .card h2 {
+            margin-top: 0;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            padding: 10px 0;
+            border-bottom: 1px solid #eeeeee;
+        }
+
+        .summary-row:last-child {
+            border-bottom: none;
+        }
+
+        .muted {
+            color: #6b7280;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .status-running {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-completed {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-failed {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-cancelled {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .error {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            background: #fff1f2;
+            color: #b91c1c;
+            line-height: 1.5;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            min-width: 900px;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 13px;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            background: #f8fafc;
+        }
+
+        .item-success {
+            color: #15803d;
+            font-weight: 700;
+        }
+
+        .item-pending {
+            color: #d97706;
+            font-weight: 700;
+        }
+
+        .item-failed {
+            color: #dc2626;
+            font-weight: 700;
+        }
+
+        .item-skipped {
+            color: #6b7280;
+            font-weight: 700;
+        }
+
+        .item-error {
+            max-width: 300px;
+            color: #b91c1c;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .deal-preview {
+            max-width: 320px;
+            color: #6b7280;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+
+        @media (max-width: 850px) {
+            .stats {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .top {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 500px) {
+            .stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+
+</head>
+
+<body>
+
+<div class="page">
+
+
+    <!-- HEADER -->
+
+    <div class="top">
+
+        <div>
+
+            <h1>
+                📋 Schedule #{{ schedule.id }}
+            </h1>
+
+            <p>
+                {{ schedule.destination.name }}
+            </p>
+
+        </div>
+
+
+        <div>
+
+            <a
+                href="{% url 'schedule_list' %}"
+                class="button"
+            >
+                ← Back
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- STATS -->
+
+    <div class="stats">
+
+        <div class="stat">
+
+            <div class="stat-label">
+                Requested
+            </div>
+
+            <div class="stat-value">
+                {{ schedule.deal_limit }}
+            </div>
+
+        </div>
+
+
+        <div class="stat">
+
+            <div class="stat-label">
+                Matched
+            </div>
+
+            <div class="stat-value">
+                {{ schedule.total_deals }}
+            </div>
+
+        </div>
+
+
+        <div class="stat">
+
+            <div class="stat-label">
+                Published
+            </div>
+
+            <div class="stat-value">
+                {{ schedule.published_count }}
+            </div>
+
+        </div>
+
+
+        <div class="stat">
+
+            <div class="stat-label">
+                Failed
+            </div>
+
+            <div class="stat-value">
+                {{ schedule.failed_count }}
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- SETTINGS + STATUS -->
+
+    <div class="grid">
+
+
+        <div class="card">
+
+            <h2>
+                Schedule Settings
+            </h2>
+
+
+            <div class="summary-row">
+
+                <span class="muted">
+                    Destination
+                </span>
+
+                <strong>
+                    {{ schedule.destination.name }}
+                </strong>
+
+            </div>
+
+
+            <div class="summary-row">
+
+                <span class="muted">
+                    Date From
+                </span>
+
+                <span>
+
+                    {% if schedule.date_from %}
+                        {{ schedule.date_from }}
+                    {% else %}
+                        All
+                    {% endif %}
+
+                </span>
+
+            </div>
+
+
+            <div class="summary-row">
+
+                <span class="muted">
+                    Date To
+                </span>
+
+                <span>
+
+                    {% if schedule.date_to %}
+                        {{ schedule.date_to }}
+                    {% else %}
+                        All
+                    {% endif %}
+
+                </span>
+
+            </div>
+
+
+            <div class="summary-row">
+
+                <span class="muted">
+                    Minimum Price
+                </span>
+
+                <span>
+
+                    {% if schedule.min_price %}
+                        ₹{{ schedule.min_price }}
+                    {% else %}
+                        Any
+                    {% endif %}
+
+                </span>
+
+            </div>
+
+
+            <div class="summary-row">
+
+                <span class="muted">
+                    Maximum Price
+                </span>
+
+                <span>
+
+                    {% if schedule.max_price %}
+                        ₹{{ schedule.max_price }}
+                    {% else %}
+                        Any
+                    {% endif %}
+
+                </span>
+
+            </div>
+
+
+            <div class="summary-row">
+
+                <span class="muted">
+                    Minimum Rating
+                </span>
+
+                <span>
+
+                    {% if schedule.min_rating %}
+                        {{ schedule.min_rating }} ⭐
+                    {% else %}
+                        Any
+                    {% endif %}
+
+                </span>
+
+            </div>
+
+
+            <div class="summary-row">
+
+                <span class="muted">
+                    Interval
+                </span>
+
+                <strong>
+                    {{ schedule.interval_seconds }} seconds
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <h2>
+                Schedule Status
+            </h2>
+
+
+            <div class="summary-row">
+
+                <span class="muted">
+                    Status
+                </span>
+
+                <span>
+
+                    {% if schedule.status == "running" %}
+
+                        <span class="status status-running">
+                            Running
+                        </span>
+
+                    {% elif schedule.status == "pending" %}
+
+                        <span class="status status-pending">
+                            Pending
+                        </span>
+
+                    {% elif schedule.status == "completed" %}
+
+                        <span class="status status-completed">
+                            Completed
+                        </span>
+
+                    {% elif schedule.status == "failed" %}
+
+                        <span class="status status-failed">
+                            Failed
+                        </span>
+
+                    {% elif schedule.status == "cancelled" %}
+
+                        <span class="status status-cancelled">
+                            Cancelled
+                        </span>
+
+                    {% endif %}
+
+                </span>
+
+            </div>
+
+
+            <div class="summary-row">
+
+                <span class="muted">
+                    Started
+                </span>
+
+                <span>
+                    {% if schedule.started_at %}
+                        {{ schedule.started_at }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </span>
+
+            </div>
+
+
+            <div class="summary-row">
+
+                <span class="muted">
+                    Completed
+                </span>
+
+                <span>
+                    {% if schedule.completed_at %}
+                        {{ schedule.completed_at }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </span>
+
+            </div>
+
+
+            {% if schedule.error %}
+
+                <div class="error">
+                    {{ schedule.error }}
+                </div>
+
+            {% endif %}
+
+
+            {% if schedule.status == "running" %}
+
+                <div style="margin-top: 20px;">
+
+                    <a
+                        href="{% url 'schedule_cancel' schedule.id %}"
+                        class="button danger-button"
+                    >
+                        Cancel Schedule
+                    </a>
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <!-- QUEUE -->
+
+    <div class="card">
+
+        <h2>
+            📤 Publishing Queue
+        </h2>
+
+        <p class="muted">
+            The bot processes these deals in this order.
+        </p>
+
+
+        <div class="table-wrapper">
+
+            {% if items %}
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                #
+                            </th>
+
+                            <th>
+                                Deal
+                            </th>
+
+                            <th>
+                                Price
+                            </th>
+
+                            <th>
+                                Rating
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                            <th>
+                                Published Record
+                            </th>
+
+                            <th>
+                                Error
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                    {% for item in items %}
+
+                        <tr>
+
+                            <td>
+                                {{ item.position }}
+                            </td>
+
+
+                            <td>
+
+                                <strong>
+                                    Deal #{{ item.deal.id }}
+                                </strong>
+
+                                <div class="deal-preview">
+                                    {{ item.deal.content|truncatechars:120 }}
+                                </div>
+
+                            </td>
+
+
+                            <td>
+
+                                {% if item.deal.price %}
+
+                                    ₹{{ item.deal.price|floatformat:"-2" }}
+
+                                {% else %}
+
+                                    -
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <td>
+
+                                {% if item.deal.rating %}
+
+                                    {{ item.deal.rating }} ⭐
+
+                                {% else %}
+
+                                    -
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <td>
+
+                                {% if item.status == "success" %}
+
+                                    <span class="item-success">
+                                        ✓ Published
+                                    </span>
+
+                                {% elif item.status == "pending" %}
+
+                                    <span class="item-pending">
+                                        ⏳ Pending
+                                    </span>
+
+                                {% elif item.status == "failed" %}
+
+                                    <span class="item-failed">
+                                        ✕ Failed
+                                    </span>
+
+                                {% elif item.status == "skipped" %}
+
+                                    <span class="item-skipped">
+                                        ⏭ Skipped
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <td>
+
+                                {% if item.published_record_id %}
+
+                                    #{{ item.published_record_id }}
+
+                                {% else %}
+
+                                    -
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <td>
+
+                                {% if item.error %}
+
+                                    <div class="item-error">
+                                        {{ item.error }}
+                                    </div>
+
+                                {% else %}
+
+                                    -
+
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            {% else %}
+
+                <div class="empty">
+                    No deals were added to this publishing queue.
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+
+</html>
