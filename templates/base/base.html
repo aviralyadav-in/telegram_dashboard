@@ -12,7 +12,7 @@
 
     <title>
         {% block title %}
-        Telegram Deals Management
+            Telegram Deals Management
         {% endblock %}
     </title>
 
@@ -22,118 +22,228 @@
             box-sizing: border-box;
         }
 
+        html,
         body {
             margin: 0;
+            padding: 0;
+            min-height: 100%;
+        }
+
+        body {
             font-family: Arial, sans-serif;
             background: #f4f6f9;
             color: #222;
         }
 
+
+        /* =====================================================
+           MAIN LAYOUT
+        ===================================================== */
+
         .layout {
-            display: flex;
             min-height: 100vh;
         }
 
+
         /* =====================================================
-           SIDEBAR
+           FIXED SIDEBAR
         ===================================================== */
 
         .sidebar {
-            width: 245px;
-            background: #111827;
-            color: white;
-            min-height: 100vh;
             position: fixed;
+
             left: 0;
             top: 0;
             bottom: 0;
+
+            width: 245px;
+            height: 100vh;
+
+            background: #111827;
+            color: white;
+
             padding: 22px 14px;
+
             overflow-y: auto;
+            overflow-x: hidden;
+
+            z-index: 9999;
+
+            border-right: 1px solid #1f2937;
         }
+
+
+        /* Sidebar scrollbar */
+
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: #111827;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: #374151;
+            border-radius: 10px;
+        }
+
+
+        /* =====================================================
+           BRAND
+        ===================================================== */
 
         .brand {
             padding: 8px 12px 24px;
+
             border-bottom: 1px solid #374151;
+
             margin-bottom: 18px;
         }
 
         .brand h2 {
             margin: 0;
+
             font-size: 20px;
+            font-weight: 700;
+
+            color: #ffffff;
         }
 
         .brand p {
             margin: 6px 0 0;
+
             color: #9ca3af;
+
             font-size: 12px;
         }
 
+
+        /* =====================================================
+           MENU TITLE
+        ===================================================== */
+
         .menu-title {
             color: #9ca3af;
+
             font-size: 11px;
+
             text-transform: uppercase;
+
             margin: 18px 12px 8px;
+
             letter-spacing: 0.5px;
         }
 
+
+        /* =====================================================
+           SIDEBAR LINKS
+        ===================================================== */
+
         .sidebar a {
             display: flex;
+
             align-items: center;
+
             gap: 10px;
+
             color: #d1d5db;
+
             text-decoration: none;
+
             padding: 12px;
+
             border-radius: 7px;
+
             margin-bottom: 5px;
+
             font-size: 14px;
+
+            transition:
+                background 0.15s ease,
+                color 0.15s ease;
         }
 
         .sidebar a:hover {
             background: #1f2937;
-            color: white;
+
+            color: #ffffff;
         }
 
         .sidebar a.active {
             background: #2563eb;
-            color: white;
+
+            color: #ffffff;
         }
+
+
+        /* =====================================================
+           ICON
+        ===================================================== */
 
         .menu-icon {
             width: 22px;
+
+            min-width: 22px;
+
             text-align: center;
+
+            font-size: 16px;
         }
 
+        .icon {
+            width: 22px;
+
+            min-width: 22px;
+
+            text-align: center;
+
+            font-size: 16px;
+        }
+
+
         /* =====================================================
-           DEALS SUB MENU
+           DEALS SUBMENU
         ===================================================== */
 
         .submenu {
             margin: 0 0 10px 34px;
+
             border-left: 1px solid #374151;
+
             padding-left: 8px;
         }
 
         .submenu a {
             padding: 9px 10px;
+
             margin-bottom: 3px;
+
             font-size: 13px;
+
             color: #9ca3af;
         }
 
         .submenu a:hover {
             background: #1f2937;
-            color: white;
+
+            color: #ffffff;
         }
 
         .submenu a.active {
             background: #1d4ed8;
-            color: white;
+
+            color: #ffffff;
         }
 
         .submenu-icon {
             width: 18px;
+
+            min-width: 18px;
+
             text-align: center;
         }
+
 
         /* =====================================================
            MAIN CONTENT
@@ -141,10 +251,16 @@
 
         .main-content {
             margin-left: 245px;
+
             width: calc(100% - 245px);
+
             min-height: 100vh;
+
             padding: 30px;
+
+            overflow-x: auto;
         }
+
 
         /* =====================================================
            BACK TO DASHBOARD
@@ -152,19 +268,28 @@
 
         .back-dashboard {
             display: inline-block;
+
             margin-bottom: 20px;
+
             padding: 9px 15px;
-            background: white;
+
+            background: #ffffff;
+
             color: #2563eb;
+
             text-decoration: none;
+
             border: 1px solid #ddd;
+
             border-radius: 6px;
+
             font-size: 14px;
         }
 
         .back-dashboard:hover {
             background: #eff6ff;
         }
+
 
         /* =====================================================
            MOBILE
@@ -178,33 +303,37 @@
 
             .main-content {
                 margin-left: 210px;
+
                 width: calc(100% - 210px);
+
                 padding: 20px;
             }
 
         }
 
+
         @media (max-width: 600px) {
 
-            .layout {
-                display: block;
-            }
-
             .sidebar {
-                position: relative;
-                width: 100%;
-                min-height: auto;
+                position: fixed;
+
+                width: 200px;
+
+                height: 100vh;
             }
 
             .main-content {
-                margin-left: 0;
-                width: 100%;
+                margin-left: 200px;
+
+                width: calc(100% - 200px);
+
                 padding: 15px;
             }
 
         }
 
     </style>
+
 
     {% block extra_css %}
     {% endblock %}
@@ -214,13 +343,18 @@
 
 <body>
 
+
 <div class="layout">
 
+
     <!-- =====================================================
-         SIDEBAR
+         FIXED SIDEBAR
     ====================================================== -->
 
     <aside class="sidebar">
+
+
+        <!-- BRAND -->
 
         <div class="brand">
 
@@ -235,12 +369,16 @@
         </div>
 
 
+        <!-- MAIN -->
+
         <div class="menu-title">
             Main
         </div>
 
 
-        <!-- DASHBOARD -->
+        <!-- =================================================
+             DASHBOARD
+        ================================================== -->
 
         <a
             href="/"
@@ -251,12 +389,16 @@
                 🏠
             </span>
 
-            Dashboard
+            <span>
+                Dashboard
+            </span>
 
         </a>
 
 
-        <!-- DEALS -->
+        <!-- =================================================
+             DEALS
+        ================================================== -->
 
         <a
             href="/list/"
@@ -267,18 +409,17 @@
                 📦
             </span>
 
-            Deals
+            <span>
+                Deals
+            </span>
 
         </a>
 
-
-        <!-- DEALS SUB MENU -->
 
         {% if '/list/' in request.path or '/categories/' in request.path %}
 
             <div class="submenu">
 
-                <!-- ALL DEALS -->
 
                 <a
                     href="/list/"
@@ -289,12 +430,12 @@
                         📋
                     </span>
 
-                    All Deals
+                    <span>
+                        All Deals
+                    </span>
 
                 </a>
 
-
-                <!-- CATEGORIES -->
 
                 <a
                     href="/categories/"
@@ -305,16 +446,21 @@
                         🏷️
                     </span>
 
-                    Categories
+                    <span>
+                        Categories
+                    </span>
 
                 </a>
+
 
             </div>
 
         {% endif %}
 
 
-        <!-- SCRAPING -->
+        <!-- =================================================
+             SCRAPING
+        ================================================== -->
 
         <a
             href="/scraping/"
@@ -325,12 +471,16 @@
                 🔍
             </span>
 
-            Scraping
+            <span>
+                Scraping
+            </span>
 
         </a>
 
 
-        <!-- CHANNELS -->
+        <!-- =================================================
+             CHANNELS
+        ================================================== -->
 
         <a
             href="/channels/"
@@ -341,12 +491,16 @@
                 📢
             </span>
 
-            Channels
+            <span>
+                Channels
+            </span>
 
         </a>
 
 
-        <!-- PUBLISH -->
+        <!-- =================================================
+             PUBLISH
+        ================================================== -->
 
         <a
             href="/channels/publish/"
@@ -357,18 +511,52 @@
                 🚀
             </span>
 
-            Publish
+            <span>
+                Publish
+            </span>
 
         </a>
-        <!-- AUTO PUBLISHING -->
 
-<a
-    href="/schedules/"
-    class="{% if '/schedules/' in request.path %}active{% endif %}"
->
-    <span class="icon">🤖</span>
-    <span>Auto Publishing</span>
-</a>
+
+        <!-- =================================================
+             PUBLISHED HISTORY
+        ================================================== -->
+
+        <a
+            href="/channels/published/"
+            class="{% if '/channels/published/' in request.path %}active{% endif %}"
+        >
+
+            <span class="menu-icon">
+                📜
+            </span>
+
+            <span>
+                Publishing History
+            </span>
+
+        </a>
+
+
+        <!-- =================================================
+             AUTO PUBLISHING
+        ================================================== -->
+
+        <a
+            href="/schedules/"
+            class="{% if '/schedules/' in request.path %}active{% endif %}"
+        >
+
+            <span class="menu-icon">
+                🤖
+            </span>
+
+            <span>
+                Auto Publishing
+            </span>
+
+        </a>
+
 
     </aside>
 
@@ -378,6 +566,7 @@
     ====================================================== -->
 
     <main class="main-content">
+
 
         {% if request.path != '/' %}
 
@@ -398,13 +587,16 @@
         {% block content %}
         {% endblock %}
 
+
     </main>
+
 
 </div>
 
 
 {% block extra_js %}
 {% endblock %}
+
 
 </body>
 

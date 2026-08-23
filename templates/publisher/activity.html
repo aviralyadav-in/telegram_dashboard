@@ -1,0 +1,145 @@
+{% extends "base/base.html" %}
+
+{% block title %}
+Activity History
+{% endblock %}
+
+{% block content %}
+
+<div style="
+    width:94%;
+    max-width:1350px;
+    margin:30px auto;
+">
+
+    <div style="
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        margin-bottom:25px;
+    ">
+
+        <div>
+
+            <h1>
+                📜 Activity History
+            </h1>
+
+            <p style="color:#6b7280;">
+                Complete activity and event history.
+            </p>
+
+        </div>
+
+        <a
+            href="{% url 'channels' %}"
+            class="btn btn-primary"
+        >
+            ← Back to Channels
+        </a>
+
+    </div>
+
+
+    <div style="
+        background:#fff;
+        border-radius:16px;
+        box-shadow:0 4px 18px rgba(0,0,0,.07);
+        overflow:hidden;
+    ">
+
+        {% for activity in activities %}
+
+            <div style="
+                padding:18px 22px;
+                border-bottom:1px solid #e5e7eb;
+            ">
+
+                <div style="
+                    display:flex;
+                    justify-content:space-between;
+                    gap:15px;
+                ">
+
+                    <strong>
+                        {{ activity.get_event_type_display }}
+                    </strong>
+
+                    <span style="
+                        color:#6b7280;
+                        font-size:13px;
+                    ">
+                        {{ activity.created_at|date:"d M Y, H:i:s" }}
+                    </span>
+
+                </div>
+
+
+                <div style="
+                    margin-top:8px;
+                    color:#374151;
+                ">
+                    {{ activity.message }}
+                </div>
+
+
+                {% if activity.destination %}
+
+                    <div style="
+                        margin-top:7px;
+                        font-size:13px;
+                        color:#6b7280;
+                    ">
+                        📢
+                        {{ activity.destination.name }}
+                    </div>
+
+                {% endif %}
+
+
+                {% if activity.user %}
+
+                    <div style="
+                        margin-top:4px;
+                        font-size:13px;
+                        color:#6b7280;
+                    ">
+                        👤
+                        @{{ activity.user.username|default:activity.user.user_id }}
+                    </div>
+
+                {% endif %}
+
+
+                {% if activity.bot %}
+
+                    <div style="
+                        margin-top:4px;
+                        font-size:13px;
+                        color:#6b7280;
+                    ">
+                        🤖
+                        @{{ activity.bot.username|default:activity.bot.name }}
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        {% empty %}
+
+            <div style="
+                padding:40px;
+                text-align:center;
+                color:#6b7280;
+            ">
+                📭 No activity recorded yet.
+            </div>
+
+        {% endfor %}
+
+    </div>
+
+</div>
+
+{% endblock %}

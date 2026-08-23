@@ -14,32 +14,32 @@ class TelegramBot(models.Model):
 
     bot_token = models.CharField(
         max_length=255,
-        unique=True
+        unique=True,
     )
 
     username = models.CharField(
         max_length=255,
         blank=True,
-        null=True
+        null=True,
     )
 
     bot_id = models.BigIntegerField(
         blank=True,
-        null=True
+        null=True,
     )
 
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
-        default="active"
+        default="active",
     )
 
     created_at = models.DateTimeField(
-        auto_now_add=True
+        auto_now_add=True,
     )
 
     updated_at = models.DateTimeField(
-        auto_now=True
+        auto_now=True,
     )
 
     def __str__(self):
@@ -58,28 +58,30 @@ class PublishedChannel(models.Model):
         ("inactive", "Inactive"),
     ]
 
-    name = models.CharField(max_length=255)
+    name = models.CharField(
+        max_length=255,
+    )
 
     username = models.CharField(
         max_length=255,
         blank=True,
-        null=True
+        null=True,
     )
 
     chat_id = models.BigIntegerField(
         blank=True,
-        null=True
+        null=True,
     )
 
     chat_type = models.CharField(
         max_length=20,
         choices=CHAT_TYPE_CHOICES,
-        default="channel"
+        default="channel",
     )
 
     description = models.TextField(
         blank=True,
-        null=True
+        null=True,
     )
 
     bot = models.ForeignKey(
@@ -87,33 +89,29 @@ class PublishedChannel(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="destinations"
+        related_name="destinations",
     )
 
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
-        default="active"
+        default="active",
     )
 
     auto_allow_users = models.BooleanField(
-        default=True
+        default=True,
     )
 
     allow_direct_messages = models.BooleanField(
-        default=True
+        default=True,
     )
 
-    # NEW:
-    # Automatically publish newly scraped deals here.
     auto_publish_deals = models.BooleanField(
-        default=True
+        default=True,
     )
 
-    # NEW:
-    # Automatically send welcome message to new members.
     send_welcome_message = models.BooleanField(
-        default=True
+        default=True,
     )
 
     welcome_message = models.TextField(
@@ -122,15 +120,15 @@ class PublishedChannel(models.Model):
             "👋 Welcome {name}!\n\n"
             "You are now connected with our Telegram community.\n\n"
             "🎁 Stay tuned for the latest deals and offers!"
-        )
+        ),
     )
 
     created_at = models.DateTimeField(
-        auto_now_add=True
+        auto_now_add=True,
     )
 
     updated_at = models.DateTimeField(
-        auto_now=True
+        auto_now=True,
     )
 
     class Meta:
@@ -151,45 +149,45 @@ class TelegramUser(models.Model):
     ]
 
     user_id = models.BigIntegerField(
-        unique=True
+        unique=True,
     )
 
     username = models.CharField(
         max_length=255,
         blank=True,
-        null=True
+        null=True,
     )
 
     first_name = models.CharField(
         max_length=255,
         blank=True,
-        null=True
+        null=True,
     )
 
     last_name = models.CharField(
         max_length=255,
         blank=True,
-        null=True
+        null=True,
     )
 
     language_code = models.CharField(
         max_length=20,
         blank=True,
-        null=True
+        null=True,
     )
 
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
-        default="allowed"
+        default="allowed",
     )
 
     created_at = models.DateTimeField(
-        auto_now_add=True
+        auto_now_add=True,
     )
 
     last_seen_at = models.DateTimeField(
-        auto_now=True
+        auto_now=True,
     )
 
     class Meta:
@@ -205,41 +203,48 @@ class TelegramUser(models.Model):
 class ChannelUser(models.Model):
 
     STATUS_CHOICES = [
+        ("active", "Active"),
         ("allowed", "Allowed"),
         ("blocked", "Blocked"),
+        ("left", "Left"),
     ]
 
     channel = models.ForeignKey(
         PublishedChannel,
         on_delete=models.CASCADE,
-        related_name="users"
+        related_name="users",
     )
 
     user = models.ForeignKey(
         TelegramUser,
         on_delete=models.CASCADE,
-        related_name="channel_memberships"
+        related_name="channel_memberships",
     )
 
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
-        default="allowed"
+        default="active",
     )
 
     joined_at = models.DateTimeField(
-        auto_now_add=True
+        auto_now_add=True,
+    )
+
+    left_at = models.DateTimeField(
+        null=True,
+        blank=True,
     )
 
     updated_at = models.DateTimeField(
-        auto_now=True
+        auto_now=True,
     )
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
                 fields=["channel", "user"],
-                name="unique_channel_user"
+                name="unique_channel_user",
             )
         ]
 
@@ -248,54 +253,50 @@ class ChannelUser(models.Model):
     def __str__(self):
         return f"{self.user} -> {self.channel}"
 
-
 class UserDestinationPermission(models.Model):
 
     user = models.ForeignKey(
         TelegramUser,
         on_delete=models.CASCADE,
-        related_name="destination_permissions"
+        related_name="destination_permissions",
     )
 
     destination = models.ForeignKey(
         PublishedChannel,
         on_delete=models.CASCADE,
-        related_name="user_permissions"
+        related_name="user_permissions",
     )
 
     can_message = models.BooleanField(
-        default=True
+        default=True,
     )
 
     can_publish = models.BooleanField(
-        default=False
+        default=False,
     )
 
     is_allowed = models.BooleanField(
-        default=True
+        default=True,
     )
 
     created_at = models.DateTimeField(
-        auto_now_add=True
+        auto_now_add=True,
     )
 
     updated_at = models.DateTimeField(
-        auto_now=True
+        auto_now=True,
     )
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
                 fields=["user", "destination"],
-                name="unique_user_destination_permission"
+                name="unique_user_destination_permission",
             )
         ]
 
     def __str__(self):
-        return (
-            f"{self.user} -> "
-            f"{self.destination}"
-        )
+        return f"{self.user} -> {self.destination}"
 
 
 class PublishedDeal(models.Model):
@@ -303,37 +304,38 @@ class PublishedDeal(models.Model):
     STATUS_CHOICES = [
         ("success", "Success"),
         ("failed", "Failed"),
+        ("skipped", "Skipped"),
     ]
 
     deal = models.ForeignKey(
         Deal,
         on_delete=models.CASCADE,
-        related_name="published_records"
+        related_name="published_records",
     )
 
     channel = models.ForeignKey(
         PublishedChannel,
         on_delete=models.CASCADE,
-        related_name="published_deals"
+        related_name="published_deals",
     )
 
     published_at = models.DateTimeField(
-        auto_now_add=True
+        auto_now_add=True,
     )
 
     status = models.CharField(
         max_length=20,
-        choices=STATUS_CHOICES
+        choices=STATUS_CHOICES,
     )
 
     telegram_message_id = models.BigIntegerField(
         blank=True,
-        null=True
+        null=True,
     )
 
     error = models.TextField(
         blank=True,
-        null=True
+        null=True,
     )
 
     class Meta:
@@ -341,3 +343,75 @@ class PublishedDeal(models.Model):
 
     def __str__(self):
         return f"{self.deal} -> {self.channel}"
+    
+class ActivityLog(models.Model):
+
+    EVENT_CHOICES = [
+        ("bot_created", "Bot Created"),
+        ("bot_updated", "Bot Updated"),
+
+        ("destination_created", "Destination Created"),
+        ("destination_updated", "Destination Updated"),
+
+        ("user_first_seen", "User First Seen"),
+        ("user_joined", "User Joined"),
+        ("user_left", "User Left"),
+
+        ("user_allowed", "User Allowed"),
+        ("user_blocked", "User Blocked"),
+
+        ("deal_published", "Deal Published"),
+        ("deal_publish_failed", "Deal Publish Failed"),
+    ]
+
+    event_type = models.CharField(
+        max_length=50,
+        choices=EVENT_CHOICES
+    )
+
+    message = models.TextField()
+
+    bot = models.ForeignKey(
+        TelegramBot,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="activity_logs"
+    )
+
+    destination = models.ForeignKey(
+        PublishedChannel,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="activity_logs"
+    )
+
+    user = models.ForeignKey(
+        TelegramUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="activity_logs"
+    )
+
+    deal = models.ForeignKey(
+        Deal,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="activity_logs"
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return (
+            f"{self.get_event_type_display()} - "
+            f"{self.created_at}"
+        )

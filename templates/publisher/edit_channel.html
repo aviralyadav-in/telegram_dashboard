@@ -75,6 +75,7 @@ Edit Destination
 
 .section h3 {
     margin-top: 0;
+    margin-bottom: 15px;
 }
 
 .checkbox {
@@ -83,10 +84,19 @@ Edit Destination
     gap: 9px;
     margin: 13px 0;
     font-size: 14px;
+    cursor: pointer;
 }
 
 .checkbox input {
-    width: auto;
+    width: 17px;
+    height: 17px;
+    cursor: pointer;
+}
+
+.help-text {
+    color: #6b7280;
+    font-size: 12px;
+    margin: -7px 0 12px 26px;
 }
 
 .actions {
@@ -149,6 +159,10 @@ Edit Destination
             {% csrf_token %}
 
 
+            <!-- ==================================================
+                 BASIC INFORMATION
+            ================================================== -->
+
             <div class="form-grid">
 
                 <div class="form-group">
@@ -156,6 +170,7 @@ Edit Destination
                     <label>Destination Name</label>
 
                     <input
+                        type="text"
                         name="name"
                         value="{{ channel.name }}"
                         required
@@ -198,6 +213,7 @@ Edit Destination
                     <label>Telegram Username</label>
 
                     <input
+                        type="text"
                         name="username"
                         value="{{ channel.username|default:'' }}"
                         placeholder="@channelusername"
@@ -211,6 +227,7 @@ Edit Destination
                     <label>Chat ID</label>
 
                     <input
+                        type="text"
                         name="chat_id"
                         value="{{ channel.chat_id|default:'' }}"
                         placeholder="-1001234567890"
@@ -218,6 +235,8 @@ Edit Destination
 
                 </div>
 
+
+                <!-- CONNECTED BOT -->
 
                 <div class="form-group full">
 
@@ -253,6 +272,8 @@ Edit Destination
                 </div>
 
 
+                <!-- DESCRIPTION -->
+
                 <div class="form-group full">
 
                     <label>Description</label>
@@ -263,6 +284,8 @@ Edit Destination
 
                 </div>
 
+
+                <!-- STATUS -->
 
                 <div class="form-group">
 
@@ -295,6 +318,10 @@ Edit Destination
             </div>
 
 
+            <!-- ==================================================
+                 USER ACCESS CONTROL
+            ================================================== -->
+
             <div class="section">
 
                 <h3>👤 User Access Control</h3>
@@ -314,6 +341,11 @@ Edit Destination
 
                 </label>
 
+                <p class="help-text">
+                    New users detected by the Telegram listener
+                    will automatically be allowed to send messages.
+                </p>
+
 
                 <label class="checkbox">
 
@@ -329,8 +361,82 @@ Edit Destination
 
                 </label>
 
+                <p class="help-text">
+                    Controls whether an allowed Telegram user can
+                    interact with the connected bot through private messages.
+                </p>
+
             </div>
 
+
+            <!-- ==================================================
+                 PUBLISHING SETTINGS
+            ================================================== -->
+
+            <div class="section">
+
+                <h3>🚀 Publishing Settings</h3>
+
+
+                <label class="checkbox">
+
+                    <input
+                        type="checkbox"
+                        name="auto_publish_deals"
+                        {% if channel.auto_publish_deals %}
+                            checked
+                        {% endif %}
+                    >
+
+                    Automatically publish deals
+
+                </label>
+
+                <p class="help-text">
+                    When enabled, newly created deals can be
+                    automatically published to this destination.
+                </p>
+
+
+                <label class="checkbox">
+
+                    <input
+                        type="checkbox"
+                        name="send_welcome_message"
+                        {% if channel.send_welcome_message %}
+                            checked
+                        {% endif %}
+                    >
+
+                    Send welcome message
+
+                </label>
+
+                <p class="help-text">
+                    Send the configured welcome message when a
+                    new user is detected.
+                </p>
+
+
+                <div class="form-group full">
+
+                    <label>
+                        Welcome Message
+                    </label>
+
+                    <textarea
+                        name="welcome_message"
+                        placeholder="Enter welcome message..."
+                    >{{ channel.welcome_message|default:'' }}</textarea>
+
+                </div>
+
+            </div>
+
+
+            <!-- ==================================================
+                 ACTIONS
+            ================================================== -->
 
             <div class="actions">
 
@@ -340,6 +446,7 @@ Edit Destination
                 >
                     💾 Save Changes
                 </button>
+
 
                 <a
                     href="{% url 'channels' %}"

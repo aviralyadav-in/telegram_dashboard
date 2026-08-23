@@ -11,17 +11,15 @@ from publisher.telegram_bot import (
     publish_to_telegram,
 )
 
+from publisher.activity import (
+    log_activity,
+)
+
 
 def publish_deal_to_channel(
     deal,
     channel,
 ):
-    """
-    Publish one deal to one Telegram destination.
-
-    This function is synchronous and is intended to be called
-    from Django views / background threads.
-    """
 
     if not channel.bot:
         raise ValueError(
@@ -44,10 +42,6 @@ def publish_deal_to_channel(
             "Destination Chat ID/Username is missing."
         )
 
-    # ---------------------------------------------------------
-    # DUPLICATE PROTECTION
-    # ---------------------------------------------------------
-
     already_published = (
         PublishedDeal.objects
         .filter(
@@ -59,16 +53,13 @@ def publish_deal_to_channel(
     )
 
     if already_published:
+
         return {
             "status": "skipped",
             "reason": "Already published",
         }
 
     try:
-
-        # -----------------------------------------------------
-        # TELEGRAM API
-        # -----------------------------------------------------
 
         sent_message = asyncio.run(
             publish_to_telegram(
@@ -79,20 +70,18 @@ def publish_deal_to_channel(
             )
         )
 
-        # -----------------------------------------------------
-        # DATABASE
-        # -----------------------------------------------------
-
         with transaction.atomic():
 
             record = PublishedDeal.objects.create(
                 deal=deal,
                 channel=channel,
                 status="success",
-                telegram_message_id=getattr(
-                    sent_message,
-                    "id",
-                    None,
+                telegram_message_id=(
+                    getattr(
+                        sent_message,
+                        "id",
+                        None,
+                    )
                 ),
                 error=None,
             )
@@ -106,15 +95,24 @@ def publish_deal_to_channel(
                 ]
             )
 
+        log_activity(
+            event_type="deal_published",
+            message=(
+                f"Deal #{deal.id} was published "
+                f"successfully to "
+                f"{channel.name}."
+            ),
+            bot=channel.bot,
+            destination=channel,
+            deal=deal,
+        )
+
         return {
             "status": "success",
             "record_id": record.id,
         }
 
     except Exception as error:
-
-        # Don't allow logging the failure itself
-        # to crash the whole publishing process.
 
         try:
 
@@ -129,18 +127,27 @@ def publish_deal_to_channel(
         except Exception:
             pass
 
+        log_activity(
+            event_type="deal_publish_failed",
+            message=(
+                f"Deal #{deal.id} failed to publish "
+                f"to {channel.name}. "
+                f"Reason: {error}"
+            ),
+            bot=channel.bot,
+            destination=channel,
+            deal=deal,
+        )
+
         return {
             "status": "failed",
             "error": str(error),
         }
 
 
-def auto_publish_deal(deal):
-    """
-    Automatically publish a newly scraped deal
-    to every active destination where
-    auto_publish_deals=True.
-    """
+def auto_publish_deal(
+    deal,
+):
 
     channels = list(
         PublishedChannel.objects
