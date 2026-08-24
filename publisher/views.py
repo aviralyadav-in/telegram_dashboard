@@ -1737,7 +1737,7 @@ def activity_history(request):
 
     return render(
         request,
-        "publisher/activity_history.html",
+        "publisher/activity.html",
         {
             "activities": activities,
         },

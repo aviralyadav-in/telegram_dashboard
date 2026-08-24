@@ -18,6 +18,18 @@ from publisher.telegram_bot import (
 
 
 # ============================================================
+# USER NAME HELPER
+# ============================================================
+
+def username_for_log(user):
+    return (
+        user.username
+        or user.first_name
+        or str(user.user_id)
+    )
+
+
+# ============================================================
 # GET / CREATE TELEGRAM USER
 # ============================================================
 
@@ -89,7 +101,21 @@ def apply_telegram_permission(
             allowed=allowed,
         )
 
+        print(
+            "🔐 TELEGRAM PERMISSION UPDATED:",
+            username_for_log(user),
+            "| ALLOWED:",
+            allowed,
+            "| DESTINATION:",
+            destination.name,
+        )
+
     except Exception as error:
+
+        print(
+            "❌ PERMISSION ERROR:",
+            error,
+        )
 
         log_activity(
             event_type="permission_error",
@@ -120,11 +146,40 @@ def send_user_welcome(
         return
 
     if not destination.send_welcome_message:
+        print(
+            "⏭️ WELCOME DISABLED:",
+            destination.name,
+        )
+        return
+
+    if not destination.chat_id:
         return
 
     message = (
         destination.welcome_message
         or "👋 Welcome! Thanks for joining us."
+    )
+
+    # --------------------------------------------------------
+    # PLACEHOLDERS
+    # --------------------------------------------------------
+
+    message = (
+        message
+        .replace(
+            "{name}",
+            user.first_name
+            or user.username
+            or "there",
+        )
+        .replace(
+            "{username}",
+            user.username or "",
+        )
+        .replace(
+            "{user_id}",
+            str(user.user_id),
+        )
     )
 
     try:
@@ -134,15 +189,21 @@ def send_user_welcome(
         )(
             bot_token=bot_record.bot_token,
             chat_id=destination.chat_id,
-
             message=message,
+        )
+
+        print(
+            "👋 WELCOME SENT:",
+            username_for_log(user),
+            "| DESTINATION:",
+            destination.name,
         )
 
         log_activity(
             event_type="welcome_message_sent",
             message=(
                 f"Welcome message sent to "
-                f"{user.username or user.user_id}."
+                f"{username_for_log(user)}."
             ),
             bot=bot_record,
             destination=destination,
@@ -151,11 +212,20 @@ def send_user_welcome(
 
     except Exception as error:
 
+        print(
+            "❌ WELCOME MESSAGE FAILED:",
+            username_for_log(user),
+            "| DESTINATION:",
+            destination.name,
+            "| ERROR:",
+            error,
+        )
+
         log_activity(
             event_type="welcome_message_error",
             message=(
                 f"Welcome message failed for "
-                f"{user.username or user.user_id}: {error}"
+                f"{username_for_log(user)}: {error}"
             ),
             bot=bot_record,
             destination=destination,
@@ -177,17 +247,64 @@ def handle_member_update(
     if not member_update:
         return
 
+    # ========================================================
+    # STATUS
+    # ========================================================
+
+    old_status = (
+        member_update.old_chat_member.status
+    )
+
+    new_status = (
+        member_update.new_chat_member.status
+    )
+
     telegram_user = (
         member_update.new_chat_member.user
     )
 
     chat = member_update.chat
 
-    new_status = (
-        member_update
-        .new_chat_member
-        .status
+    # ========================================================
+    # DEBUG
+    # ========================================================
+
+    print(
+        "🔥 CHAT MEMBER UPDATE:",
+        old_status,
+        "→",
+        new_status,
+        "| USER:",
+        telegram_user.id,
+        "| CHAT:",
+        chat.id,
     )
+
+    # ========================================================
+    # IGNORE RESTRICTED → RESTRICTED
+    #
+    # Telegram can send several of these while a user joins.
+    # They must NOT create/update membership or send welcome.
+    # ========================================================
+
+    if (
+        old_status == "restricted"
+        and new_status == "restricted"
+    ):
+
+        print(
+            "⏭️ IGNORED: restricted → restricted",
+            "| USER:",
+            telegram_user.id,
+            "| CHAT:",
+            chat.id,
+        )
+
+        return
+
+    # ========================================================
+    # FIND DESTINATION
+    # ========================================================
 
     destination = (
         PublishedChannel.objects
@@ -199,21 +316,23 @@ def handle_member_update(
     )
 
     if not destination:
+
+        print(
+            "⚠️ DESTINATION NOT FOUND:",
+            chat.id,
+        )
+
         return
 
     # ========================================================
-    # USER
+    # GET / CREATE TELEGRAM USER
     # ========================================================
 
     user, created = get_or_create_telegram_user(
         telegram_user
     )
 
-    username = (
-        user.username
-        or user.first_name
-        or str(user.user_id)
-    )
+    username = username_for_log(user)
 
     # ========================================================
     # FIRST USER SEEN
@@ -233,7 +352,7 @@ def handle_member_update(
         )
 
     # ========================================================
-    # USER JOINED
+    # ACTUAL JOIN / REJOIN
     # ========================================================
 
     if new_status in {
@@ -242,7 +361,22 @@ def handle_member_update(
         "creator",
     }:
 
+        joined_now = timezone.now()
+
+        print(
+            "🟢 USER JOINED / REJOINED:",
+            username,
+            "| DESTINATION:",
+            destination.name,
+            "| TIME:",
+            joined_now,
+        )
+
         with transaction.atomic():
+
+            # =================================================
+            # GET / CREATE CHANNEL USER
+            # =================================================
 
             channel_user, channel_created = (
                 ChannelUser.objects.get_or_create(
@@ -250,16 +384,22 @@ def handle_member_update(
                     user=user,
                     defaults={
                         "status": "active",
-                        "joined_at": timezone.now(),
+                        "joined_at": joined_now,
+                        "left_at": None,
                     },
                 )
             )
 
             # =================================================
-            # NEW MEMBERSHIP
+            # FIRST JOIN
             # =================================================
 
             if channel_created:
+
+                print(
+                    "🆕 NEW MEMBERSHIP:",
+                    channel_user.id,
+                )
 
                 log_activity(
                     event_type="user_joined",
@@ -282,14 +422,30 @@ def handle_member_update(
             }:
 
                 channel_user.status = "active"
-                channel_user.left_at = None
+
+                # Current rejoin time
+                channel_user.joined_at = joined_now
+
+                # IMPORTANT:
+                # DO NOT clear left_at.
+                # Previous leave time is preserved.
 
                 channel_user.save(
                     update_fields=[
                         "status",
-                        "left_at",
+                        "joined_at",
                         "updated_at",
                     ]
+                )
+
+                print(
+                    "🔄 REJOIN SAVED:",
+                    "ChannelUser ID =",
+                    channel_user.id,
+                    "| joined_at =",
+                    channel_user.joined_at,
+                    "| previous left_at =",
+                    channel_user.left_at,
                 )
 
                 log_activity(
@@ -304,7 +460,27 @@ def handle_member_update(
                 )
 
             # =================================================
-            # PERMISSION
+            # ALREADY MEMBER
+            #
+            # member → member
+            # administrator → administrator
+            # creator → creator
+            #
+            # Don't change joined_at.
+            # Don't create duplicate welcome.
+            # =================================================
+
+            else:
+
+                print(
+                    "ℹ️ USER ALREADY ACTIVE:",
+                    username,
+                    "| DESTINATION:",
+                    destination.name,
+                )
+
+            # =================================================
+            # USER DESTINATION PERMISSION
             # =================================================
 
             permission, permission_created = (
@@ -349,8 +525,13 @@ def handle_member_update(
                     ]
                 )
 
-                # Actually apply Telegram permission
-                if destination.chat_type == "group":
+                # ---------------------------------------------
+                # GROUP ONLY
+                # ---------------------------------------------
+
+                if (
+                    destination.chat_type == "group"
+                ):
 
                     apply_telegram_permission(
                         bot_record,
@@ -372,15 +553,6 @@ def handle_member_update(
                         user=user,
                     )
 
-                # Welcome only for a newly detected user
-                if  channel_created:
-
-                    send_user_welcome(
-                        bot_record,
-                        destination,
-                        user,
-                    )
-
             # =================================================
             # EXISTING PERMISSION
             # =================================================
@@ -391,23 +563,85 @@ def handle_member_update(
 
                     channel_user.status = "allowed"
 
-                    channel_user.save(
-                        update_fields=[
-                            "status",
-                            "updated_at",
-                        ]
-                    )
-
                 else:
 
                     channel_user.status = "active"
 
-                    channel_user.save(
-                        update_fields=[
-                            "status",
-                            "updated_at",
-                        ]
+                channel_user.save(
+                    update_fields=[
+                        "status",
+                        "updated_at",
+                    ]
+                )
+
+                # ---------------------------------------------
+                # RE-APPLY TELEGRAM PERMISSION
+                # ---------------------------------------------
+
+                if (
+                    destination.chat_type == "group"
+                ):
+
+                    apply_telegram_permission(
+                        bot_record,
+                        destination,
+                        user,
+                        permission.is_allowed,
                     )
+
+            # =================================================
+            # WELCOME MESSAGE
+            #
+            # EVERY ACTUAL JOIN / REJOIN:
+            #
+            # left → member       ✅
+            # restricted → member ✅
+            # kicked → member     ✅
+            # new → member        ✅
+            #
+            # NOT:
+            #
+            # member → member             ❌
+            # administrator → member      ❌
+            # creator → member            ❌
+            # restricted → restricted     ❌
+            # =================================================
+
+            actual_join = (
+                old_status not in {
+                    "member",
+                    "administrator",
+                    "creator",
+                }
+            )
+
+            if actual_join:
+
+                print(
+                    "🎉 ACTUAL JOIN DETECTED - SENDING WELCOME:",
+                    username,
+                    "| DESTINATION:",
+                    destination.name,
+                )
+
+                send_user_welcome(
+                    bot_record,
+                    destination,
+                    user,
+                )
+
+            else:
+
+                print(
+                    "⏭️ NO WELCOME - NOT A NEW JOIN:",
+                    old_status,
+                    "→",
+                    new_status,
+                    "| USER:",
+                    username,
+                    "| DESTINATION:",
+                    destination.name,
+                )
 
     # ========================================================
     # USER LEFT / KICKED
@@ -418,19 +652,44 @@ def handle_member_update(
         "kicked",
     }:
 
-        channel_user = (
-            ChannelUser.objects
-            .filter(
-                channel=destination,
-                user=user,
-            )
-            .first()
+        left_now = timezone.now()
+
+        print(
+            "🚪 USER LEFT/KICKED:",
+            username,
+            "| DESTINATION:",
+            destination.name,
+            "| TIME:",
+            left_now,
         )
 
-        if channel_user:
+        # ====================================================
+        # GET EXISTING MEMBERSHIP
+        # OR CREATE LEFT RECORD
+        # ====================================================
+
+        channel_user, channel_created = (
+            ChannelUser.objects.get_or_create(
+                channel=destination,
+                user=user,
+                defaults={
+                    "status": "left",
+                    "joined_at": None,
+                    "left_at": left_now,
+                },
+            )
+        )
+
+        # ====================================================
+        # EXISTING MEMBERSHIP
+        # ====================================================
+
+        if not channel_created:
 
             channel_user.status = "left"
-            channel_user.left_at = timezone.now()
+
+            # Always save current leave time
+            channel_user.left_at = left_now
 
             channel_user.save(
                 update_fields=[
@@ -439,6 +698,26 @@ def handle_member_update(
                     "updated_at",
                 ]
             )
+
+        # ====================================================
+        # CONFIRM DATABASE SAVE
+        # ====================================================
+
+        print(
+            "✅ LEFT SAVED:",
+            "ChannelUser ID =",
+            channel_user.id,
+            "| status =",
+            channel_user.status,
+            "| joined_at =",
+            channel_user.joined_at,
+            "| left_at =",
+            channel_user.left_at,
+        )
+
+        # ====================================================
+        # NO WELCOME ON LEAVE
+        # ====================================================
 
         log_activity(
             event_type="user_left",
@@ -449,4 +728,21 @@ def handle_member_update(
             bot=bot_record,
             destination=destination,
             user=user,
+        )
+
+    # ========================================================
+    # EVERYTHING ELSE
+    # ========================================================
+
+    else:
+
+        print(
+            "⏭️ IGNORED STATUS CHANGE:",
+            old_status,
+            "→",
+            new_status,
+            "| USER:",
+            username,
+            "| DESTINATION:",
+            destination.name,
         )
