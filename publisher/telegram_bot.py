@@ -1,8 +1,12 @@
 import os
 
 from django.conf import settings
-
-from telegram import Bot, ChatPermissions
+from telegram import (
+    Bot,
+    ChatPermissions,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+)
 
 
 # ============================================================
@@ -43,7 +47,9 @@ async def find_telegram_chat(bot_token, username):
     bot = Bot(token=bot_token)
 
     try:
-        return await bot.get_chat(chat_id=username)
+        return await bot.get_chat(
+            chat_id=username
+        )
 
     finally:
         await bot.shutdown()
@@ -114,9 +120,47 @@ async def publish_to_telegram(
 
     bot = Bot(token=bot_token)
 
+    # --------------------------------------------------------
+    # FIND IMAGE
+    # --------------------------------------------------------
+
+    actual_image_path = get_image_path(
+        image_path
+    )
+
+    # --------------------------------------------------------
+    # FIND MY DEALS BUTTON
+    # --------------------------------------------------------
+    #
+    # User clicks this button from the channel.
+    # Telegram opens the bot private chat.
+    #
+    # Bot username:
+    # @my_deals_publisher_bot
+    #
+    # ?start=find_deals is passed to /start
+    # --------------------------------------------------------
+
+    find_deals_button = InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton(
+                    text="🔎 Find My Deals",
+                    url=(
+                        "https://t.me/"
+                        "my_deals_publisher_bot"
+                        "?start=find_deals"
+                    ),
+                )
+            ]
+        ]
+    )
+
     try:
 
-        actual_image_path = get_image_path(image_path)
+        # ----------------------------------------------------
+        # SEND IMAGE DEAL
+        # ----------------------------------------------------
 
         if (
             actual_image_path
@@ -132,15 +176,23 @@ async def publish_to_telegram(
                     chat_id=channel_username,
                     photo=photo,
                     caption=content or "",
+                    reply_markup=find_deals_button,
                 )
+
+        # ----------------------------------------------------
+        # SEND TEXT DEAL
+        # ----------------------------------------------------
 
         return await bot.send_message(
             chat_id=channel_username,
             text=content or "",
+            reply_markup=find_deals_button,
         )
 
     finally:
+
         await bot.shutdown()
+
 
 # ============================================================
 # WELCOME MESSAGE
@@ -151,6 +203,7 @@ async def send_welcome_message(
     chat_id,
     message,
 ):
+
     if not bot_token:
         raise ValueError(
             "Telegram bot token is not configured."
@@ -167,13 +220,16 @@ async def send_welcome_message(
     bot = Bot(token=bot_token)
 
     try:
+
         return await bot.send_message(
             chat_id=int(chat_id),
             text=message,
         )
 
     finally:
+
         await bot.shutdown()
+
 
 # ============================================================
 # USER PERMISSIONS
@@ -254,4 +310,5 @@ async def set_user_message_permission(
         )
 
     finally:
+
         await bot.shutdown()
