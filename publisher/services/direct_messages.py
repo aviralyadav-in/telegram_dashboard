@@ -1,15 +1,14 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 import asyncio
+import re
 import traceback
+from html import escape
 
 from asgiref.sync import sync_to_async
 from django.core.cache import cache
 from django.utils import timezone
 
-from telegram import (
-    Bot,
-    ReplyKeyboardMarkup,
-)
+from telegram import Bot, ReplyKeyboardMarkup
 
 from deals.models import Deal, Category
 
@@ -19,52 +18,13 @@ from publisher.services.user_tracking import (
 
 
 # ============================================================
-# KEYBOARDS
+# MAIN KEYBOARD
 # ============================================================
 
 MAIN_KEYBOARD = ReplyKeyboardMarkup(
     [
         ["🔎 Find Deals"],
         ["🆕 Latest Deals"],
-    ],
-    resize_keyboard=True,
-    one_time_keyboard=False,
-)
-
-CATEGORY_KEYBOARD = ReplyKeyboardMarkup(
-    [
-        ["📱 Electronics"],
-        ["🛒 Grocery"],
-        ["👕 Fashion"],
-        ["🏠 Home"],
-        ["📦 All Categories"],
-        ["⬅️ Back"],
-    ],
-    resize_keyboard=True,
-    one_time_keyboard=False,
-)
-
-PRICE_KEYBOARD = ReplyKeyboardMarkup(
-    [
-        ["💰 Under ₹300"],
-        ["💰 ₹300 - ₹500"],
-        ["💰 ₹500 - ₹700"],
-        ["💰 ₹700 - ₹1000"],
-        ["💰 Above ₹1000"],
-        ["💰 Any Price"],
-        ["⬅️ Back"],
-    ],
-    resize_keyboard=True,
-    one_time_keyboard=False,
-)
-
-DATE_KEYBOARD = ReplyKeyboardMarkup(
-    [
-        ["📅 Today"],
-        ["📅 Last 7 Days"],
-        ["📅 Last 30 Days"],
-        ["📅 Any Date"],
-        ["⬅️ Back"],
     ],
     resize_keyboard=True,
     one_time_keyboard=False,
@@ -116,7 +76,7 @@ async def send_main_menu(
 
 
 # ============================================================
-# CATEGORY MENU
+# CATEGORY INPUT
 # ============================================================
 
 async def send_category_menu(
@@ -128,14 +88,21 @@ async def send_category_menu(
         chat_id,
         (
             "🔎 Find Deals\n\n"
-            "First, choose the category you want:"
+            "Enter the category you want.\n\n"
+            "Examples:\n"
+            "• Electronics\n"
+            "• Grocery\n"
+            "• Fashion\n"
+            "• Home\n"
+            "• All Categories\n\n"
+            "You can type the category name."
         ),
-        CATEGORY_KEYBOARD,
+        MAIN_KEYBOARD,
     )
 
 
 # ============================================================
-# PRICE MENU
+# PRICE INPUT
 # ============================================================
 
 async def send_price_menu(
@@ -148,14 +115,20 @@ async def send_price_menu(
         chat_id,
         (
             f"✅ Category: {category}\n\n"
-            "Now choose your price range:"
+            "Now enter your price range.\n\n"
+            "Examples:\n"
+            "• 500-700\n"
+            "• 700-1000\n"
+            "• under 300\n"
+            "• above 1000\n"
+            "• any"
         ),
-        PRICE_KEYBOARD,
+        MAIN_KEYBOARD,
     )
 
 
 # ============================================================
-# DATE MENU
+# DATE INPUT
 # ============================================================
 
 async def send_date_menu(
@@ -170,29 +143,132 @@ async def send_date_menu(
         (
             f"✅ Category: {category}\n"
             f"✅ Price: {price_label}\n\n"
-            "Finally, choose the date range:"
+            "Finally, enter the date range.\n\n"
+            "Examples:\n"
+            "• today\n"
+            "• 7   → last 7 days\n"
+            "• 30  → last 30 days\n"
+            "• 25-08-2026 → particular date\n"
+            "• any"
         ),
-        DATE_KEYBOARD,
+        MAIN_KEYBOARD,
     )
 
 
 # ============================================================
-# CATEGORY MATCH
+# SEARCH AGAIN
 # ============================================================
 
-def category_matches(
-    deal,
-    category_name,
+async def send_search_again_prompt(
+    bot,
+    chat_id,
 ):
-    if category_name == "All Categories":
-        return True
+    await send_bot_message(
+        bot,
+        chat_id,
+        (
+            "🔎 Start another search.\n\n"
+            "Enter the category you want.\n\n"
+            "Examples:\n"
+            "• Electronics\n"
+            "• Grocery\n"
+            "• Fashion\n"
+            "• Home\n"
+            "• All Categories"
+        ),
+        MAIN_KEYBOARD,
+    )
 
-    content = (
-        f"{deal.content or ''} "
-        f"{deal.product_link or ''}"
-    ).lower()
 
-    try:
+# ============================================================
+# CATEGORY RESOLUTION
+# ============================================================
+
+def resolve_category(
+    user_input,
+):
+    """
+    Converts user input into the actual Category name.
+
+    Examples:
+        Electronics -> Electronics & Gadgets
+        Grocery -> Grocery
+        Home -> Home & Kitchen
+        Fashion -> Fashion
+        all -> All Categories
+    """
+
+    value = (
+        user_input or ""
+    ).strip().lower()
+
+    if not value:
+        return None
+
+    # --------------------------------------------------------
+    # ALL CATEGORIES
+    # --------------------------------------------------------
+
+    if value in [
+        "all",
+        "all categories",
+        "all category",
+        "any",
+        "*",
+    ]:
+        return "All Categories"
+
+    # --------------------------------------------------------
+    # EXACT DATABASE CATEGORY
+    # --------------------------------------------------------
+
+    category = (
+        Category.objects
+        .filter(
+            name__iexact=user_input.strip(),
+            status="active",
+        )
+        .first()
+    )
+
+    if category:
+        return category.name
+
+    # --------------------------------------------------------
+    # COMMON ALIASES
+    # --------------------------------------------------------
+
+    aliases = {
+        "electronics": "Electronics & Gadgets",
+        "electronic": "Electronics & Gadgets",
+        "gadgets": "Electronics & Gadgets",
+
+        "grocery": "Grocery",
+        "groceries": "Grocery",
+
+        "fashion": "Fashion",
+        "clothes": "Fashion",
+        "clothing": "Fashion",
+
+        "home": "Home & Kitchen",
+        "kitchen": "Home & Kitchen",
+
+        "beauty": "Beauty & Personal Care",
+        "personal care": "Beauty & Personal Care",
+
+        "fitness": "Fitness & Sports",
+        "sports": "Fitness & Sports",
+
+        "kids": "Kids & Toys",
+        "toys": "Kids & Toys",
+    }
+
+    category_name = aliases.get(
+        value
+    )
+
+    if category_name:
+
         category = (
             Category.objects
             .filter(
@@ -203,24 +279,238 @@ def category_matches(
         )
 
         if category:
-            keywords = category.get_keywords_list()
+            return category.name
+
+    # --------------------------------------------------------
+    # PARTIAL DATABASE NAME
+    # --------------------------------------------------------
+
+    categories = (
+        Category.objects
+        .filter(status="active")
+    )
+
+    for category in categories:
+
+        db_name = category.name.lower()
+
+        if (
+            value in db_name
+            or db_name in value
+        ):
+            return category.name
+
+    return None
+
+
+# ============================================================
+# CATEGORY MATCH
+# ============================================================
+
+def category_matches(
+    deal,
+    category_name,
+):
+    """
+    Strict keyword based category matching.
+    """
+
+    if category_name == "All Categories":
+        return True
+
+    content = (
+        f"{deal.content or ''} "
+        f"{deal.product_link or ''}"
+    ).lower()
+
+    try:
+
+        category = (
+            Category.objects
+            .filter(
+                name__iexact=category_name,
+                status="active",
+            )
+            .first()
+        )
+
+        if category:
+
+            keywords = (
+                category.get_keywords_list()
+            )
 
             if keywords:
+
                 return any(
                     keyword in content
                     for keyword in keywords
                 )
 
-            return category_name.lower() in content
+            return (
+                category_name.lower()
+                in content
+            )
 
     except Exception as error:
+
         print(
             "❌ CATEGORY MATCH ERROR:",
             repr(error),
         )
+
         traceback.print_exc()
 
-    return category_name.lower() in content
+    return (
+        category_name.lower()
+        in content
+    )
+
+
+# ============================================================
+# PRICE INPUT PARSER
+# ============================================================
+
+def parse_price_input(
+    user_input,
+):
+    """
+    Supported:
+
+        500-700
+        500 - 700
+        under 300
+        below 300
+        above 1000
+        over 1000
+        any
+    """
+
+    value = (
+        user_input or ""
+    ).strip().lower()
+
+    value = value.replace(
+        "₹",
+        "",
+    )
+
+    value = value.replace(
+        ",",
+        "",
+    )
+
+    # --------------------------------------------------------
+    # ANY
+    # --------------------------------------------------------
+
+    if value in [
+        "any",
+        "any price",
+        "all",
+        "no filter",
+    ]:
+
+        return {
+            "type": "any",
+            "label": "Any Price",
+        }
+
+    # --------------------------------------------------------
+    # UNDER
+    # --------------------------------------------------------
+
+    match = re.match(
+        r"^(under|below|less than)\s*(\d+(?:\.\d+)?)$",
+        value,
+    )
+
+    if match:
+
+        amount = float(
+            match.group(2)
+        )
+
+        return {
+            "type": "under",
+            "max": amount,
+            "label": f"Under ₹{amount:g}",
+        }
+
+    # --------------------------------------------------------
+    # ABOVE
+    # --------------------------------------------------------
+
+    match = re.match(
+        r"^(above|over|more than)\s*(\d+(?:\.\d+)?)$",
+        value,
+    )
+
+    if match:
+
+        amount = float(
+            match.group(2)
+        )
+
+        return {
+            "type": "above",
+            "min": amount,
+            "label": f"Above ₹{amount:g}",
+        }
+
+    # --------------------------------------------------------
+    # RANGE
+    # --------------------------------------------------------
+
+    match = re.match(
+        r"^(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)$",
+        value,
+    )
+
+    if match:
+
+        minimum = float(
+            match.group(1)
+        )
+
+        maximum = float(
+            match.group(2)
+        )
+
+        if minimum > maximum:
+            minimum, maximum = (
+                maximum,
+                minimum,
+            )
+
+        return {
+            "type": "range",
+            "min": minimum,
+            "max": maximum,
+            "label": (
+                f"₹{minimum:g} - ₹{maximum:g}"
+            ),
+        }
+
+    # --------------------------------------------------------
+    # SINGLE EXACT PRICE
+    # --------------------------------------------------------
+
+    if re.match(
+        r"^\d+(?:\.\d+)?$",
+        value,
+    ):
+
+        amount = float(value)
+
+        return {
+            "type": "single",
+            "min": amount,
+            "max": amount,
+            "label": f"₹{amount:g}",
+        }
+
+    return None
 
 
 # ============================================================
@@ -229,40 +519,149 @@ def category_matches(
 
 def apply_price_filter(
     queryset,
-    price_label,
+    price_data,
 ):
-    if price_label == "Any Price":
+
+    if not price_data:
         return queryset
 
-    if price_label == "Under ₹300":
+    price_type = price_data.get(
+        "type"
+    )
+
+    if price_type == "any":
+        return queryset
+
+    if price_type == "under":
         return queryset.filter(
-            price__lt=300
+            price__lt=price_data["max"]
         )
 
-    if price_label == "₹300 - ₹500":
+    if price_type == "above":
         return queryset.filter(
-            price__gte=300,
-            price__lte=500,
+            price__gt=price_data["min"]
         )
 
-    if price_label == "₹500 - ₹700":
+    if price_type == "range":
         return queryset.filter(
-            price__gte=500,
-            price__lte=700,
+            price__gte=price_data["min"],
+            price__lte=price_data["max"],
         )
 
-    if price_label == "₹700 - ₹1000":
+    if price_type == "single":
         return queryset.filter(
-            price__gte=700,
-            price__lte=1000,
-        )
-
-    if price_label == "Above ₹1000":
-        return queryset.filter(
-            price__gt=1000
+            price=price_data["min"]
         )
 
     return queryset
+
+
+# ============================================================
+# DATE INPUT PARSER
+# ============================================================
+
+def parse_date_input(
+    user_input,
+):
+    """
+    Supported:
+
+        today
+        7
+        30
+        any
+        25-08-2026
+        25/08/2026
+        25.08.2026
+    """
+
+    value = (
+        user_input or ""
+    ).strip().lower()
+
+    # --------------------------------------------------------
+    # ANY
+    # --------------------------------------------------------
+
+    if value in [
+        "any",
+        "any date",
+        "all",
+        "no filter",
+    ]:
+
+        return {
+            "type": "any",
+            "label": "Any Date",
+        }
+
+    # --------------------------------------------------------
+    # TODAY
+    # --------------------------------------------------------
+
+    if value in [
+        "today",
+        "todays",
+        "today's",
+    ]:
+
+        return {
+            "type": "today",
+            "label": "Today",
+        }
+
+    # --------------------------------------------------------
+    # LAST N DAYS
+    # --------------------------------------------------------
+
+    if re.match(
+        r"^\d+$",
+        value,
+    ):
+
+        days = int(value)
+
+        if days <= 0:
+            return None
+
+        if days > 3650:
+            return None
+
+        return {
+            "type": "days",
+            "days": days,
+            "label": f"Last {days} Days",
+        }
+
+    # --------------------------------------------------------
+    # PARTICULAR DATE
+    # --------------------------------------------------------
+
+    for date_format in [
+        "%d-%m-%Y",
+        "%d/%m/%Y",
+        "%d.%m.%Y",
+    ]:
+
+        try:
+
+            selected_date = datetime.strptime(
+                value,
+                date_format,
+            ).date()
+
+            return {
+                "type": "specific",
+                "date": selected_date,
+                "label": selected_date.strftime(
+                    "%d-%m-%Y"
+                ),
+            }
+
+        except ValueError:
+            continue
+
+    return None
 
 
 # ============================================================
@@ -271,11 +670,31 @@ def apply_price_filter(
 
 def apply_date_filter(
     queryset,
-    date_label,
+    date_data,
 ):
+
+    if not date_data:
+        return queryset
+
+    date_type = date_data.get(
+        "type"
+    )
+
+    # --------------------------------------------------------
+    # ANY DATE
+    # --------------------------------------------------------
+
+    if date_type == "any":
+        return queryset
+
     now = timezone.now()
 
-    if date_label == "Today":
+    # --------------------------------------------------------
+    # TODAY
+    # --------------------------------------------------------
+
+    if date_type == "today":
+
         start = now.replace(
             hour=0,
             minute=0,
@@ -283,18 +702,54 @@ def apply_date_filter(
             microsecond=0,
         )
 
-        return queryset.filter(
-            date__gte=start
+        end = (
+            start
+            + timedelta(days=1)
         )
 
-    if date_label == "Last 7 Days":
         return queryset.filter(
-            date__gte=now - timedelta(days=7)
+            date__gte=start,
+            date__lt=end,
         )
 
-    if date_label == "Last 30 Days":
+    # --------------------------------------------------------
+    # LAST N DAYS
+    # --------------------------------------------------------
+
+    if date_type == "days":
+
         return queryset.filter(
-            date__gte=now - timedelta(days=30)
+            date__gte=(
+                now
+                - timedelta(
+                    days=date_data["days"]
+                )
+            )
+        )
+
+    # --------------------------------------------------------
+    # PARTICULAR DATE
+    # --------------------------------------------------------
+
+    if date_type == "specific":
+
+        selected_date = date_data["date"]
+
+        start = timezone.make_aware(
+            datetime.combine(
+                selected_date,
+                datetime.min.time(),
+            )
+        )
+
+        end = (
+            start
+            + timedelta(days=1)
+        )
+
+        return queryset.filter(
+            date__gte=start,
+            date__lt=end,
         )
 
     return queryset
@@ -302,24 +757,23 @@ def apply_date_filter(
 
 # ============================================================
 # FIND MATCHING DEALS
-#
-# NORMAL SYNC FUNCTION
-# Do NOT wrap this function with sync_to_async here.
 # ============================================================
 
 def find_matching_deals(
     category,
-    price_label,
-    date_label,
+    price_data,
+    date_data,
 ):
+
     print("\n========================================")
     print("🔎 FIND DEALS START")
     print("Category:", category)
-    print("Price:", price_label)
-    print("Date:", date_label)
+    print("Price:", price_data)
+    print("Date:", date_data)
     print("========================================")
 
     try:
+
         deals = (
             Deal.objects
             .filter(
@@ -335,37 +789,61 @@ def find_matching_deals(
             )
         )
 
+        # ----------------------------------------------------
+        # PRICE
+        # ----------------------------------------------------
+
         deals = apply_price_filter(
             deals,
-            price_label,
+            price_data,
         )
+
+        # ----------------------------------------------------
+        # DATE
+        # ----------------------------------------------------
 
         deals = apply_date_filter(
             deals,
-            date_label,
+            date_data,
         )
 
-        # Evaluate queryset inside the worker thread.
-        deals = list(deals[:200])
+        # ----------------------------------------------------
+        # LOAD DATABASE RECORDS
+        # ----------------------------------------------------
+
+        deals = list(
+            deals[:200]
+        )
 
         print(
             "STEP 1 - Deals loaded:",
             len(deals),
         )
 
+        # ----------------------------------------------------
+        # CATEGORY
+        # ----------------------------------------------------
+
         results = []
 
         for deal in deals:
+
             try:
+
                 if category_matches(
                     deal,
                     category,
                 ):
-                    results.append(deal)
+
+                    results.append(
+                        deal
+                    )
 
             except Exception as error:
+
                 print(
-                    f"❌ Category error for Deal #{deal.id}:",
+                    f"❌ Category error "
+                    f"for Deal #{deal.id}:",
                     repr(error),
                 )
 
@@ -386,6 +864,7 @@ def find_matching_deals(
         return results
 
     except Exception as error:
+
         print(
             "❌ FIND DEALS DATABASE ERROR:",
             repr(error),
@@ -403,33 +882,149 @@ def find_matching_deals(
 def format_deal(
     deal,
 ):
+    """
+    Creates HTML-safe Telegram message.
+    """
+
+    content = escape(
+        deal.content or "Deal available"
+    )
+
     text = (
         f"🛍️ <b>Deal #{deal.id}</b>\n\n"
-        f"{deal.content or 'Deal available'}\n\n"
+        f"{content}\n\n"
     )
 
     if deal.price is not None:
+
         text += (
             f"💰 Price: ₹{deal.price}\n"
         )
 
     if deal.rating is not None:
+
         text += (
             f"⭐ Rating: {deal.rating}\n"
         )
 
     if deal.date:
+
         text += (
-            f"📅 {deal.date.strftime('%d %b %Y')}\n"
+            f"📅 "
+            f"{deal.date.strftime('%d %b %Y')}\n"
+        )
+
+    if deal.channel:
+
+        text += (
+            f"📢 Source: "
+            f"{escape(str(deal.channel))}\n"
         )
 
     if deal.product_link:
+
+        safe_link = escape(
+            str(deal.product_link),
+            quote=True,
+        )
+
         text += (
-            f'\n🔗 <a href="{deal.product_link}">'
+            f'\n🔗 <a href="{safe_link}">'
             "View Deal</a>"
         )
 
     return text
+
+
+# ============================================================
+# SPLIT LONG TELEGRAM MESSAGE
+# ============================================================
+
+def split_telegram_message(
+    text,
+    max_length=3500,
+):
+    """
+    Telegram has a finite message size.
+
+    Long scraped deals are split into multiple messages
+    instead of being rejected.
+    """
+
+    if len(text) <= max_length:
+        return [text]
+
+    chunks = []
+
+    current = ""
+
+    # Prefer splitting on newlines.
+    lines = text.split("\n")
+
+    for line in lines:
+
+        # ----------------------------------------------------
+        # A single line is itself too long
+        # ----------------------------------------------------
+
+        if len(line) > max_length:
+
+            if current:
+
+                chunks.append(
+                    current.rstrip()
+                )
+
+                current = ""
+
+            start = 0
+
+            while start < len(line):
+
+                end = (
+                    start
+                    + max_length
+                )
+
+                chunks.append(
+                    line[start:end]
+                )
+
+                start = end
+
+            continue
+
+        # ----------------------------------------------------
+        # Normal line
+        # ----------------------------------------------------
+
+        candidate = (
+            f"{current}\n{line}"
+            if current
+            else line
+        )
+
+        if len(candidate) <= max_length:
+
+            current = candidate
+
+        else:
+
+            if current:
+
+                chunks.append(
+                    current.rstrip()
+                )
+
+            current = line
+
+    if current:
+
+        chunks.append(
+            current.rstrip()
+        )
+
+    return chunks
 
 
 # ============================================================
@@ -440,26 +1035,38 @@ async def send_filtered_deals(
     bot,
     chat_id,
     category,
-    price_label,
-    date_label,
+    price_data,
+    date_data,
+    user_cache_key,
 ):
+
     try:
+
         print("\n########################################")
         print("FILTER REQUEST")
-        print("CATEGORY =", category)
-        print("PRICE =", price_label)
-        print("DATE =", date_label)
+        print(
+            "CATEGORY =",
+            category,
+        )
+        print(
+            "PRICE =",
+            price_data,
+        )
+        print(
+            "DATE =",
+            date_data,
+        )
         print("########################################")
 
         # IMPORTANT:
-        # sync_to_async is used ONLY HERE.
+        # Django sync ORM runs only at this boundary.
         deals = await sync_to_async(
             find_matching_deals,
             thread_sensitive=False,
         )(
             category,
-            price_label,
-            date_label,
+            price_data,
+            date_data,
         )
 
         print(
@@ -469,6 +1076,7 @@ async def send_filtered_deals(
         )
 
     except Exception as error:
+
         print("\n########################################")
         print("❌ DEAL FETCH ERROR")
         print(
@@ -480,20 +1088,47 @@ async def send_filtered_deals(
 
         traceback.print_exc()
 
+        # Allow another search.
+        cache.set(
+            user_cache_key,
+            {
+                "step": "category",
+            },
+            timeout=1800,
+        )
+
         await send_bot_message(
             bot,
             chat_id,
             (
-                "⚠️ DEAL FETCH ERROR\n\n"
-                f"{type(error).__name__}: {error}\n\n"
-                "Please check the Django terminal."
+                "⚠️ Sorry, deals fetch karte time "
+                "problem aa gayi.\n\n"
+                "Let's try another search."
             ),
             MAIN_KEYBOARD,
         )
 
+        await send_search_again_prompt(
+            bot,
+            chat_id,
+        )
+
         return
 
+    # ========================================================
+    # NO RESULTS
+    # ========================================================
+
     if not deals:
+
+        cache.set(
+            user_cache_key,
+            {
+                "step": "category",
+            },
+            timeout=1800,
+        )
+
         await send_bot_message(
             bot,
             chat_id,
@@ -501,52 +1136,112 @@ async def send_filtered_deals(
                 "😔 No deals found for your "
                 "selected filters.\n\n"
                 f"📂 Category: {category}\n"
-                f"💰 Price: {price_label}\n"
-                f"📅 Date: {date_label}\n\n"
-                "Try another combination."
+                f"💰 Price: {price_data['label']}\n"
+                f"📅 Date: {date_data['label']}"
             ),
             MAIN_KEYBOARD,
         )
 
+        await send_search_again_prompt(
+            bot,
+            chat_id,
+        )
+
         return
+
+    # ========================================================
+    # RESULTS HEADER
+    # ========================================================
+
+    # Reset state so next message can start a new search.
+    cache.set(
+        user_cache_key,
+        {
+            "step": "category",
+        },
+        timeout=1800,
+    )
 
     await bot.send_message(
         chat_id=chat_id,
         text=(
             f"🎯 Found {len(deals)} matching deal(s)!\n\n"
             f"📂 {category}\n"
-            f"💰 {price_label}\n"
-            f"📅 {date_label}"
+            f"💰 {price_data['label']}\n"
+            f"📅 {date_data['label']}"
         ),
         reply_markup=MAIN_KEYBOARD,
     )
 
+    # ========================================================
+    # SEND EACH DEAL
+    # ========================================================
+
     for deal in deals:
+
         try:
-            await bot.send_message(
-                chat_id=chat_id,
-                text=format_deal(deal),
-                parse_mode="HTML",
-                disable_web_page_preview=False,
+
+            formatted_text = format_deal(
+                deal
             )
 
+            chunks = split_telegram_message(
+                formatted_text
+            )
+
+            for index, chunk in enumerate(
+                chunks
+            ):
+
+                try:
+
+                    await bot.send_message(
+                        chat_id=chat_id,
+                        text=chunk,
+                        parse_mode="HTML",
+                        disable_web_page_preview=False,
+                    )
+
+                except Exception as error:
+
+                    print(
+                        f"❌ Failed sending Deal "
+                        f"#{deal.id} "
+                        f"chunk {index + 1}:",
+                        repr(error),
+                    )
+
+                    traceback.print_exc()
+
         except Exception as error:
+
             print(
-                f"❌ Failed sending Deal #{deal.id}:",
+                f"❌ Failed formatting Deal "
+                f"#{deal.id}:",
                 repr(error),
             )
 
             traceback.print_exc()
 
+    # ========================================================
+    # SEARCH AGAIN
+    # ========================================================
+
+    await send_search_again_prompt(
+        bot,
+        chat_id,
+    )
+
 
 # ============================================================
 # GET LATEST DEALS
-#
-# NORMAL SYNC FUNCTION
 # ============================================================
 
 def get_latest_deals():
-    print("🔎 Loading latest deals...")
+
+    print(
+        "🔎 Loading latest deals..."
+    )
 
     deals = list(
         Deal.objects
@@ -579,15 +1274,16 @@ async def send_latest_deals(
     bot,
     chat_id,
 ):
+
     try:
-        # IMPORTANT:
-        # sync_to_async is used ONLY HERE.
+
         deals = await sync_to_async(
             get_latest_deals,
             thread_sensitive=False,
         )()
 
     except Exception as error:
+
         print(
             "❌ LATEST DEAL ERROR:",
             repr(error),
@@ -609,6 +1305,7 @@ async def send_latest_deals(
         return
 
     if not deals:
+
         await send_bot_message(
             bot,
             chat_id,
@@ -626,17 +1323,31 @@ async def send_latest_deals(
     )
 
     for deal in deals:
+
         try:
-            await bot.send_message(
-                chat_id=chat_id,
-                text=format_deal(deal),
-                parse_mode="HTML",
-                disable_web_page_preview=False,
+
+            formatted_text = format_deal(
+                deal
             )
 
+            chunks = split_telegram_message(
+                formatted_text
+            )
+
+            for chunk in chunks:
+
+                await bot.send_message(
+                    chat_id=chat_id,
+                    text=chunk,
+                    parse_mode="HTML",
+                    disable_web_page_preview=False,
+                )
+
         except Exception as error:
+
             print(
-                f"❌ Latest Deal #{deal.id} send error:",
+                f"❌ Latest Deal "
+                f"#{deal.id} send error:",
                 repr(error),
             )
 
@@ -651,6 +1362,7 @@ def handle_private_message(
     bot_record,
     update,
 ):
+
     message = update.message
 
     if not message:
@@ -661,26 +1373,44 @@ def handle_private_message(
 
     telegram_user = message.from_user
 
-    user, created = get_or_create_telegram_user(
-        telegram_user
+    user, created = (
+        get_or_create_telegram_user(
+            telegram_user
+        )
     )
 
     text = (
         message.text or ""
     ).strip()
 
+    normalized_text = (
+        text.lower().strip()
+    )
+
+    user_cache_key = (
+        f"deal_filter_state_{user.user_id}"
+    )
+
     # ========================================================
     # START
     # ========================================================
 
-    if text.startswith("/start"):
+    if normalized_text.startswith(
+        "/start"
+    ):
+
+        cache.delete(
+            user_cache_key
+        )
 
         async def send():
+
             bot = Bot(
                 token=bot_record.bot_token
             )
 
             try:
+
                 await send_main_menu(
                     bot,
                     message.chat_id,
@@ -688,204 +1418,7 @@ def handle_private_message(
                 )
 
             finally:
-                await bot.shutdown()
 
-        asyncio.run(send())
-
-        return
-
-    # ========================================================
-    # FIND DEALS
-    # ========================================================
-
-    if text == "🔎 Find Deals":
-
-        async def send():
-            bot = Bot(
-                token=bot_record.bot_token
-            )
-
-            try:
-                await send_category_menu(
-                    bot,
-                    message.chat_id,
-                )
-
-            finally:
-                await bot.shutdown()
-
-        asyncio.run(send())
-
-        return
-
-    # ========================================================
-    # LATEST DEALS
-    # ========================================================
-
-    if text == "🆕 Latest Deals":
-
-        async def send():
-            bot = Bot(
-                token=bot_record.bot_token
-            )
-
-            try:
-                await send_latest_deals(
-                    bot,
-                    message.chat_id,
-                )
-
-            finally:
-                await bot.shutdown()
-
-        asyncio.run(send())
-
-        return
-
-    # ========================================================
-    # CATEGORY
-    # ========================================================
-
-    category_map = {
-        "📱 Electronics": "Electronics",
-        "🛒 Grocery": "Grocery",
-        "👕 Fashion": "Fashion",
-        "🏠 Home": "Home",
-        "📦 All Categories": "All Categories",
-    }
-
-    if text in category_map:
-
-        category = category_map[text]
-
-        cache.set(
-            f"deal_filter_category_{user.user_id}",
-            category,
-            timeout=1800,
-        )
-
-        async def send():
-            bot = Bot(
-                token=bot_record.bot_token
-            )
-
-            try:
-                await send_price_menu(
-                    bot,
-                    message.chat_id,
-                    category,
-                )
-
-            finally:
-                await bot.shutdown()
-
-        asyncio.run(send())
-
-        return
-
-    # ========================================================
-    # PRICE
-    # ========================================================
-
-    price_options = {
-        "💰 Under ₹300": "Under ₹300",
-        "💰 ₹300 - ₹500": "₹300 - ₹500",
-        "💰 ₹500 - ₹700": "₹500 - ₹700",
-        "💰 ₹700 - ₹1000": "₹700 - ₹1000",
-        "💰 Above ₹1000": "Above ₹1000",
-        "💰 Any Price": "Any Price",
-    }
-
-    if text in price_options:
-
-        category = cache.get(
-            f"deal_filter_category_{user.user_id}"
-        )
-
-        if not category:
-            print(
-                "❌ Category missing from cache"
-            )
-            return
-
-        price_label = price_options[text]
-
-        cache.set(
-            f"deal_filter_price_{user.user_id}",
-            price_label,
-            timeout=1800,
-        )
-
-        async def send():
-            bot = Bot(
-                token=bot_record.bot_token
-            )
-
-            try:
-                await send_date_menu(
-                    bot,
-                    message.chat_id,
-                    category,
-                    price_label,
-                )
-
-            finally:
-                await bot.shutdown()
-
-        asyncio.run(send())
-
-        return
-
-    # ========================================================
-    # DATE
-    # ========================================================
-
-    date_options = {
-        "📅 Today": "Today",
-        "📅 Last 7 Days": "Last 7 Days",
-        "📅 Last 30 Days": "Last 30 Days",
-        "📅 Any Date": "Any Date",
-    }
-
-    if text in date_options:
-
-        category = cache.get(
-            f"deal_filter_category_{user.user_id}"
-        )
-
-        price_label = cache.get(
-            f"deal_filter_price_{user.user_id}"
-        )
-
-        if not category:
-            print(
-                "❌ Category missing before date filter"
-            )
-            return
-
-        if not price_label:
-            print(
-                "❌ Price missing before date filter"
-            )
-            return
-
-        date_label = date_options[text]
-
-        async def send():
-            bot = Bot(
-                token=bot_record.bot_token
-            )
-
-            try:
-                await send_filtered_deals(
-                    bot,
-                    message.chat_id,
-                    category,
-                    price_label,
-                    date_label,
-                )
-
-            finally:
                 await bot.shutdown()
 
         asyncio.run(send())
@@ -896,14 +1429,24 @@ def handle_private_message(
     # BACK
     # ========================================================
 
-    if text == "⬅️ Back":
+    if normalized_text in [
+        "back",
+        "⬅️ back",
+        "/back",
+    ]:
+
+        cache.delete(
+            user_cache_key
+        )
 
         async def send():
+
             bot = Bot(
                 token=bot_record.bot_token
             )
 
             try:
+
                 await send_main_menu(
                     bot,
                     message.chat_id,
@@ -911,6 +1454,369 @@ def handle_private_message(
                 )
 
             finally:
+
+                await bot.shutdown()
+
+        asyncio.run(send())
+
+        return
+
+    # ========================================================
+    # FIND DEALS
+    # ========================================================
+
+    if (
+        text == "🔎 Find Deals"
+        or normalized_text in [
+            "find deals",
+            "find my deals",
+            "find",
+        ]
+    ):
+
+        cache.set(
+            user_cache_key,
+            {
+                "step": "category",
+            },
+            timeout=1800,
+        )
+
+        async def send():
+
+            bot = Bot(
+                token=bot_record.bot_token
+            )
+
+            try:
+
+                await send_category_menu(
+                    bot,
+                    message.chat_id,
+                )
+
+            finally:
+
+                await bot.shutdown()
+
+        asyncio.run(send())
+
+        return
+
+    # ========================================================
+    # LATEST DEALS
+    # ========================================================
+
+    if (
+        text == "🆕 Latest Deals"
+        or normalized_text in [
+            "latest deals",
+            "latest",
+        ]
+    ):
+
+        async def send():
+
+            bot = Bot(
+                token=bot_record.bot_token
+            )
+
+            try:
+
+                await send_latest_deals(
+                    bot,
+                    message.chat_id,
+                )
+
+            finally:
+
+                await bot.shutdown()
+
+        asyncio.run(send())
+
+        return
+
+    # ========================================================
+    # CURRENT STATE
+    # ========================================================
+
+    state = cache.get(
+        user_cache_key
+    )
+
+    if not state:
+
+        async def send():
+
+            bot = Bot(
+                token=bot_record.bot_token
+            )
+
+            try:
+
+                await send_bot_message(
+                    bot,
+                    message.chat_id,
+                    (
+                        "Please choose an option "
+                        "from the menu first."
+                    ),
+                    MAIN_KEYBOARD,
+                )
+
+            finally:
+
+                await bot.shutdown()
+
+        asyncio.run(send())
+
+        return
+
+    step = state.get(
+        "step"
+    )
+
+    # ========================================================
+    # STEP 1 - CATEGORY
+    # ========================================================
+
+    if step == "category":
+
+        category = resolve_category(
+            text
+        )
+
+        if not category:
+
+            async def send():
+
+                bot = Bot(
+                    token=bot_record.bot_token
+                )
+
+                try:
+
+                    await send_bot_message(
+                        bot,
+                        message.chat_id,
+                        (
+                            "❌ Category not found.\n\n"
+                            "Please type a valid category.\n\n"
+                            "Examples:\n"
+                            "Electronics\n"
+                            "Grocery\n"
+                            "Fashion\n"
+                            "Home\n"
+                            "All Categories"
+                        ),
+                        MAIN_KEYBOARD,
+                    )
+
+                finally:
+
+                    await bot.shutdown()
+
+            asyncio.run(send())
+
+            return
+
+        cache.set(
+            user_cache_key,
+            {
+                "step": "price",
+                "category": category,
+            },
+            timeout=1800,
+        )
+
+        async def send():
+
+            bot = Bot(
+                token=bot_record.bot_token
+            )
+
+            try:
+
+                await send_price_menu(
+                    bot,
+                    message.chat_id,
+                    category,
+                )
+
+            finally:
+
+                await bot.shutdown()
+
+        asyncio.run(send())
+
+        return
+
+    # ========================================================
+    # STEP 2 - PRICE
+    # ========================================================
+
+    if step == "price":
+
+        price_data = parse_price_input(
+            text
+        )
+
+        if not price_data:
+
+            async def send():
+
+                bot = Bot(
+                    token=bot_record.bot_token
+                )
+
+                try:
+
+                    await send_bot_message(
+                        bot,
+                        message.chat_id,
+                        (
+                            "❌ Invalid price format.\n\n"
+                            "Please enter one of these:\n\n"
+                            "• 500-700\n"
+                            "• 700-1000\n"
+                            "• under 300\n"
+                            "• above 1000\n"
+                            "• any"
+                        ),
+                        MAIN_KEYBOARD,
+                    )
+
+                finally:
+
+                    await bot.shutdown()
+
+            asyncio.run(send())
+
+            return
+
+        category = state.get(
+            "category"
+        )
+
+        if not category:
+
+            cache.delete(
+                user_cache_key
+            )
+
+            return
+
+        cache.set(
+            user_cache_key,
+            {
+                "step": "date",
+                "category": category,
+                "price": price_data,
+            },
+            timeout=1800,
+        )
+
+        async def send():
+
+            bot = Bot(
+                token=bot_record.bot_token
+            )
+
+            try:
+
+                await send_date_menu(
+                    bot,
+                    message.chat_id,
+                    category,
+                    price_data["label"],
+                )
+
+            finally:
+
+                await bot.shutdown()
+
+        asyncio.run(send())
+
+        return
+
+    # ========================================================
+    # STEP 3 - DATE
+    # ========================================================
+
+    if step == "date":
+
+        date_data = parse_date_input(
+            text
+        )
+
+        if not date_data:
+
+            async def send():
+
+                bot = Bot(
+                    token=bot_record.bot_token
+                )
+
+                try:
+
+                    await send_bot_message(
+                        bot,
+                        message.chat_id,
+                        (
+                            "❌ Invalid date format.\n\n"
+                            "Please enter:\n\n"
+                            "• today\n"
+                            "• 7  → last 7 days\n"
+                            "• 30 → last 30 days\n"
+                            "• 25-08-2026 → particular date\n"
+                            "• any"
+                        ),
+                        MAIN_KEYBOARD,
+                    )
+
+                finally:
+
+                    await bot.shutdown()
+
+            asyncio.run(send())
+
+            return
+
+        category = state.get(
+            "category"
+        )
+
+        price_data = state.get(
+            "price"
+        )
+
+        if not category or not price_data:
+
+            cache.delete(
+                user_cache_key
+            )
+
+            return
+
+        async def send():
+
+            bot = Bot(
+                token=bot_record.bot_token
+            )
+
+            try:
+
+                await send_filtered_deals(
+                    bot,
+                    message.chat_id,
+                    category,
+                    price_data,
+                    date_data,
+                    user_cache_key,
+                )
+
+            finally:
+
                 await bot.shutdown()
 
         asyncio.run(send())

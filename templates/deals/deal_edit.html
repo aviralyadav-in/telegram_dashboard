@@ -1,162 +1,829 @@
 {% extends "base/base.html" %}
 
 {% block title %}
-    Edit Deal
+    Edit Deal #{{ deal.id }}
 {% endblock %}
 
-{% block page_title %}
-    Edit Deal
-{% endblock %}
 
 {% block extra_css %}
 
 <style>
 
-    .edit-container {
-        width: 100%;
-        max-width: 900px;
-        margin: 30px auto;
+    /* =========================================================
+       EDIT DEAL PAGE
+    ========================================================== */
+
+    .deal-edit-page {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding-bottom: 35px;
     }
 
-    .edit-card {
-        background: white;
-        padding: 30px;
-        border-radius: 12px;
-        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
-    }
 
-    .edit-card h1 {
-        margin-top: 0;
-        margin-bottom: 25px;
-    }
+    /* =========================================================
+       HERO
+    ========================================================== */
 
-    .info {
-        background: #f8f9fa;
-        padding: 15px;
-        border-radius: 8px;
-        margin-bottom: 25px;
-        line-height: 1.8;
-    }
+    .deal-edit-hero {
+        display: flex;
 
-    .form-group {
-        margin-bottom: 20px;
-    }
+        align-items: center;
 
-    .form-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
+        justify-content: space-between;
+
         gap: 20px;
+
+        margin-bottom: 22px;
     }
 
-    label {
-        display: block;
-        font-weight: 600;
-        margin-bottom: 8px;
+    .deal-edit-hero-left {
+        display: flex;
+
+        align-items: center;
+
+        gap: 14px;
     }
 
-    textarea,
-    input,
-    select {
-        width: 100%;
-        padding: 12px;
-        border: 1px solid #ccc;
-        border-radius: 7px;
-        font-size: 14px;
-        font-family: Arial, sans-serif;
+    .deal-edit-icon {
+        width: 56px;
+        height: 56px;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        border-radius: 16px;
+
+        background:
+            linear-gradient(
+                135deg,
+                #2563eb,
+                #1d4ed8
+            );
+
+        color: #ffffff;
+
+        font-size: 23px;
+
+        box-shadow:
+            0 12px 28px
+            rgba(37,99,235,.20);
     }
 
-    textarea {
-        min-height: 220px;
-        resize: vertical;
+    .deal-edit-hero h1 {
+        margin: 0;
+
+        color: #0f172a;
+
+        font-size: 28px;
+
+        font-weight: 800;
+
+        letter-spacing: -.65px;
     }
 
-    textarea:focus,
-    input:focus,
-    select:focus {
-        outline: none;
-        border-color: #2563eb;
-        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
-    }
+    .deal-edit-hero p {
+        margin: 5px 0 0;
 
-    .field-help {
-        color: #777;
+        color: #64748b;
+
         font-size: 12px;
-        margin-top: 5px;
+    }
+
+    .deal-edit-actions-top {
+        display: flex;
+
+        gap: 8px;
+
+        flex-wrap: wrap;
+    }
+
+
+    /* =========================================================
+       MAIN GRID
+    ========================================================== */
+
+    .deal-edit-grid {
+
+        display: grid;
+
+        grid-template-columns:
+            minmax(0, 1.55fr)
+            minmax(280px, .75fr);
+
+        gap: 18px;
+
+        align-items: start;
+    }
+
+
+    /* =========================================================
+       PANELS
+    ========================================================== */
+
+    .deal-edit-panel {
+
+        overflow: hidden;
+
+        background: #ffffff;
+
+        border:
+            1px solid #e7ebf0;
+
+        border-radius: 17px;
+
+        box-shadow:
+            0 4px 16px
+            rgba(15,23,42,.045);
+    }
+
+    .deal-edit-panel-header {
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 10px;
+
+        padding:
+            16px 18px;
+
+        border-bottom:
+            1px solid #eef2f7;
+
+        background:
+            linear-gradient(
+                180deg,
+                #ffffff,
+                #fbfcfe
+            );
+    }
+
+    .deal-edit-panel-icon {
+
+        width: 37px;
+        height: 37px;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        border-radius: 11px;
+
+        background: #eff6ff;
+
+        color: #2563eb;
+
+        font-size: 16px;
+    }
+
+    .deal-edit-panel-header h5 {
+
+        margin: 0;
+
+        color: #0f172a;
+
+        font-size: 15px;
+
+        font-weight: 800;
+    }
+
+    .deal-edit-panel-header p {
+
+        margin: 2px 0 0;
+
+        color: #94a3b8;
+
+        font-size: 10px;
+    }
+
+    .deal-edit-panel-body {
+
+        padding: 20px;
+    }
+
+
+    /* =========================================================
+       DEAL INFORMATION
+    ========================================================== */
+
+    .deal-info-card {
+
+        padding:
+            14px;
+
+        margin-bottom: 17px;
+
+        background: #f8fafc;
+
+        border:
+            1px solid #edf1f5;
+
+        border-radius: 13px;
+    }
+
+    .deal-info-title {
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 7px;
+
+        margin-bottom: 11px;
+
+        color: #334155;
+
+        font-size: 11px;
+
+        font-weight: 800;
+    }
+
+    .deal-info-grid {
+
+        display: grid;
+
+        grid-template-columns:
+            repeat(3, minmax(0,1fr));
+
+        gap: 10px;
+    }
+
+    .deal-info-item {
+
+        padding:
+            10px;
+
+        background: #ffffff;
+
+        border:
+            1px solid #e8edf3;
+
+        border-radius: 10px;
+    }
+
+    .deal-info-label {
+
+        display: block;
+
+        margin-bottom: 4px;
+
+        color: #94a3b8;
+
+        font-size: 8px;
+
+        font-weight: 800;
+
+        text-transform: uppercase;
+
+        letter-spacing: .5px;
+    }
+
+    .deal-info-value {
+
+        color: #334155;
+
+        font-size: 10px;
+
+        font-weight: 750;
+
+        word-break: break-word;
+    }
+
+
+    /* =========================================================
+       FORM
+    ========================================================== */
+
+    .deal-form-group {
+
+        margin-bottom: 17px;
+    }
+
+    .deal-label {
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 6px;
+
+        margin-bottom: 7px;
+
+        color: #334155;
+
+        font-size: 10px;
+
+        font-weight: 800;
+    }
+
+    .deal-label i {
+
+        color: #2563eb;
+    }
+
+    .deal-control {
+
+        width: 100%;
+
+        min-height: 43px;
+
+        padding:
+            9px 11px;
+
+        border:
+            1px solid #dbe2ea;
+
+        border-radius: 10px;
+
+        background: #ffffff;
+
+        color: #1f2937;
+
+        font-size: 11px;
+
+        outline: none;
+
+        transition:
+            border-color .15s ease,
+            box-shadow .15s ease;
+    }
+
+    .deal-control:focus {
+
+        border-color:
+            #2563eb;
+
+        box-shadow:
+            0 0 0 4px
+            rgba(37,99,235,.08);
+    }
+
+    textarea.deal-control {
+
+        min-height:
+            260px;
+
+        resize:
+            vertical;
+
+        line-height:
+            1.6;
+    }
+
+    .deal-help {
+
+        margin-top:
+            6px;
+
+        color:
+            #94a3b8;
+
+        font-size:
+            9px;
+
+        line-height:
+            1.5;
+    }
+
+    .deal-form-row {
+
+        display: grid;
+
+        grid-template-columns:
+            1fr 1fr;
+
+        gap:
+            14px;
+    }
+
+
+    /* =========================================================
+       CURRENT IMAGE
+    ========================================================== */
+
+    .current-image-box {
+
+        margin-bottom:
+            18px;
+
+        padding:
+            14px;
+
+        border:
+            1px solid #e8edf3;
+
+        border-radius:
+            13px;
+
+        background:
+            linear-gradient(
+                135deg,
+                #f8fafc,
+                #ffffff
+            );
+    }
+
+    .current-image-header {
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: space-between;
+
+        margin-bottom:
+            11px;
+    }
+
+    .current-image-title {
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 6px;
+
+        color:
+            #334155;
+
+        font-size:
+            10px;
+
+        font-weight:
+            800;
+    }
+
+    .current-image-tag {
+
+        padding:
+            5px 7px;
+
+        border-radius:
+            7px;
+
+        background:
+            #f0fdf4;
+
+        color:
+            #15803d;
+
+        font-size:
+            8px;
+
+        font-weight:
+            800;
     }
 
     .current-image {
-        margin-bottom: 25px;
+
+        width:
+            180px;
+
+        height:
+            180px;
+
+        display:
+            block;
+
+        object-fit:
+            cover;
+
+        border-radius:
+            12px;
+
+        border:
+            1px solid #e5e7eb;
+
+        box-shadow:
+            0 8px 20px
+            rgba(15,23,42,.08);
     }
 
-    .current-image label {
-        margin-bottom: 10px;
+
+    /* =========================================================
+       SIDE SUMMARY
+    ========================================================== */
+
+    .side-sticky {
+
+        position:
+            sticky;
+
+        top:
+            20px;
     }
 
-    .current-image img {
-        width: 180px;
-        height: 180px;
-        object-fit: cover;
-        border-radius: 10px;
-        border: 1px solid #ddd;
+    .side-section {
+
+        margin-bottom:
+            14px;
+
+        padding:
+            14px;
+
+        border:
+            1px solid #edf1f5;
+
+        border-radius:
+            13px;
+
+        background:
+            #f8fafc;
     }
 
-    .actions {
-        display: flex;
-        gap: 10px;
-        margin-top: 30px;
+    .side-title {
+
+        display:
+            flex;
+
+        align-items:
+            center;
+
+        gap:
+            7px;
+
+        margin-bottom:
+            10px;
+
+        color:
+            #334155;
+
+        font-size:
+            10px;
+
+        font-weight:
+            800;
     }
 
-    .save-btn {
-        background: #2563eb;
-        color: white;
-        border: none;
-        padding: 12px 22px;
-        border-radius: 7px;
-        cursor: pointer;
-        font-weight: 600;
+    .side-title i {
+
+        color:
+            #2563eb;
     }
 
-    .save-btn:hover {
-        background: #1d4ed8;
+    .side-row {
+
+        display:
+            flex;
+
+        align-items:
+            center;
+
+        justify-content:
+            space-between;
+
+        gap:
+            10px;
+
+        padding:
+            8px 0;
+
+        border-bottom:
+            1px solid #e5e7eb;
+
+        font-size:
+            9px;
     }
 
-    .cancel-btn {
-        background: #6b7280;
-        color: white;
-        text-decoration: none;
-        padding: 12px 22px;
-        border-radius: 7px;
-        font-weight: 600;
+    .side-row:last-child {
+
+        border-bottom:
+            0;
+
+        padding-bottom:
+            0;
     }
 
-    .cancel-btn:hover {
-        background: #4b5563;
+    .side-label {
+
+        color:
+            #94a3b8;
     }
 
-    @media (max-width: 700px) {
+    .side-value {
 
-        .edit-container {
-            width: 95%;
-            margin: 20px auto;
+        color:
+            #334155;
+
+        font-weight:
+            750;
+
+        text-align:
+            right;
+    }
+
+
+    /* =========================================================
+       STATUS
+    ========================================================== */
+
+    .edit-status {
+
+        display:
+            inline-flex;
+
+        align-items:
+            center;
+
+        gap:
+            5px;
+
+        padding:
+            6px 8px;
+
+        border-radius:
+            7px;
+
+        font-size:
+            8px;
+
+        font-weight:
+            800;
+    }
+
+    .edit-status-new {
+
+        background:
+            #eff6ff;
+
+        color:
+            #2563eb;
+    }
+
+    .edit-status-processed {
+
+        background:
+            #f5f3ff;
+
+        color:
+            #7c3aed;
+    }
+
+    .edit-status-published {
+
+        background:
+            #f0fdf4;
+
+        color:
+            #15803d;
+    }
+
+    .edit-status-expired {
+
+        background:
+            #f1f5f9;
+
+        color:
+            #64748b;
+    }
+
+    .edit-status-rejected {
+
+        background:
+            #fef2f2;
+
+        color:
+            #dc2626;
+    }
+
+
+    /* =========================================================
+       ACTION BAR
+    ========================================================== */
+
+    .deal-edit-action-bar {
+
+        display:
+            flex;
+
+        align-items:
+            center;
+
+        justify-content:
+            space-between;
+
+        gap:
+            15px;
+
+        margin-top:
+            20px;
+
+        padding-top:
+            17px;
+
+        border-top:
+            1px solid #eef2f7;
+    }
+
+    .deal-edit-note {
+
+        display:
+            flex;
+
+        align-items:
+            center;
+
+        gap:
+            6px;
+
+        color:
+            #94a3b8;
+
+        font-size:
+            9px;
+    }
+
+    .deal-edit-buttons {
+
+        display:
+            flex;
+
+        gap:
+            8px;
+
+        flex-wrap:
+            wrap;
+    }
+
+
+    /* =========================================================
+       RESPONSIVE
+    ========================================================== */
+
+    @media(max-width: 950px) {
+
+        .deal-edit-grid {
+
+            grid-template-columns:
+                1fr;
         }
 
-        .edit-card {
-            padding: 20px;
+        .side-sticky {
+
+            position:
+                static;
         }
 
-        .form-row {
-            grid-template-columns: 1fr;
-            gap: 0;
+    }
+
+
+    @media(max-width: 650px) {
+
+        .deal-info-grid,
+        .deal-form-row {
+
+            grid-template-columns:
+                1fr;
         }
 
-        .actions {
-            flex-direction: column;
+        .deal-edit-hero {
+
+            flex-direction:
+                column;
+
+            align-items:
+                flex-start;
         }
 
-        .save-btn,
-        .cancel-btn {
-            width: 100%;
-            text-align: center;
+        .deal-edit-hero h1 {
+
+            font-size:
+                23px;
+        }
+
+        .deal-edit-action-bar {
+
+            flex-direction:
+                column;
+
+            align-items:
+                stretch;
+        }
+
+        .deal-edit-buttons .btn {
+
+            flex:
+                1;
+        }
+
+        .deal-edit-panel-body {
+
+            padding:
+                14px;
+        }
+
+        .current-image {
+
+            width:
+                150px;
+
+            height:
+                150px;
         }
 
     }
@@ -168,211 +835,741 @@
 
 {% block content %}
 
-<div class="edit-container">
-
-    <div class="edit-card">
-
-        <h1>
-            Edit Deal #{{ deal.id }}
-        </h1>
+<div class="deal-edit-page">
 
 
-        <!-- DEAL INFORMATION -->
+    <!-- =========================================================
+         HERO
+    ========================================================== -->
 
-        <div class="info">
+    <div class="deal-edit-hero">
 
-            <strong>Message ID:</strong>
-            {{ deal.message_id }}
+        <div class="deal-edit-hero-left">
 
-            <br>
+            <div class="deal-edit-icon">
 
-            <strong>Source Channel:</strong>
-            {{ deal.channel }}
+                <i class="bi bi-pencil-square"></i>
 
-            <br>
+            </div>
 
-            <strong>Date:</strong>
-            {{ deal.date|date:"d M Y H:i" }}
+            <div>
+
+                <h1>
+                    Edit Deal #{{ deal.id }}
+                </h1>
+
+                <p>
+                    Update deal content, product information, pricing, rating and status.
+                </p>
+
+            </div>
 
         </div>
 
 
-        <!-- CURRENT IMAGE -->
+        <div class="deal-edit-actions-top">
 
-        {% if deal.image_path %}
+            <a
+                href="{% url 'deal-list' %}"
+                class="btn btn-outline-secondary"
+            >
 
-            <div class="current-image">
+                <i class="bi bi-arrow-left me-1"></i>
 
-                <label>
-                    Current Deal Image
-                </label>
+                Back to Deals
 
-                <br>
+            </a>
 
-                <img
-                    src="/media/{{ deal.image_path }}"
-                    alt="Deal Image"
-                >
+        </div>
 
-            </div>
-
-        {% endif %}
+    </div>
 
 
-        <!-- EDIT FORM -->
+    <!-- =========================================================
+         GRID
+    ========================================================== -->
 
-        <form method="POST">
-
-            {% csrf_token %}
-
-
-            <!-- CONTENT -->
-
-            <div class="form-group">
-
-                <label for="content">
-                    Deal Content
-                </label>
-
-                <textarea
-                    id="content"
-                    name="content"
-                    required
-                >{{ deal.content|default:'' }}</textarea>
-
-            </div>
+    <div class="deal-edit-grid">
 
 
-            <!-- PRODUCT LINK -->
+        <!-- =====================================================
+             MAIN FORM PANEL
+        ====================================================== -->
 
-            <div class="form-group">
+        <div class="deal-edit-panel">
 
-                <label for="product_link">
-                    Product Link
-                </label>
+            <div class="deal-edit-panel-header">
 
-                <input
-                    type="url"
-                    id="product_link"
-                    name="product_link"
-                    value="{{ deal.product_link|default:'' }}"
-                    placeholder="https://example.com/product"
-                >
+                <div class="deal-edit-panel-icon">
 
-            </div>
-
-
-            <!-- PRICE + RATING -->
-
-            <div class="form-row">
-
-
-                <!-- PRICE -->
-
-                <div class="form-group">
-
-                    <label for="price">
-                        Price
-                    </label>
-
-                    <input
-                        type="number"
-                        id="price"
-                        name="price"
-                        value="{{ deal.price|default:'' }}"
-                        placeholder="Enter product price"
-                        min="0"
-                        step="0.01"
-                    >
-
-                    <div class="field-help">
-                        Enter the current deal/product price.
-                    </div>
+                    <i class="bi bi-file-earmark-text-fill"></i>
 
                 </div>
 
+                <div>
 
-                <!-- RATING -->
+                    <h5>
+                        Deal Information
+                    </h5>
 
-                <div class="form-group">
-
-                    <label for="rating">
-                        Product Rating
-                    </label>
-
-                    <input
-                        type="number"
-                        id="rating"
-                        name="rating"
-                        value="{{ deal.rating|default:'' }}"
-                        placeholder="0.00 - 5.00"
-                        min="0"
-                        max="5"
-                        step="0.01"
-                    >
-
-                    <div class="field-help">
-                        Rating should be between 0 and 5.
-                    </div>
+                    <p>
+                        Edit the stored deal details.
+                    </p>
 
                 </div>
 
             </div>
 
 
-            <!-- STATUS -->
+            <div class="deal-edit-panel-body">
 
-            <div class="form-group">
 
-                <label for="status">
-                    Status
-                </label>
+                <!-- =================================================
+                     SOURCE INFORMATION
+                ================================================== -->
 
-                <select
-                    id="status"
-                    name="status"
-                >
+                <div class="deal-info-card">
 
-                    {% for value, label in deal.STATUS_CHOICES %}
+                    <div class="deal-info-title">
 
-                        <option
-                            value="{{ value }}"
-                            {% if deal.status == value %}
-                                selected
-                            {% endif %}
+                        <i class="bi bi-info-circle-fill"></i>
+
+                        Source Information
+
+                    </div>
+
+
+                    <div class="deal-info-grid">
+
+
+                        <div class="deal-info-item">
+
+                            <span class="deal-info-label">
+                                Message ID
+                            </span>
+
+                            <span class="deal-info-value">
+                                {{ deal.message_id }}
+                            </span>
+
+                        </div>
+
+
+                        <div class="deal-info-item">
+
+                            <span class="deal-info-label">
+                                Source Channel
+                            </span>
+
+                            <span class="deal-info-value">
+                                {{ deal.channel }}
+                            </span>
+
+                        </div>
+
+
+                        <div class="deal-info-item">
+
+                            <span class="deal-info-label">
+                                Deal Date
+                            </span>
+
+                            <span class="deal-info-value">
+                                {{ deal.date|date:"d M Y H:i" }}
+                            </span>
+
+                        </div>
+
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     CURRENT IMAGE
+                ================================================== -->
+
+                {% if deal.image_path %}
+
+                    <div class="current-image-box">
+
+                        <div class="current-image-header">
+
+                            <div class="current-image-title">
+
+                                <i class="bi bi-image-fill"></i>
+
+                                Current Deal Image
+
+                            </div>
+
+                            <span class="current-image-tag">
+
+                                Available
+
+                            </span>
+
+                        </div>
+
+
+                        <img
+                            src="/media/{{ deal.image_path }}"
+                            alt="Deal Image"
+                            class="current-image"
                         >
-                            {{ label }}
-                        </option>
 
-                    {% endfor %}
+                    </div>
 
-                </select>
+                {% endif %}
+
+
+                <!-- =================================================
+                     FORM
+                ================================================== -->
+
+                <form method="POST">
+
+                    {% csrf_token %}
+
+
+                    <!-- CONTENT -->
+
+                    <div class="deal-form-group">
+
+                        <label
+                            for="content"
+                            class="deal-label"
+                        >
+
+                            <i class="bi bi-file-text"></i>
+
+                            Deal Content
+
+                        </label>
+
+
+                        <textarea
+                            id="content"
+                            name="content"
+                            class="deal-control"
+                            required
+                        >{{ deal.content|default:'' }}</textarea>
+
+
+                        <div class="deal-help">
+
+                            Update the main scraped deal message or description.
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- PRODUCT LINK -->
+
+                    <div class="deal-form-group">
+
+                        <label
+                            for="product_link"
+                            class="deal-label"
+                        >
+
+                            <i class="bi bi-link-45deg"></i>
+
+                            Product Link
+
+                        </label>
+
+
+                        <input
+                            type="url"
+                            id="product_link"
+                            name="product_link"
+                            value="{{ deal.product_link|default:'' }}"
+                            placeholder="https://example.com/product"
+                            class="deal-control"
+                        >
+
+
+                        <div class="deal-help">
+
+                            Enter the product or affiliate URL associated with this deal.
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- PRICE + RATING -->
+
+                    <div class="deal-form-row">
+
+
+                        <!-- PRICE -->
+
+                        <div class="deal-form-group">
+
+                            <label
+                                for="price"
+                                class="deal-label"
+                            >
+
+                                <i class="bi bi-currency-rupee"></i>
+
+                                Price
+
+                            </label>
+
+
+                            <input
+                                type="number"
+                                id="price"
+                                name="price"
+                                value="{{ deal.price|default:'' }}"
+                                placeholder="Enter product price"
+                                min="0"
+                                step="0.01"
+                                class="deal-control"
+                            >
+
+
+                            <div class="deal-help">
+
+                                Current deal/product price.
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- RATING -->
+
+                        <div class="deal-form-group">
+
+                            <label
+                                for="rating"
+                                class="deal-label"
+                            >
+
+                                <i class="bi bi-star-fill"></i>
+
+                                Product Rating
+
+                            </label>
+
+
+                            <input
+                                type="number"
+                                id="rating"
+                                name="rating"
+                                value="{{ deal.rating|default:'' }}"
+                                placeholder="0.00 - 5.00"
+                                min="0"
+                                max="5"
+                                step="0.01"
+                                class="deal-control"
+                            >
+
+
+                            <div class="deal-help">
+
+                                Rating must be between 0 and 5.
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- STATUS -->
+
+                    <div class="deal-form-group">
+
+                        <label
+                            for="status"
+                            class="deal-label"
+                        >
+
+                            <i class="bi bi-activity"></i>
+
+                            Status
+
+                        </label>
+
+
+                        <select
+                            id="status"
+                            name="status"
+                            class="deal-control"
+                        >
+
+                            {% for value, label in deal.STATUS_CHOICES %}
+
+                                <option
+                                    value="{{ value }}"
+                                    {% if deal.status == value %}
+                                        selected
+                                    {% endif %}
+                                >
+
+                                    {{ label }}
+
+                                </option>
+
+                            {% endfor %}
+
+                        </select>
+
+
+                        <div class="deal-help">
+
+                            Controls the current lifecycle state of this deal.
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- ACTIONS -->
+
+                    <div class="deal-edit-action-bar">
+
+                        <div class="deal-edit-note">
+
+                            <i class="bi bi-shield-check"></i>
+
+                            Changes are saved directly to this deal.
+
+                        </div>
+
+
+                        <div class="deal-edit-buttons">
+
+                            <a
+                                href="{% url 'deal-list' %}"
+                                class="btn btn-outline-secondary"
+                            >
+
+                                <i class="bi bi-x-circle me-1"></i>
+
+                                Cancel
+
+                            </a>
+
+
+                            <button
+                                type="submit"
+                                class="btn btn-primary"
+                            >
+
+                                <i class="bi bi-check2-circle me-1"></i>
+
+                                Save Changes
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                </form>
 
             </div>
 
-
-            <!-- ACTIONS -->
-
-            <div class="actions">
-
-                <button
-                    type="submit"
-                    class="save-btn"
-                >
-                    💾 Save Changes
-                </button>
+        </div>
 
 
-                <a
-                    href="{% url 'deal-list' %}"
-                    class="cancel-btn"
-                >
-                    Cancel
-                </a>
+        <!-- =====================================================
+             SIDE SUMMARY
+        ====================================================== -->
+
+        <div class="side-sticky">
+
+            <div class="deal-edit-panel">
+
+
+                <div class="deal-edit-panel-header">
+
+                    <div class="deal-edit-panel-icon">
+
+                        <i class="bi bi-eye-fill"></i>
+
+                    </div>
+
+                    <div>
+
+                        <h5>
+                            Deal Summary
+                        </h5>
+
+                        <p>
+                            Current values stored in the system.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="deal-edit-panel-body">
+
+
+                    <!-- STATUS -->
+
+                    <div class="side-section">
+
+                        <div class="side-title">
+
+                            <i class="bi bi-activity"></i>
+
+                            Current Status
+
+                        </div>
+
+
+                        {% if deal.status == "new" %}
+
+                            <span class="edit-status edit-status-new">
+
+                                <i class="bi bi-stars"></i>
+
+                                New
+
+                            </span>
+
+                        {% elif deal.status == "processed" %}
+
+                            <span class="edit-status edit-status-processed">
+
+                                <i class="bi bi-gear-fill"></i>
+
+                                Processed
+
+                            </span>
+
+                        {% elif deal.status == "published" %}
+
+                            <span class="edit-status edit-status-published">
+
+                                <i class="bi bi-check-circle-fill"></i>
+
+                                Published
+
+                            </span>
+
+                        {% elif deal.status == "expired" %}
+
+                            <span class="edit-status edit-status-expired">
+
+                                <i class="bi bi-clock-history"></i>
+
+                                Expired
+
+                            </span>
+
+                        {% elif deal.status == "rejected" %}
+
+                            <span class="edit-status edit-status-rejected">
+
+                                <i class="bi bi-x-circle-fill"></i>
+
+                                Rejected
+
+                            </span>
+
+                        {% else %}
+
+                            <span class="badge bg-secondary">
+
+                                {{ deal.status|title }}
+
+                            </span>
+
+                        {% endif %}
+
+                    </div>
+
+
+                    <!-- DETAILS -->
+
+                    <div class="side-section">
+
+                        <div class="side-title">
+
+                            <i class="bi bi-bar-chart-fill"></i>
+
+                            Deal Metrics
+
+                        </div>
+
+
+                        <div class="side-row">
+
+                            <span class="side-label">
+                                Price
+                            </span>
+
+                            <span class="side-value">
+
+                                {% if deal.price is not None %}
+
+                                    ₹{{ deal.price|floatformat:2 }}
+
+                                {% else %}
+
+                                    —
+
+                                {% endif %}
+
+                            </span>
+
+                        </div>
+
+
+                        <div class="side-row">
+
+                            <span class="side-label">
+                                Rating
+                            </span>
+
+                            <span class="side-value">
+
+                                {% if deal.rating is not None %}
+
+                                    ⭐ {{ deal.rating|floatformat:1 }}
+
+                                {% else %}
+
+                                    —
+
+                                {% endif %}
+
+                            </span>
+
+                        </div>
+
+
+                        <div class="side-row">
+
+                            <span class="side-label">
+                                Product Link
+                            </span>
+
+                            <span class="side-value">
+
+                                {% if deal.product_link %}
+
+                                    Available
+
+                                {% else %}
+
+                                    None
+
+                                {% endif %}
+
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- SOURCE -->
+
+                    <div class="side-section">
+
+                        <div class="side-title">
+
+                            <i class="bi bi-telegram"></i>
+
+                            Telegram Source
+
+                        </div>
+
+
+                        <div class="side-row">
+
+                            <span class="side-label">
+                                Channel
+                            </span>
+
+                            <span class="side-value">
+
+                                {{ deal.channel }}
+
+                            </span>
+
+                        </div>
+
+
+                        <div class="side-row">
+
+                            <span class="side-label">
+                                Message ID
+                            </span>
+
+                            <span class="side-value">
+
+                                {{ deal.message_id }}
+
+                            </span>
+
+                        </div>
+
+
+                        <div class="side-row">
+
+                            <span class="side-label">
+                                Date
+                            </span>
+
+                            <span class="side-value">
+
+                                {{ deal.date|date:"d M Y H:i" }}
+
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- NOTE -->
+
+                    <div
+                        class="side-section"
+                        style="
+                            background:#eff6ff;
+                            border-color:#dbeafe;
+                        "
+                    >
+
+                        <div
+                            style="
+                                color:#1e40af;
+                                font-size:9px;
+                                line-height:1.6;
+                            "
+                        >
+
+                            <i class="bi bi-info-circle-fill me-1"></i>
+
+                            Updating this record changes the deal data
+                            used by filtering and publishing.
+
+                        </div>
+
+                    </div>
+
+                </div>
 
             </div>
 
-        </form>
+        </div>
+
 
     </div>
 

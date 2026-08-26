@@ -1,459 +1,1287 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base/base.html" %}
 
-<head>
+{% block title %}
+    Auto Publishing Schedules
+{% endblock %}
 
-    <meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+{% block extra_css %}
 
-    <title>Auto Publishing Schedules</title>
+<style>
 
-    <style>
-        * {
-            box-sizing: border-box;
+    /* =========================================================
+       PAGE
+    ========================================================== */
+
+    .schedule-page {
+        max-width: 1550px;
+        margin: 0 auto;
+        padding-bottom: 35px;
+    }
+
+
+    /* =========================================================
+       HERO
+    ========================================================== */
+
+    .schedule-hero {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+
+        margin-bottom: 24px;
+    }
+
+    .schedule-hero-left {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .schedule-hero-icon {
+        width: 56px;
+        height: 56px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 16px;
+
+        background:
+            linear-gradient(
+                135deg,
+                #7c3aed,
+                #5b21b6
+            );
+
+        color: #ffffff;
+
+        font-size: 23px;
+
+        box-shadow:
+            0 12px 28px
+            rgba(124, 58, 237, 0.20);
+    }
+
+    .schedule-hero h1 {
+        margin: 0;
+
+        color: #0f172a;
+
+        font-size: 28px;
+
+        font-weight: 800;
+
+        letter-spacing: -0.65px;
+    }
+
+    .schedule-hero p {
+        margin: 5px 0 0;
+
+        color: #64748b;
+
+        font-size: 12px;
+    }
+
+    .schedule-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+
+    /* =========================================================
+       STATISTICS
+    ========================================================== */
+
+    .schedule-stat-grid {
+        display: grid;
+
+        grid-template-columns:
+            minmax(240px, 340px);
+
+        gap: 14px;
+
+        margin-bottom: 24px;
+    }
+
+    .schedule-stat {
+        position: relative;
+
+        min-height: 125px;
+
+        padding: 17px;
+
+        overflow: hidden;
+
+        background: #ffffff;
+
+        border:
+            1px solid #e7ebf0;
+
+        border-radius: 16px;
+
+        box-shadow:
+            0 4px 15px
+            rgba(15, 23, 42, 0.045);
+
+        transition:
+            transform 0.18s ease,
+            box-shadow 0.18s ease;
+    }
+
+    .schedule-stat:hover {
+        transform: translateY(-3px);
+
+        box-shadow:
+            0 12px 28px
+            rgba(15, 23, 42, 0.075);
+    }
+
+    .schedule-stat-top {
+        display: flex;
+
+        align-items: center;
+
+        justify-content: space-between;
+    }
+
+    .schedule-stat-icon {
+        width: 43px;
+        height: 43px;
+
+        display: flex;
+
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 12px;
+
+        font-size: 18px;
+    }
+
+    .schedule-purple {
+        background: #f5f3ff;
+        color: #7c3aed;
+    }
+
+    .schedule-stat-mini {
+        color: #94a3b8;
+
+        font-size: 9px;
+
+        font-weight: 750;
+    }
+
+    .schedule-stat-label {
+        margin-top: 15px;
+
+        color: #64748b;
+
+        font-size: 10px;
+
+        font-weight: 800;
+
+        text-transform: uppercase;
+
+        letter-spacing: 0.55px;
+    }
+
+    .schedule-stat-value {
+        margin-top: 2px;
+
+        color: #0f172a;
+
+        font-size: 27px;
+
+        font-weight: 800;
+    }
+
+
+    /* =========================================================
+       MAIN PANEL
+    ========================================================== */
+
+    .schedule-panel {
+        overflow: hidden;
+
+        background: #ffffff;
+
+        border:
+            1px solid #e7ebf0;
+
+        border-radius: 17px;
+
+        box-shadow:
+            0 4px 16px
+            rgba(15, 23, 42, 0.045);
+    }
+
+    .schedule-panel-header {
+        display: flex;
+
+        align-items: center;
+
+        justify-content: space-between;
+
+        gap: 15px;
+
+        padding: 16px 18px;
+
+        border-bottom:
+            1px solid #eef2f7;
+
+        background:
+            linear-gradient(
+                180deg,
+                #ffffff,
+                #fbfcfe
+            );
+    }
+
+    .schedule-panel-heading {
+        display: flex;
+
+        align-items: center;
+
+        gap: 10px;
+    }
+
+    .schedule-panel-icon {
+        width: 37px;
+        height: 37px;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        border-radius: 11px;
+
+        background: #f5f3ff;
+
+        color: #7c3aed;
+
+        font-size: 16px;
+    }
+
+    .schedule-panel-heading h5 {
+        margin: 0;
+
+        color: #0f172a;
+
+        font-size: 15px;
+
+        font-weight: 800;
+    }
+
+    .schedule-panel-heading p {
+        margin: 2px 0 0;
+
+        color: #94a3b8;
+
+        font-size: 10px;
+    }
+
+    .schedule-panel-body {
+        padding: 18px;
+    }
+
+
+    /* =========================================================
+       TABLE
+    ========================================================== */
+
+    .schedule-table-wrap {
+        overflow-x: auto;
+
+        border:
+            1px solid #edf1f5;
+
+        border-radius: 13px;
+    }
+
+    .schedule-table {
+        min-width: 1150px;
+
+        margin: 0;
+    }
+
+    .schedule-table thead th {
+        padding: 12px 13px;
+
+        background: #f8fafc;
+
+        color: #64748b;
+
+        font-size: 9px;
+
+        font-weight: 800;
+
+        text-transform: uppercase;
+
+        letter-spacing: 0.6px;
+
+        border-bottom:
+            1px solid #e8edf2;
+
+        white-space: nowrap;
+    }
+
+    .schedule-table tbody td {
+        padding: 13px;
+
+        color: #334155;
+
+        font-size: 11px;
+
+        border-color:
+            #eef2f7;
+
+        vertical-align: middle;
+    }
+
+    .schedule-table tbody tr {
+        transition:
+            background 0.15s ease;
+    }
+
+    .schedule-table tbody tr:hover {
+        background: #fbfdff;
+    }
+
+
+    /* =========================================================
+       ID
+    ========================================================== */
+
+    .schedule-id {
+        display: inline-flex;
+
+        align-items: center;
+
+        padding: 5px 8px;
+
+        border-radius: 7px;
+
+        background: #f5f3ff;
+
+        color: #7c3aed;
+
+        font-size: 9px;
+
+        font-weight: 800;
+    }
+
+
+    /* =========================================================
+       DESTINATION
+    ========================================================== */
+
+    .destination-name {
+        color: #334155;
+
+        font-size: 11px;
+
+        font-weight: 800;
+    }
+
+    .destination-username {
+        margin-top: 2px;
+
+        color: #94a3b8;
+
+        font-size: 9px;
+    }
+
+
+    /* =========================================================
+       FILTERS
+    ========================================================== */
+
+    .filter-summary {
+        min-width: 180px;
+
+        color: #64748b;
+
+        font-size: 9px;
+
+        line-height: 1.7;
+    }
+
+    .filter-chip {
+        display: inline-flex;
+
+        align-items: center;
+
+        gap: 4px;
+
+        margin:
+            2px 3px 2px 0;
+
+        padding:
+            4px 7px;
+
+        border-radius: 6px;
+
+        background: #f8fafc;
+
+        border:
+            1px solid #e8edf3;
+
+        color: #475569;
+
+        font-size: 8px;
+
+        font-weight: 700;
+    }
+
+
+    /* =========================================================
+       COUNTS
+    ========================================================== */
+
+    .count-value {
+        display: inline-flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        min-width: 35px;
+
+        padding:
+            5px 7px;
+
+        border-radius: 7px;
+
+        background: #eff6ff;
+
+        color: #2563eb;
+
+        font-size: 9px;
+
+        font-weight: 800;
+    }
+
+
+    /* =========================================================
+       PROGRESS
+    ========================================================== */
+
+    .progress-value {
+        color: #334155;
+
+        font-size: 11px;
+
+        font-weight: 800;
+    }
+
+    .failed-count {
+        display: block;
+
+        margin-top: 3px;
+
+        color: #dc2626;
+
+        font-size: 9px;
+
+        font-weight: 700;
+    }
+
+
+    /* =========================================================
+       STATUS
+    ========================================================== */
+
+    .schedule-status {
+        display: inline-flex;
+
+        align-items: center;
+
+        gap: 5px;
+
+        padding:
+            6px 9px;
+
+        border-radius: 8px;
+
+        font-size: 9px;
+
+        font-weight: 800;
+    }
+
+    .status-running {
+        color: #1d4ed8;
+
+        background: #eff6ff;
+    }
+
+    .status-pending {
+        color: #92400e;
+
+        background: #fef3c7;
+    }
+
+    .status-completed {
+        color: #166534;
+
+        background: #f0fdf4;
+    }
+
+    .status-failed {
+        color: #991b1b;
+
+        background: #fef2f2;
+    }
+
+    .status-cancelled {
+        color: #475569;
+
+        background: #f1f5f9;
+    }
+
+
+    /* =========================================================
+       ACTIONS
+    ========================================================== */
+
+    .schedule-action {
+        display: inline-flex;
+
+        align-items: center;
+
+        gap: 5px;
+
+        margin-right: 7px;
+
+        text-decoration: none;
+
+        font-size: 10px;
+
+        font-weight: 750;
+    }
+
+    .schedule-view {
+        color: #2563eb;
+    }
+
+    .schedule-cancel {
+        color: #dc2626;
+    }
+
+    .schedule-action:hover {
+        text-decoration: underline;
+    }
+
+
+    /* =========================================================
+       EMPTY
+    ========================================================== */
+
+    .schedule-empty {
+        padding:
+            60px 25px;
+
+        text-align: center;
+    }
+
+    .schedule-empty-icon {
+        width: 63px;
+        height: 63px;
+
+        margin:
+            0 auto 14px;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        border-radius: 19px;
+
+        background: #f5f3ff;
+
+        color: #7c3aed;
+
+        font-size: 25px;
+    }
+
+    .schedule-empty h6 {
+        margin:
+            0 0 5px;
+
+        color: #1f2937;
+
+        font-size: 14px;
+
+        font-weight: 800;
+    }
+
+    .schedule-empty p {
+        max-width: 520px;
+
+        margin:
+            0 auto 18px;
+
+        color: #94a3b8;
+
+        font-size: 11px;
+
+        line-height: 1.6;
+    }
+
+
+    /* =========================================================
+       RESPONSIVE
+    ========================================================== */
+
+    @media (max-width: 800px) {
+
+        .schedule-hero {
+            flex-direction: column;
+
+            align-items: flex-start;
         }
 
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f4f6f9;
-            color: #1f2937;
-        }
-
-        .page {
-            max-width: 1250px;
-            margin: 35px auto;
-            padding: 0 20px;
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 20px;
-            margin-bottom: 25px;
-        }
-
-        .header h1 {
-            margin: 0 0 6px;
-            font-size: 28px;
-        }
-
-        .header p {
-            margin: 0;
-            color: #6b7280;
-        }
-
-        .button {
-            display: inline-block;
-            padding: 11px 17px;
-            border-radius: 9px;
-            text-decoration: none;
-            background: #111827;
-            color: #ffffff;
-            font-weight: 700;
-        }
-
-        .card {
-            background: #ffffff;
-            border-radius: 14px;
-            padding: 22px;
-            box-shadow: 0 5px 22px rgba(0, 0, 0, 0.07);
-        }
-
-        .messages {
-            margin-bottom: 20px;
-        }
-
-        .message {
-            padding: 12px 15px;
-            border-radius: 8px;
-            background: #f3f4f6;
-            margin-bottom: 8px;
-        }
-
-        .table-wrapper {
-            overflow-x: auto;
-        }
-
-        table {
+        .schedule-actions {
             width: 100%;
-            min-width: 1050px;
-            border-collapse: collapse;
         }
 
-        th,
-        td {
-            padding: 13px;
-            border-bottom: 1px solid #e5e7eb;
-            text-align: left;
-            vertical-align: middle;
+    }
+
+
+    @media (max-width: 600px) {
+
+        .schedule-stat-grid {
+            grid-template-columns:
+                1fr;
         }
 
-        th {
-            background: #f8fafc;
-            font-size: 14px;
+        .schedule-hero h1 {
+            font-size: 23px;
         }
 
-        .status {
-            display: inline-block;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 700;
+        .schedule-panel-body {
+            padding: 12px;
         }
 
-        .status-running {
-            background: #dbeafe;
-            color: #1d4ed8;
-        }
+    }
 
-        .status-pending {
-            background: #fef3c7;
-            color: #92400e;
-        }
+</style>
 
-        .status-completed {
-            background: #dcfce7;
-            color: #166534;
-        }
+{% endblock %}
 
-        .status-failed {
-            background: #fee2e2;
-            color: #991b1b;
-        }
 
-        .status-cancelled {
-            background: #e5e7eb;
-            color: #374151;
-        }
+{% block content %}
 
-        .progress-text {
-            font-weight: 700;
-        }
+<div class="schedule-page">
 
-        .filter-summary {
-            color: #6b7280;
-            line-height: 1.7;
-            font-size: 13px;
-        }
 
-        .action-link {
-            color: #2563eb;
-            text-decoration: none;
-            font-weight: 600;
-            margin-right: 10px;
-        }
+    <!-- =========================================================
+         HERO
+    ========================================================== -->
 
-        .cancel-link {
-            color: #dc2626;
-        }
+    <div class="schedule-hero">
 
-        .empty {
-            text-align: center;
-            padding: 60px 20px;
-            color: #6b7280;
-        }
+        <div class="schedule-hero-left">
 
-        @media (max-width: 700px) {
-            .header {
-                align-items: flex-start;
-                flex-direction: column;
-            }
+            <div class="schedule-hero-icon">
 
-            .button {
-                width: 100%;
-                text-align: center;
-            }
-        }
-    </style>
+                <i class="bi bi-calendar2-week-fill"></i>
 
-</head>
+            </div>
 
-<body>
+            <div>
 
-<div class="page">
+                <h1>
+                    Auto Publishing Schedules
+                </h1>
 
-    <div class="header">
+                <p>
+                    Create and monitor filtered Telegram deal publishing jobs.
+                </p>
 
-        <div>
-
-            <h1>
-                📅 Auto Publishing Schedules
-            </h1>
-
-            <p>
-                Filtered Telegram bot publishing jobs
-            </p>
+            </div>
 
         </div>
 
 
-        <a
-            href="{% url 'create_schedule' %}"
-            class="button"
-        >
-            + Create New Schedule
-        </a>
+        <div class="schedule-actions">
+
+            <a
+                href="{% url 'create_schedule' %}"
+                class="btn btn-primary"
+            >
+
+                <i class="bi bi-plus-circle me-1"></i>
+
+                Create New Schedule
+
+            </a>
+
+        </div>
 
     </div>
 
 
+    <!-- =========================================================
+         MESSAGES
+    ========================================================== -->
+
     {% if messages %}
 
-        <div class="messages">
+        {% for message in messages %}
 
-            {% for message in messages %}
+            <div
+                class="alert
+                {% if message.tags == 'error' %}
+                    alert-danger
+                {% elif message.tags == 'warning' %}
+                    alert-warning
+                {% else %}
+                    alert-success
+                {% endif %}
+                alert-dismissible fade show mb-3"
+                role="alert"
+            >
 
-                <div class="message">
-                    {{ message }}
+                <div class="d-flex align-items-center gap-2">
+
+                    {% if message.tags == "error" %}
+
+                        <i class="bi bi-exclamation-circle-fill"></i>
+
+                    {% elif message.tags == "warning" %}
+
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+
+                    {% else %}
+
+                        <i class="bi bi-check-circle-fill"></i>
+
+                    {% endif %}
+
+                    <span>
+                        {{ message }}
+                    </span>
+
                 </div>
 
-            {% endfor %}
 
-        </div>
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"
+                ></button>
+
+            </div>
+
+        {% endfor %}
 
     {% endif %}
 
 
-    <div class="card">
+    <!-- =========================================================
+         TOTAL SCHEDULES
+    ========================================================== -->
 
-        {% if schedules %}
+    <div class="schedule-stat-grid">
 
-            <div class="table-wrapper">
+        <div class="schedule-stat">
 
-                <table>
+            <div class="schedule-stat-top">
 
-                    <thead>
+                <div class="schedule-stat-icon schedule-purple">
 
-                        <tr>
-                            <th>ID</th>
-                            <th>Destination</th>
-                            <th>Filters</th>
-                            <th>Requested</th>
-                            <th>Matched</th>
-                            <th>Interval</th>
-                            <th>Progress</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
+                    <i class="bi bi-calendar2-check-fill"></i>
 
-                    </thead>
+                </div>
 
-
-                    <tbody>
-
-                    {% for schedule in schedules %}
-
-                        <tr>
-
-                            <td>
-                                #{{ schedule.id }}
-                            </td>
-
-
-                            <td>
-
-                                <strong>
-                                    {{ schedule.destination.name }}
-                                </strong>
-
-                                {% if schedule.destination.username %}
-
-                                    <br>
-
-                                    <small>
-                                        {{ schedule.destination.username }}
-                                    </small>
-
-                                {% endif %}
-
-                            </td>
-
-
-                            <td>
-
-                                <div class="filter-summary">
-
-                                    {% if schedule.date_from %}
-                                        From: {{ schedule.date_from }}<br>
-                                    {% endif %}
-
-                                    {% if schedule.date_to %}
-                                        To: {{ schedule.date_to }}<br>
-                                    {% endif %}
-
-                                    {% if schedule.min_price %}
-                                        Min: ₹{{ schedule.min_price|floatformat:"-2" }}<br>
-                                    {% endif %}
-
-                                    {% if schedule.max_price %}
-                                        Max: ₹{{ schedule.max_price|floatformat:"-2" }}<br>
-                                    {% endif %}
-
-                                    {% if schedule.min_rating %}
-                                        Rating: {{ schedule.min_rating }}+
-                                        ⭐
-                                    {% endif %}
-
-                                    {% if not schedule.date_from and not schedule.date_to and not schedule.min_price and not schedule.max_price and not schedule.min_rating %}
-                                        No filters
-                                    {% endif %}
-
-                                </div>
-
-                            </td>
-
-
-                            <td>
-
-                                <strong>
-                                    {{ schedule.deal_limit }}
-                                </strong>
-
-                                deals
-
-                            </td>
-
-
-                            <td>
-
-                                {{ schedule.total_deals }}
-
-                            </td>
-
-
-                            <td>
-
-                                {{ schedule.interval_seconds }} sec
-
-                            </td>
-
-
-                            <td>
-
-                                <div class="progress-text">
-                                    {{ schedule.published_count }}
-                                    /
-                                    {{ schedule.total_deals }}
-                                </div>
-
-                                {% if schedule.failed_count %}
-
-                                    <small>
-                                        Failed:
-                                        {{ schedule.failed_count }}
-                                    </small>
-
-                                {% endif %}
-
-                            </td>
-
-
-                            <td>
-
-                                {% if schedule.status == "running" %}
-
-                                    <span class="status status-running">
-                                        Running
-                                    </span>
-
-                                {% elif schedule.status == "pending" %}
-
-                                    <span class="status status-pending">
-                                        Pending
-                                    </span>
-
-                                {% elif schedule.status == "completed" %}
-
-                                    <span class="status status-completed">
-                                        Completed
-                                    </span>
-
-                                {% elif schedule.status == "failed" %}
-
-                                    <span class="status status-failed">
-                                        Failed
-                                    </span>
-
-                                {% elif schedule.status == "cancelled" %}
-
-                                    <span class="status status-cancelled">
-                                        Cancelled
-                                    </span>
-
-                                {% endif %}
-
-                            </td>
-
-
-                            <td>
-
-                                <a
-                                    href="{% url 'schedule_detail' schedule.id %}"
-                                    class="action-link"
-                                >
-                                    View
-                                </a>
-
-
-                                {% if schedule.status == "running" %}
-
-                                    <a
-                                        href="{% url 'schedule_cancel' schedule.id %}"
-                                        class="action-link cancel-link"
-                                    >
-                                        Cancel
-                                    </a>
-
-                                {% endif %}
-
-                            </td>
-
-                        </tr>
-
-                    {% endfor %}
-
-                    </tbody>
-
-                </table>
+                <span class="schedule-stat-mini">
+                    All
+                </span>
 
             </div>
 
-        {% else %}
 
-            <div class="empty">
-
-                <h2>
-                    No schedules created yet
-                </h2>
-
-                <p>
-                    Create a schedule to filter deals and
-                    automatically publish them through your bot.
-                </p>
-
-                <br>
-
-                <a
-                    href="{% url 'create_schedule' %}"
-                    class="button"
-                >
-                    Create First Schedule
-                </a>
-
+            <div class="schedule-stat-label">
+                Total Schedules
             </div>
 
-        {% endif %}
+
+            <div class="schedule-stat-value">
+                {{ schedules|length }}
+            </div>
+
+        </div>
 
     </div>
 
+
+    <!-- =========================================================
+         SCHEDULE TABLE
+    ========================================================== -->
+
+    <div class="schedule-panel">
+
+        <div class="schedule-panel-header">
+
+            <div class="schedule-panel-heading">
+
+                <div class="schedule-panel-icon">
+
+                    <i class="bi bi-list-task"></i>
+
+                </div>
+
+                <div>
+
+                    <h5>
+                        Publishing Schedules
+                    </h5>
+
+                    <p>
+                        Monitor filters, progress, interval and schedule status.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <span class="badge bg-light text-dark border">
+
+                {{ schedules|length }}
+
+                Schedule{{ schedules|length|pluralize }}
+
+            </span>
+
+        </div>
+
+
+        <div class="schedule-panel-body">
+
+            {% if schedules %}
+
+                <div class="schedule-table-wrap">
+
+                    <table class="table table-hover align-middle schedule-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    ID
+                                </th>
+
+                                <th>
+                                    Destination
+                                </th>
+
+                                <th>
+                                    Filters
+                                </th>
+
+                                <th>
+                                    Requested
+                                </th>
+
+                                <th>
+                                    Matched
+                                </th>
+
+                                <th>
+                                    Interval
+                                </th>
+
+                                <th>
+                                    Progress
+                                </th>
+
+                                <th>
+                                    Status
+                                </th>
+
+                                <th>
+                                    Actions
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                        {% for schedule in schedules %}
+
+                            <tr>
+
+
+                                <!-- ID -->
+
+                                <td>
+
+                                    <span class="schedule-id">
+
+                                        #{{ schedule.id }}
+
+                                    </span>
+
+                                </td>
+
+
+                                <!-- DESTINATION -->
+
+                                <td>
+
+                                    <div class="destination-name">
+
+                                        {{ schedule.destination.name }}
+
+                                    </div>
+
+
+                                    {% if schedule.destination.username %}
+
+                                        <div class="destination-username">
+
+                                            {{ schedule.destination.username }}
+
+                                        </div>
+
+                                    {% endif %}
+
+                                </td>
+
+
+                                <!-- FILTERS -->
+
+                                <td>
+
+                                    <div class="filter-summary">
+
+
+                                        {% if schedule.date_from %}
+
+                                            <span class="filter-chip">
+
+                                                <i class="bi bi-calendar3"></i>
+
+                                                From {{ schedule.date_from }}
+
+                                            </span>
+
+                                        {% endif %}
+
+
+                                        {% if schedule.date_to %}
+
+                                            <span class="filter-chip">
+
+                                                <i class="bi bi-calendar3"></i>
+
+                                                To {{ schedule.date_to }}
+
+                                            </span>
+
+                                        {% endif %}
+
+
+                                        {% if schedule.min_price %}
+
+                                            <span class="filter-chip">
+
+                                                <i class="bi bi-currency-rupee"></i>
+
+                                                Min ₹{{ schedule.min_price|floatformat:"-2" }}
+
+                                            </span>
+
+                                        {% endif %}
+
+
+                                        {% if schedule.max_price %}
+
+                                            <span class="filter-chip">
+
+                                                <i class="bi bi-currency-rupee"></i>
+
+                                                Max ₹{{ schedule.max_price|floatformat:"-2" }}
+
+                                            </span>
+
+                                        {% endif %}
+
+
+                                        {% if schedule.min_rating %}
+
+                                            <span class="filter-chip">
+
+                                                ⭐
+                                                Rating {{ schedule.min_rating }}+
+
+                                            </span>
+
+                                        {% endif %}
+
+
+                                        {% if not schedule.date_from and not schedule.date_to and not schedule.min_price and not schedule.max_price and not schedule.min_rating %}
+
+                                            <span class="filter-chip">
+
+                                                No filters
+
+                                            </span>
+
+                                        {% endif %}
+
+                                    </div>
+
+                                </td>
+
+
+                                <!-- REQUESTED -->
+
+                                <td>
+
+                                    <span class="count-value">
+
+                                        {{ schedule.deal_limit }}
+
+                                    </span>
+
+                                    <div
+                                        class="text-muted mt-1"
+                                        style="font-size:8px;"
+                                    >
+
+                                        deals
+
+                                    </div>
+
+                                </td>
+
+
+                                <!-- MATCHED -->
+
+                                <td>
+
+                                    <span class="count-value">
+
+                                        {{ schedule.total_deals }}
+
+                                    </span>
+
+                                </td>
+
+
+                                <!-- INTERVAL -->
+
+                                <td>
+
+                                    <strong>
+
+                                        {{ schedule.interval_seconds }}s
+
+                                    </strong>
+
+                                </td>
+
+
+                                <!-- PROGRESS -->
+
+                                <td>
+
+                                    <div class="progress-value">
+
+                                        {{ schedule.published_count }}
+
+                                        /
+
+                                        {{ schedule.total_deals }}
+
+                                    </div>
+
+
+                                    {% if schedule.failed_count %}
+
+                                        <span class="failed-count">
+
+                                            Failed:
+                                            {{ schedule.failed_count }}
+
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+
+                                <!-- STATUS -->
+
+                                <td>
+
+                                    {% if schedule.status == "running" %}
+
+                                        <span class="schedule-status status-running">
+
+                                            <i class="bi bi-play-fill"></i>
+
+                                            Running
+
+                                        </span>
+
+
+                                    {% elif schedule.status == "pending" %}
+
+                                        <span class="schedule-status status-pending">
+
+                                            <i class="bi bi-hourglass-split"></i>
+
+                                            Pending
+
+                                        </span>
+
+
+                                    {% elif schedule.status == "completed" %}
+
+                                        <span class="schedule-status status-completed">
+
+                                            <i class="bi bi-check-circle-fill"></i>
+
+                                            Completed
+
+                                        </span>
+
+
+                                    {% elif schedule.status == "failed" %}
+
+                                        <span class="schedule-status status-failed">
+
+                                            <i class="bi bi-x-circle-fill"></i>
+
+                                            Failed
+
+                                        </span>
+
+
+                                    {% elif schedule.status == "cancelled" %}
+
+                                        <span class="schedule-status status-cancelled">
+
+                                            <i class="bi bi-slash-circle"></i>
+
+                                            Cancelled
+
+                                        </span>
+
+                                    {% else %}
+
+                                        <span class="badge bg-secondary">
+
+                                            {{ schedule.status|title }}
+
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+
+                                <!-- ACTIONS -->
+
+                                <td>
+
+                                    <a
+                                        href="{% url 'schedule_detail' schedule.id %}"
+                                        class="schedule-action schedule-view"
+                                    >
+
+                                        <i class="bi bi-eye-fill"></i>
+
+                                        View
+
+                                    </a>
+
+
+                                    {% if schedule.status == "running" %}
+
+                                        <a
+                                            href="{% url 'schedule_cancel' schedule.id %}"
+                                            class="schedule-action schedule-cancel"
+                                        >
+
+                                            <i class="bi bi-x-circle-fill"></i>
+
+                                            Cancel
+
+                                        </a>
+
+                                    {% endif %}
+
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+
+            {% else %}
+
+                <div class="schedule-empty">
+
+                    <div class="schedule-empty-icon">
+
+                        <i class="bi bi-calendar2-x"></i>
+
+                    </div>
+
+
+                    <h6>
+                        No schedules created yet
+                    </h6>
+
+
+                    <p>
+                        Create a schedule to filter deals and automatically
+                        publish them through your connected Telegram bot.
+                    </p>
+
+
+                    <a
+                        href="{% url 'create_schedule' %}"
+                        class="btn btn-primary"
+                    >
+
+                        <i class="bi bi-plus-circle me-1"></i>
+
+                        Create First Schedule
+
+                    </a>
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
 </div>
 
-</body>
-
-</html>
+{% endblock %}

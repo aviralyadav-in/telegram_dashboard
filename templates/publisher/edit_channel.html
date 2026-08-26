@@ -1,463 +1,1263 @@
 {% extends "base/base.html" %}
 
 {% block title %}
-Edit Destination
+    Edit Destination
 {% endblock %}
 
-{% block content %}
+
+{% block extra_css %}
 
 <style>
 
-.edit-container {
-    width: 92%;
-    max-width: 900px;
-    margin: 35px auto;
-}
+    /* =========================================================
+       EDIT DESTINATION PAGE
+    ========================================================== */
 
-.card {
-    background: white;
-    padding: 28px;
-    border-radius: 16px;
-    box-shadow: 0 4px 18px rgba(0,0,0,.07);
-}
-
-.card h1 {
-    margin-top: 0;
-}
-
-.subtitle {
-    color: #6b7280;
-    margin-bottom: 25px;
-}
-
-.form-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 18px;
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
-}
-
-.form-group label {
-    font-weight: 600;
-    font-size: 14px;
-}
-
-.form-group input,
-.form-group select,
-.form-group textarea {
-    width: 100%;
-    box-sizing: border-box;
-    padding: 12px;
-    border: 1px solid #d1d5db;
-    border-radius: 9px;
-    font-size: 14px;
-}
-
-.form-group textarea {
-    min-height: 110px;
-    resize: vertical;
-}
-
-.full {
-    grid-column: 1 / -1;
-}
-
-.section {
-    margin-top: 25px;
-    padding-top: 22px;
-    border-top: 1px solid #eee;
-}
-
-.section h3 {
-    margin-top: 0;
-    margin-bottom: 15px;
-}
-
-.checkbox {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    margin: 13px 0;
-    font-size: 14px;
-    cursor: pointer;
-}
-
-.checkbox input {
-    width: 17px;
-    height: 17px;
-    cursor: pointer;
-}
-
-.help-text {
-    color: #6b7280;
-    font-size: 12px;
-    margin: -7px 0 12px 26px;
-}
-
-.actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 25px;
-}
-
-.btn {
-    border: none;
-    padding: 11px 18px;
-    border-radius: 9px;
-    cursor: pointer;
-    text-decoration: none;
-    font-weight: 600;
-}
-
-.btn-primary {
-    background: #2563eb;
-    color: white;
-}
-
-.btn-secondary {
-    background: #e5e7eb;
-    color: #111827;
-}
-
-@media(max-width:700px) {
-
-    .form-grid {
-        grid-template-columns: 1fr;
+    .edit-page {
+        max-width: 1250px;
+        margin: 0 auto;
+        padding-bottom: 35px;
     }
 
-    .full {
-        grid-column: auto;
+
+    /* =========================================================
+       HERO
+    ========================================================== */
+
+    .edit-hero {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+
+        margin-bottom: 22px;
     }
 
-    .actions {
-        flex-direction: column;
+    .edit-hero-left {
+        display: flex;
+        align-items: center;
+        gap: 14px;
     }
 
-}
+    .edit-hero-icon {
+        width: 56px;
+        height: 56px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 16px;
+
+        background:
+            linear-gradient(
+                135deg,
+                #7c3aed,
+                #6d28d9
+            );
+
+        color: #ffffff;
+
+        font-size: 23px;
+
+        box-shadow:
+            0 12px 28px
+            rgba(124,58,237,.20);
+    }
+
+    .edit-hero h1 {
+        margin: 0;
+
+        font-size: 28px;
+        font-weight: 800;
+
+        letter-spacing: -.6px;
+    }
+
+    .edit-hero p {
+        margin: 5px 0 0;
+
+        color: #64748b;
+
+        font-size: 12px;
+    }
+
+    .edit-hero-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+
+    /* =========================================================
+       MAIN CARD
+    ========================================================== */
+
+    .edit-panel {
+        background: #ffffff;
+
+        border:
+            1px solid #e7ebf0;
+
+        border-radius: 18px;
+
+        overflow: hidden;
+
+        box-shadow:
+            0 5px 18px
+            rgba(15,23,42,.05);
+    }
+
+
+    /* =========================================================
+       PANEL HEADER
+    ========================================================== */
+
+    .edit-panel-header {
+        display: flex;
+
+        align-items: center;
+
+        justify-content: space-between;
+
+        gap: 15px;
+
+        padding: 17px 20px;
+
+        border-bottom:
+            1px solid #eef2f7;
+
+        background:
+            linear-gradient(
+                180deg,
+                #ffffff,
+                #fbfcfe
+            );
+    }
+
+    .edit-panel-heading {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+    }
+
+    .edit-panel-icon {
+        width: 37px;
+        height: 37px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 11px;
+
+        background: #f5f3ff;
+
+        color: #7c3aed;
+
+        font-size: 16px;
+    }
+
+    .edit-panel-heading h5 {
+        margin: 0;
+
+        font-size: 15px;
+        font-weight: 800;
+    }
+
+    .edit-panel-heading p {
+        margin: 2px 0 0;
+
+        color: #94a3b8;
+
+        font-size: 10px;
+    }
+
+
+    /* =========================================================
+       FORM BODY
+    ========================================================== */
+
+    .edit-panel-body {
+        padding: 20px;
+    }
+
+
+    /* =========================================================
+       FORM SECTIONS
+    ========================================================== */
+
+    .edit-section {
+        padding: 16px;
+
+        background: #f8fafc;
+
+        border:
+            1px solid #edf1f5;
+
+        border-radius: 14px;
+
+        margin-bottom: 16px;
+    }
+
+    .edit-section-title {
+        display: flex;
+
+        align-items: center;
+
+        gap: 8px;
+
+        margin-bottom: 14px;
+
+        color: #334155;
+
+        font-size: 12px;
+
+        font-weight: 800;
+    }
+
+    .edit-section-title i {
+        color: #7c3aed;
+    }
+
+
+    /* =========================================================
+       FORM
+    ========================================================== */
+
+    .edit-label {
+        display: flex;
+
+        align-items: center;
+
+        gap: 6px;
+
+        margin-bottom: 7px;
+
+        color: #334155;
+
+        font-size: 11px;
+
+        font-weight: 750;
+    }
+
+    .edit-control {
+        width: 100%;
+
+        min-height: 43px;
+
+        padding:
+            9px 11px;
+
+        border:
+            1px solid #dbe2ea;
+
+        border-radius: 10px;
+
+        background: #ffffff;
+
+        color: #1f2937;
+
+        font-size: 12px;
+
+        outline: none;
+
+        transition:
+            border-color .15s ease,
+            box-shadow .15s ease;
+    }
+
+    .edit-control:focus {
+        border-color: #7c3aed;
+
+        box-shadow:
+            0 0 0 4px
+            rgba(124,58,237,.08);
+    }
+
+    textarea.edit-control {
+        min-height: 110px;
+
+        resize: vertical;
+
+        line-height: 1.6;
+    }
+
+    .edit-help {
+        margin-top: 6px;
+
+        color: #94a3b8;
+
+        font-size: 9px;
+
+        line-height: 1.45;
+    }
+
+
+    /* =========================================================
+       STATUS
+    ========================================================== */
+
+    .status-select-wrap {
+        position: relative;
+    }
+
+    .status-badge {
+        display: inline-flex;
+
+        align-items: center;
+
+        gap: 5px;
+
+        margin-top: 8px;
+
+        padding: 5px 8px;
+
+        border-radius: 7px;
+
+        font-size: 9px;
+
+        font-weight: 800;
+    }
+
+    .status-active {
+        background: #f0fdf4;
+        color: #15803d;
+    }
+
+    .status-inactive {
+        background: #f1f5f9;
+        color: #64748b;
+    }
+
+
+    /* =========================================================
+       CHECKBOX SETTINGS
+    ========================================================== */
+
+    .setting-card {
+        height: 100%;
+
+        padding: 13px;
+
+        background: #ffffff;
+
+        border:
+            1px solid #e5e7eb;
+
+        border-radius: 12px;
+
+        transition:
+            border-color .15s ease,
+            box-shadow .15s ease;
+    }
+
+    .setting-card:hover {
+        border-color: #ddd6fe;
+
+        box-shadow:
+            0 5px 15px
+            rgba(15,23,42,.04);
+    }
+
+    .setting-card .form-check {
+        margin: 0;
+    }
+
+    .setting-card .form-check-label {
+        color: #334155;
+
+        font-size: 11px;
+
+        font-weight: 700;
+    }
+
+    .setting-help {
+        margin:
+            6px 0 0 24px;
+
+        color: #94a3b8;
+
+        font-size: 9px;
+
+        line-height: 1.45;
+    }
+
+
+    /* =========================================================
+       BOT INFO
+    ========================================================== */
+
+    .connected-bot-box {
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 11px;
+
+        padding: 12px;
+
+        border:
+            1px solid #dbeafe;
+
+        border-radius: 11px;
+
+        background:
+            linear-gradient(
+                135deg,
+                #eff6ff,
+                #ffffff
+            );
+    }
+
+    .connected-bot-icon {
+
+        width: 38px;
+        height: 38px;
+
+        flex: 0 0 38px;
+
+        display: flex;
+
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 10px;
+
+        background: #ffffff;
+
+        color: #2563eb;
+
+        border:
+            1px solid #dbeafe;
+    }
+
+    .connected-bot-name {
+        font-size: 11px;
+
+        font-weight: 800;
+
+        color: #1e3a8a;
+    }
+
+    .connected-bot-username {
+        margin-top: 2px;
+
+        font-size: 9px;
+
+        color: #64748b;
+    }
+
+
+    /* =========================================================
+       WELCOME PREVIEW
+    ========================================================== */
+
+    .welcome-preview {
+
+        margin-top: 10px;
+
+        padding: 11px;
+
+        border-radius: 10px;
+
+        border:
+            1px solid #e5e7eb;
+
+        background: #ffffff;
+
+        color: #64748b;
+
+        font-size: 10px;
+
+        line-height: 1.6;
+    }
+
+
+    /* =========================================================
+       ACTION BAR
+    ========================================================== */
+
+    .edit-actions {
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: space-between;
+
+        gap: 15px;
+
+        padding-top: 17px;
+
+        border-top:
+            1px solid #eef2f7;
+    }
+
+    .edit-actions-note {
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 6px;
+
+        color: #94a3b8;
+
+        font-size: 9px;
+    }
+
+    .edit-actions-buttons {
+
+        display: flex;
+
+        gap: 8px;
+
+        flex-wrap: wrap;
+    }
+
+
+    /* =========================================================
+       RESPONSIVE
+    ========================================================== */
+
+    @media (max-width: 850px) {
+
+        .edit-hero {
+            flex-direction: column;
+
+            align-items: flex-start;
+        }
+
+        .edit-actions {
+            flex-direction: column;
+
+            align-items: stretch;
+        }
+
+        .edit-actions-buttons {
+            width: 100%;
+        }
+
+        .edit-actions-buttons .btn {
+            flex: 1;
+        }
+
+    }
+
+    @media (max-width: 600px) {
+
+        .edit-hero h1 {
+            font-size: 23px;
+        }
+
+        .edit-panel-body {
+            padding: 14px;
+        }
+
+        .edit-section {
+            padding: 13px;
+        }
+
+    }
 
 </style>
 
-
-<div class="edit-container">
-
-    <div class="card">
-
-        <h1>✏️ Edit Destination</h1>
-
-        <p class="subtitle">
-            Update Telegram channel or group configuration.
-        </p>
+{% endblock %}
 
 
-        <form method="POST">
+{% block content %}
 
-            {% csrf_token %}
-
-
-            <!-- ==================================================
-                 BASIC INFORMATION
-            ================================================== -->
-
-            <div class="form-grid">
-
-                <div class="form-group">
-
-                    <label>Destination Name</label>
-
-                    <input
-                        type="text"
-                        name="name"
-                        value="{{ channel.name }}"
-                        required
-                    >
-
-                </div>
+<div class="edit-page">
 
 
-                <div class="form-group">
+    <!-- =========================================================
+         HEADER
+    ========================================================== -->
 
-                    <label>Destination Type</label>
+    <div class="edit-hero">
 
-                    <select name="chat_type">
+        <div class="edit-hero-left">
 
-                        <option
-                            value="channel"
-                            {% if channel.chat_type == "channel" %}
-                                selected
-                            {% endif %}
-                        >
-                            📢 Channel
-                        </option>
+            <div class="edit-hero-icon">
 
-                        <option
-                            value="group"
-                            {% if channel.chat_type == "group" %}
-                                selected
-                            {% endif %}
-                        >
-                            👥 Group
-                        </option>
+                <i class="bi bi-pencil-square"></i>
 
-                    </select>
+            </div>
 
-                </div>
+            <div>
+
+                <h1>
+                    Edit Destination
+                </h1>
+
+                <p>
+                    Update Telegram channel or group configuration.
+                </p>
+
+            </div>
+
+        </div>
 
 
-                <div class="form-group">
+        <div class="edit-hero-actions">
 
-                    <label>Telegram Username</label>
+            <a
+                href="{% url 'channels' %}"
+                class="btn btn-outline-secondary"
+            >
 
-                    <input
-                        type="text"
-                        name="username"
-                        value="{{ channel.username|default:'' }}"
-                        placeholder="@channelusername"
-                    >
+                <i class="bi bi-arrow-left me-1"></i>
+
+                Back to Channels
+
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         MAIN PANEL
+    ========================================================== -->
+
+    <div class="edit-panel">
+
+
+        <!-- HEADER -->
+
+        <div class="edit-panel-header">
+
+            <div class="edit-panel-heading">
+
+                <div class="edit-panel-icon">
+
+                    <i class="bi bi-sliders2"></i>
 
                 </div>
 
+                <div>
 
-                <div class="form-group">
+                    <h5>
+                        Destination Configuration
+                    </h5>
 
-                    <label>Chat ID</label>
-
-                    <input
-                        type="text"
-                        name="chat_id"
-                        value="{{ channel.chat_id|default:'' }}"
-                        placeholder="-1001234567890"
-                    >
+                    <p>
+                        Manage identity, bot connection, access and publishing settings.
+                    </p>
 
                 </div>
 
+            </div>
 
-                <!-- CONNECTED BOT -->
 
-                <div class="form-group full">
+            {% if channel.status == "active" %}
 
-                    <label>Connected Bot</label>
+                <span class="status-badge status-active">
 
-                    <select name="bot_id">
+                    <i class="bi bi-check-circle-fill"></i>
 
-                        <option value="">
-                            -- No Bot --
-                        </option>
+                    Active
 
-                        {% for bot in bots %}
+                </span>
 
-                            <option
-                                value="{{ bot.id }}"
-                                {% if channel.bot_id == bot.id %}
-                                    selected
-                                {% endif %}
+            {% else %}
+
+                <span class="status-badge status-inactive">
+
+                    <i class="bi bi-pause-circle-fill"></i>
+
+                    Inactive
+
+                </span>
+
+            {% endif %}
+
+        </div>
+
+
+        <!-- BODY -->
+
+        <div class="edit-panel-body">
+
+            <form method="POST">
+
+                {% csrf_token %}
+
+
+                <!-- =================================================
+                     BASIC INFORMATION
+                ================================================== -->
+
+                <div class="edit-section">
+
+                    <div class="edit-section-title">
+
+                        <i class="bi bi-info-circle-fill"></i>
+
+                        Basic Information
+
+                    </div>
+
+
+                    <div class="row g-3">
+
+
+                        <!-- NAME -->
+
+                        <div class="col-md-6">
+
+                            <label class="edit-label">
+
+                                Destination Name
+
+                            </label>
+
+                            <input
+                                type="text"
+                                name="name"
+                                value="{{ channel.name }}"
+                                class="edit-control"
+                                required
                             >
 
-                                {{ bot.name }}
-
-                                {% if bot.username %}
-                                    (@{{ bot.username }})
-                                {% endif %}
-
-                            </option>
-
-                        {% endfor %}
-
-                    </select>
-
-                </div>
+                        </div>
 
 
-                <!-- DESCRIPTION -->
+                        <!-- TYPE -->
 
-                <div class="form-group full">
+                        <div class="col-md-6">
 
-                    <label>Description</label>
+                            <label class="edit-label">
 
-                    <textarea
-                        name="description"
-                    >{{ channel.description|default:'' }}</textarea>
+                                Destination Type
 
-                </div>
+                            </label>
+
+                            <select
+                                name="chat_type"
+                                class="edit-control"
+                            >
+
+                                <option
+                                    value="channel"
+                                    {% if channel.chat_type == "channel" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    📢 Channel
+                                </option>
 
 
-                <!-- STATUS -->
+                                <option
+                                    value="group"
+                                    {% if channel.chat_type == "group" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    👥 Group
+                                </option>
 
-                <div class="form-group">
+                            </select>
 
-                    <label>Status</label>
+                        </div>
 
-                    <select name="status">
 
-                        <option
-                            value="active"
-                            {% if channel.status == "active" %}
-                                selected
+                        <!-- USERNAME -->
+
+                        <div class="col-md-6">
+
+                            <label class="edit-label">
+
+                                Telegram Username
+
+                            </label>
+
+                            <input
+                                type="text"
+                                name="username"
+                                value="{{ channel.username|default:'' }}"
+                                placeholder="@channelusername"
+                                class="edit-control"
+                            >
+
+                            <div class="edit-help">
+
+                                Public Telegram username of the destination.
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- CHAT ID -->
+
+                        <div class="col-md-6">
+
+                            <label class="edit-label">
+
+                                Chat ID
+
+                            </label>
+
+                            <input
+                                type="text"
+                                name="chat_id"
+                                value="{{ channel.chat_id|default:'' }}"
+                                placeholder="-1001234567890"
+                                class="edit-control"
+                            >
+
+                            <div class="edit-help">
+
+                                Telegram numeric Chat ID.
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- CONNECTED BOT -->
+
+                        <div class="col-12">
+
+                            <label class="edit-label">
+
+                                Connected Bot
+
+                            </label>
+
+
+                            <select
+                                name="bot_id"
+                                class="edit-control"
+                            >
+
+                                <option value="">
+
+                                    -- No Bot --
+
+                                </option>
+
+
+                                {% for bot in bots %}
+
+                                    <option
+                                        value="{{ bot.id }}"
+                                        {% if channel.bot_id == bot.id %}
+                                            selected
+                                        {% endif %}
+                                    >
+
+                                        {{ bot.name }}
+
+                                        {% if bot.username %}
+
+                                            (@{{ bot.username|cut:"@" }})
+
+                                        {% endif %}
+
+                                    </option>
+
+                                {% endfor %}
+
+                            </select>
+
+
+                            {% if channel.bot %}
+
+                                <div class="connected-bot-box mt-3">
+
+                                    <div class="connected-bot-icon">
+
+                                        <i class="bi bi-robot"></i>
+
+                                    </div>
+
+                                    <div>
+
+                                        <div class="connected-bot-name">
+
+                                            {{ channel.bot.name }}
+
+                                        </div>
+
+                                        <div class="connected-bot-username">
+
+                                            {% if channel.bot.username %}
+
+                                                @{{ channel.bot.username|cut:"@" }}
+
+                                            {% else %}
+
+                                                Bot username unavailable
+
+                                            {% endif %}
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
                             {% endif %}
-                        >
-                            Active
-                        </option>
 
-                        <option
-                            value="inactive"
-                            {% if channel.status == "inactive" %}
-                                selected
+                        </div>
+
+
+                        <!-- DESCRIPTION -->
+
+                        <div class="col-12">
+
+                            <label class="edit-label">
+
+                                Description
+
+                            </label>
+
+                            <textarea
+                                name="description"
+                                class="edit-control"
+                                placeholder="Optional destination description..."
+                            >{{ channel.description|default:'' }}</textarea>
+
+                        </div>
+
+
+                        <!-- STATUS -->
+
+                        <div class="col-md-6">
+
+                            <label class="edit-label">
+
+                                Status
+
+                            </label>
+
+                            <select
+                                name="status"
+                                class="edit-control"
+                            >
+
+                                <option
+                                    value="active"
+                                    {% if channel.status == "active" %}
+                                        selected
+                                    {% endif %}
+                                >
+
+                                    Active
+
+                                </option>
+
+
+                                <option
+                                    value="inactive"
+                                    {% if channel.status == "inactive" %}
+                                        selected
+                                    {% endif %}
+                                >
+
+                                    Inactive
+
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     USER ACCESS
+                ================================================== -->
+
+                <div class="edit-section">
+
+                    <div class="edit-section-title">
+
+                        <i class="bi bi-people-fill"></i>
+
+                        User Access Control
+
+                    </div>
+
+
+                    <div class="row g-3">
+
+
+                        <div class="col-md-6">
+
+                            <div class="setting-card">
+
+                                <div class="form-check">
+
+                                    <input
+                                        type="checkbox"
+                                        name="auto_allow_users"
+                                        class="form-check-input"
+                                        id="auto_allow_users"
+                                        {% if channel.auto_allow_users %}
+                                            checked
+                                        {% endif %}
+                                    >
+
+                                    <label
+                                        class="form-check-label"
+                                        for="auto_allow_users"
+                                    >
+
+                                        Automatically allow new users
+
+                                    </label>
+
+                                </div>
+
+
+                                <div class="setting-help">
+
+                                    New users detected by the Telegram listener
+                                    can automatically be allowed.
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="col-md-6">
+
+                            <div class="setting-card">
+
+                                <div class="form-check">
+
+                                    <input
+                                        type="checkbox"
+                                        name="allow_direct_messages"
+                                        class="form-check-input"
+                                        id="allow_direct_messages"
+                                        {% if channel.allow_direct_messages %}
+                                            checked
+                                        {% endif %}
+                                    >
+
+                                    <label
+                                        class="form-check-label"
+                                        for="allow_direct_messages"
+                                    >
+
+                                        Allow direct messages to bot
+
+                                    </label>
+
+                                </div>
+
+
+                                <div class="setting-help">
+
+                                    Controls whether users can interact
+                                    with the bot through private chat.
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     PUBLISHING
+                ================================================== -->
+
+                <div class="edit-section">
+
+                    <div class="edit-section-title">
+
+                        <i class="bi bi-rocket-takeoff-fill"></i>
+
+                        Publishing Settings
+
+                    </div>
+
+
+                    <div class="row g-3">
+
+
+                        <div class="col-md-6">
+
+                            <div class="setting-card">
+
+                                <div class="form-check">
+
+                                    <input
+                                        type="checkbox"
+                                        name="auto_publish_deals"
+                                        class="form-check-input"
+                                        id="auto_publish_deals"
+                                        {% if channel.auto_publish_deals %}
+                                            checked
+                                        {% endif %}
+                                    >
+
+                                    <label
+                                        class="form-check-label"
+                                        for="auto_publish_deals"
+                                    >
+
+                                        Automatically publish deals
+
+                                    </label>
+
+                                </div>
+
+
+                                <div class="setting-help">
+
+                                    Newly created deals can automatically
+                                    be published to this destination.
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="col-md-6">
+
+                            <div class="setting-card">
+
+                                <div class="form-check">
+
+                                    <input
+                                        type="checkbox"
+                                        name="send_welcome_message"
+                                        class="form-check-input"
+                                        id="send_welcome_message"
+                                        {% if channel.send_welcome_message %}
+                                            checked
+                                        {% endif %}
+                                    >
+
+                                    <label
+                                        class="form-check-label"
+                                        for="send_welcome_message"
+                                    >
+
+                                        Send welcome message
+
+                                    </label>
+
+                                </div>
+
+
+                                <div class="setting-help">
+
+                                    Send the configured welcome message
+                                    when a user joins or is detected.
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="col-12">
+
+                            <label class="edit-label">
+
+                                Welcome Message
+
+                            </label>
+
+                            <textarea
+                                name="welcome_message"
+                                class="edit-control"
+                                placeholder="Enter welcome message..."
+                            >{{ channel.welcome_message|default:'' }}</textarea>
+
+
+                            {% if channel.welcome_message %}
+
+                                <div class="welcome-preview">
+
+                                    <strong>
+                                        Current message:
+                                    </strong>
+
+                                    <div class="mt-1">
+                                        {{ channel.welcome_message|linebreaksbr }}
+                                    </div>
+
+                                </div>
+
                             {% endif %}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     ACTIONS
+                ================================================== -->
+
+                <div class="edit-actions">
+
+                    <div class="edit-actions-note">
+
+                        <i class="bi bi-shield-check"></i>
+
+                        Changes are applied when you save the destination.
+
+                    </div>
+
+
+                    <div class="edit-actions-buttons">
+
+                        <a
+                            href="{% url 'channels' %}"
+                            class="btn btn-outline-secondary"
                         >
-                            Inactive
-                        </option>
 
-                    </select>
+                            <i class="bi bi-x-circle me-1"></i>
 
-                </div>
+                            Cancel
 
-            </div>
+                        </a>
 
 
-            <!-- ==================================================
-                 USER ACCESS CONTROL
-            ================================================== -->
+                        <button
+                            type="submit"
+                            class="btn btn-primary"
+                        >
 
-            <div class="section">
+                            <i class="bi bi-check2-circle me-1"></i>
 
-                <h3>👤 User Access Control</h3>
+                            Save Changes
 
+                        </button>
 
-                <label class="checkbox">
-
-                    <input
-                        type="checkbox"
-                        name="auto_allow_users"
-                        {% if channel.auto_allow_users %}
-                            checked
-                        {% endif %}
-                    >
-
-                    Automatically allow new users
-
-                </label>
-
-                <p class="help-text">
-                    New users detected by the Telegram listener
-                    will automatically be allowed to send messages.
-                </p>
-
-
-                <label class="checkbox">
-
-                    <input
-                        type="checkbox"
-                        name="allow_direct_messages"
-                        {% if channel.allow_direct_messages %}
-                            checked
-                        {% endif %}
-                    >
-
-                    Allow direct messages to the bot
-
-                </label>
-
-                <p class="help-text">
-                    Controls whether an allowed Telegram user can
-                    interact with the connected bot through private messages.
-                </p>
-
-            </div>
-
-
-            <!-- ==================================================
-                 PUBLISHING SETTINGS
-            ================================================== -->
-
-            <div class="section">
-
-                <h3>🚀 Publishing Settings</h3>
-
-
-                <label class="checkbox">
-
-                    <input
-                        type="checkbox"
-                        name="auto_publish_deals"
-                        {% if channel.auto_publish_deals %}
-                            checked
-                        {% endif %}
-                    >
-
-                    Automatically publish deals
-
-                </label>
-
-                <p class="help-text">
-                    When enabled, newly created deals can be
-                    automatically published to this destination.
-                </p>
-
-
-                <label class="checkbox">
-
-                    <input
-                        type="checkbox"
-                        name="send_welcome_message"
-                        {% if channel.send_welcome_message %}
-                            checked
-                        {% endif %}
-                    >
-
-                    Send welcome message
-
-                </label>
-
-                <p class="help-text">
-                    Send the configured welcome message when a
-                    new user is detected.
-                </p>
-
-
-                <div class="form-group full">
-
-                    <label>
-                        Welcome Message
-                    </label>
-
-                    <textarea
-                        name="welcome_message"
-                        placeholder="Enter welcome message..."
-                    >{{ channel.welcome_message|default:'' }}</textarea>
+                    </div>
 
                 </div>
 
-            </div>
+            </form>
 
-
-            <!-- ==================================================
-                 ACTIONS
-            ================================================== -->
-
-            <div class="actions">
-
-                <button
-                    type="submit"
-                    class="btn btn-primary"
-                >
-                    💾 Save Changes
-                </button>
-
-
-                <a
-                    href="{% url 'channels' %}"
-                    class="btn btn-secondary"
-                >
-                    Cancel
-                </a>
-
-            </div>
-
-        </form>
+        </div>
 
     </div>
 

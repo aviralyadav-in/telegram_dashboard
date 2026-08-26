@@ -1,35 +1,996 @@
 {% extends "base/base.html" %}
 
+{% block title %}
+    Telegram Channels & Groups
+{% endblock %}
+
+
+{% block extra_css %}
+
+<style>
+
+    /* =========================================================
+       CHANNEL PAGE
+    ========================================================== */
+
+    .channels-page {
+        max-width: 1550px;
+        margin: 0 auto;
+        padding-bottom: 30px;
+    }
+
+
+    /* =========================================================
+       HERO
+    ========================================================== */
+
+    .channels-hero {
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: space-between;
+
+        gap: 20px;
+
+        margin-bottom: 24px;
+    }
+
+
+    .channels-hero-left {
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 14px;
+    }
+
+
+    .channels-hero-icon {
+
+        width: 56px;
+        height: 56px;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        border-radius: 16px;
+
+        background:
+            linear-gradient(
+                135deg,
+                #2563eb,
+                #1d4ed8
+            );
+
+        color: #ffffff;
+
+        font-size: 23px;
+
+        box-shadow:
+            0 12px 28px
+            rgba(37,99,235,.20);
+    }
+
+
+    .channels-hero h1 {
+
+        margin: 0;
+
+        font-size: 28px;
+
+        font-weight: 800;
+
+        letter-spacing: -.65px;
+    }
+
+
+    .channels-hero p {
+
+        margin: 5px 0 0;
+
+        color: #64748b;
+
+        font-size: 12px;
+    }
+
+
+    .channels-actions {
+
+        display: flex;
+
+        gap: 8px;
+
+        flex-wrap: wrap;
+    }
+
+
+    /* =========================================================
+       STAT GRID
+    ========================================================== */
+
+    .channel-stat-grid {
+
+        display: grid;
+
+        grid-template-columns:
+            repeat(4, minmax(0, 1fr));
+
+        gap: 14px;
+
+        margin-bottom: 24px;
+    }
+
+
+    .channel-stat {
+
+        position: relative;
+
+        min-height: 125px;
+
+        padding: 17px;
+
+        overflow: hidden;
+
+        background: #ffffff;
+
+        border:
+            1px solid #e7ebf0;
+
+        border-radius: 16px;
+
+        box-shadow:
+            0 4px 15px
+            rgba(15,23,42,.045);
+
+        transition:
+            transform .18s ease,
+            box-shadow .18s ease;
+    }
+
+
+    .channel-stat:hover {
+
+        transform:
+            translateY(-3px);
+
+        box-shadow:
+            0 12px 28px
+            rgba(15,23,42,.075);
+    }
+
+
+    .channel-stat-top {
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: space-between;
+    }
+
+
+    .channel-stat-icon {
+
+        width: 43px;
+        height: 43px;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        border-radius: 12px;
+
+        font-size: 18px;
+    }
+
+
+    .icon-blue {
+        color: #2563eb;
+        background: #eff6ff;
+    }
+
+
+    .icon-purple {
+        color: #7c3aed;
+        background: #f5f3ff;
+    }
+
+
+    .icon-green {
+        color: #16a34a;
+        background: #f0fdf4;
+    }
+
+
+    .icon-orange {
+        color: #ea580c;
+        background: #fff7ed;
+    }
+
+
+    .channel-stat-mini {
+
+        color: #94a3b8;
+
+        font-size: 9px;
+
+        font-weight: 750;
+    }
+
+
+    .channel-stat-label {
+
+        margin-top: 15px;
+
+        color: #64748b;
+
+        font-size: 10px;
+
+        font-weight: 800;
+
+        text-transform: uppercase;
+
+        letter-spacing: .55px;
+    }
+
+
+    .channel-stat-value {
+
+        margin-top: 2px;
+
+        color: #0f172a;
+
+        font-size: 27px;
+
+        font-weight: 800;
+    }
+
+
+    /* =========================================================
+       PANEL
+    ========================================================== */
+
+    .channel-panel {
+
+        margin-bottom: 20px;
+
+        overflow: hidden;
+
+        background: #ffffff;
+
+        border:
+            1px solid #e7ebf0;
+
+        border-radius: 17px;
+
+        box-shadow:
+            0 4px 16px
+            rgba(15,23,42,.045);
+    }
+
+
+    .channel-panel-header {
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: space-between;
+
+        gap: 15px;
+
+        padding:
+            16px 18px;
+
+        border-bottom:
+            1px solid #eef2f7;
+
+        background:
+            linear-gradient(
+                180deg,
+                #ffffff,
+                #fbfcfe
+            );
+    }
+
+
+    .channel-panel-heading {
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 10px;
+    }
+
+
+    .channel-panel-icon {
+
+        width: 37px;
+        height: 37px;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        border-radius: 11px;
+
+        color: #2563eb;
+
+        background: #eff6ff;
+
+        font-size: 16px;
+    }
+
+
+    .channel-panel-heading h5 {
+
+        margin: 0;
+
+        font-size: 15px;
+
+        font-weight: 800;
+    }
+
+
+    .channel-panel-heading p {
+
+        margin: 2px 0 0;
+
+        color: #94a3b8;
+
+        font-size: 10px;
+    }
+
+
+    .channel-panel-body {
+
+        padding: 18px;
+    }
+
+
+    /* =========================================================
+       BOT CARDS
+    ========================================================== */
+
+    .bot-card {
+
+        height: 100%;
+
+        padding: 17px;
+
+        background: #ffffff;
+
+        border:
+            1px solid #e5e7eb;
+
+        border-radius: 15px;
+
+        transition:
+            transform .18s ease,
+            box-shadow .18s ease,
+            border-color .18s ease;
+    }
+
+
+    .bot-card:hover {
+
+        transform:
+            translateY(-3px);
+
+        border-color:
+            #dbeafe;
+
+        box-shadow:
+            0 12px 28px
+            rgba(15,23,42,.075);
+    }
+
+
+    .bot-top {
+
+        display: flex;
+
+        justify-content: space-between;
+
+        align-items: flex-start;
+
+        gap: 10px;
+    }
+
+
+    .bot-info {
+
+        display: flex;
+
+        gap: 10px;
+    }
+
+
+    .bot-avatar {
+
+        width: 42px;
+        height: 42px;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        border-radius: 12px;
+
+        color: #2563eb;
+
+        background: #eff6ff;
+
+        font-size: 18px;
+    }
+
+
+    .bot-name {
+
+        margin: 0;
+
+        font-size: 13px;
+
+        font-weight: 800;
+    }
+
+
+    .bot-username {
+
+        margin-top: 2px;
+
+        color: #64748b;
+
+        font-size: 10px;
+    }
+
+
+    .bot-details {
+
+        display: grid;
+
+        grid-template-columns:
+            1fr 1fr;
+
+        gap: 8px;
+
+        margin-top: 15px;
+    }
+
+
+    .bot-detail {
+
+        padding: 9px;
+
+        border-radius: 9px;
+
+        background: #f8fafc;
+
+        border:
+            1px solid #edf1f5;
+    }
+
+
+    .bot-detail-label {
+
+        display: block;
+
+        color: #94a3b8;
+
+        font-size: 8px;
+
+        font-weight: 800;
+
+        text-transform:
+            uppercase;
+
+        letter-spacing: .45px;
+    }
+
+
+    .bot-detail-value {
+
+        display: block;
+
+        margin-top: 2px;
+
+        color: #334155;
+
+        font-size: 10px;
+
+        font-weight: 700;
+    }
+
+
+    .bot-actions {
+
+        display: flex;
+
+        justify-content: flex-end;
+
+        margin-top: 13px;
+    }
+
+
+    /* =========================================================
+       DESTINATION CARD
+    ========================================================== */
+
+    .destination-card {
+
+        height: 100%;
+
+        padding: 18px;
+
+        background: #ffffff;
+
+        border:
+            1px solid #e5e7eb;
+
+        border-radius: 16px;
+
+        transition:
+            transform .18s ease,
+            box-shadow .18s ease,
+            border-color .18s ease;
+    }
+
+
+    .destination-card:hover {
+
+        transform:
+            translateY(-4px);
+
+        border-color:
+            #dbeafe;
+
+        box-shadow:
+            0 13px 30px
+            rgba(15,23,42,.08);
+    }
+
+
+    .destination-top {
+
+        display: flex;
+
+        align-items: flex-start;
+
+        justify-content: space-between;
+
+        gap: 12px;
+    }
+
+
+    .destination-title-wrap {
+
+        display: flex;
+
+        gap: 11px;
+    }
+
+
+    .destination-avatar {
+
+        width: 43px;
+        height: 43px;
+
+        flex: 0 0 43px;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        border-radius: 12px;
+
+        color: #2563eb;
+
+        background: #eff6ff;
+
+        font-size: 18px;
+    }
+
+
+    .destination-title {
+
+        margin: 0;
+
+        font-size: 14px;
+
+        font-weight: 800;
+    }
+
+
+    .destination-subtitle {
+
+        margin-top: 3px;
+
+        color: #64748b;
+
+        font-size: 10px;
+    }
+
+
+    .destination-details {
+
+        display: grid;
+
+        grid-template-columns:
+            1fr 1fr;
+
+        gap: 8px;
+
+        margin-top: 15px;
+    }
+
+
+    .destination-detail {
+
+        padding: 9px;
+
+        border-radius: 10px;
+
+        background: #f8fafc;
+
+        border:
+            1px solid #edf1f5;
+    }
+
+
+    .destination-detail small {
+
+        display: block;
+
+        color: #94a3b8;
+
+        font-size: 8px;
+
+        font-weight: 800;
+
+        text-transform:
+            uppercase;
+
+        letter-spacing: .4px;
+    }
+
+
+    .destination-detail strong {
+
+        display: block;
+
+        margin-top: 2px;
+
+        color: #334155;
+
+        font-size: 10px;
+
+        font-weight: 700;
+
+        word-break: break-word;
+    }
+
+
+    .destination-badges {
+
+        display: flex;
+
+        flex-wrap: wrap;
+
+        gap: 5px;
+
+        margin-top: 13px;
+    }
+
+
+    .destination-setting {
+
+        display: inline-flex;
+
+        align-items: center;
+
+        gap: 4px;
+
+        padding:
+            5px 7px;
+
+        border-radius: 7px;
+
+        font-size: 8px;
+
+        font-weight: 800;
+    }
+
+
+    .setting-on {
+
+        color: #15803d;
+
+        background: #f0fdf4;
+    }
+
+
+    .setting-off {
+
+        color: #64748b;
+
+        background: #f1f5f9;
+    }
+
+
+    .setting-blue {
+
+        color: #2563eb;
+
+        background: #eff6ff;
+    }
+
+
+    .welcome-preview {
+
+        margin-top: 12px;
+
+        padding: 10px;
+
+        border-radius: 10px;
+
+        border:
+            1px solid #e8edf3;
+
+        background: #f8fafc;
+
+        color: #64748b;
+
+        font-size: 9px;
+
+        line-height: 1.55;
+    }
+
+
+    .destination-actions {
+
+        display: flex;
+
+        flex-wrap: wrap;
+
+        gap: 6px;
+
+        margin-top: 14px;
+    }
+
+
+    /* =========================================================
+       MODERN TABLE
+    ========================================================== */
+
+    .table-wrap {
+
+        overflow-x: auto;
+
+        border:
+            1px solid #edf1f5;
+
+        border-radius: 12px;
+    }
+
+
+    .modern-table {
+
+        min-width:
+            720px;
+    }
+
+
+    .user-mini {
+
+        width: 30px;
+        height: 30px;
+
+        display: inline-flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        margin-right: 7px;
+
+        border-radius: 9px;
+
+        background: #eff6ff;
+
+        color: #2563eb;
+
+        font-size: 10px;
+
+        font-weight: 800;
+    }
+
+
+    /* =========================================================
+       EMPTY
+    ========================================================== */
+
+    .empty-state {
+
+        padding:
+            50px 20px;
+
+        text-align:
+            center;
+    }
+
+
+    .empty-icon {
+
+        width: 58px;
+        height: 58px;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        margin:
+            0 auto 13px;
+
+        border-radius:
+            17px;
+
+        color: #64748b;
+
+        background: #f1f5f9;
+
+        font-size: 23px;
+    }
+
+
+    .empty-state h6 {
+
+        margin: 0 0 4px;
+
+        font-size: 13px;
+
+        font-weight: 800;
+    }
+
+
+    .empty-state p {
+
+        margin: 0;
+
+        color: #94a3b8;
+
+        font-size: 10px;
+    }
+
+
+    /* =========================================================
+       RESPONSIVE
+    ========================================================== */
+
+    @media(max-width: 1050px) {
+
+        .channel-stat-grid {
+
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+        }
+
+    }
+
+
+    @media(max-width: 800px) {
+
+        .channels-hero {
+
+            flex-direction:
+                column;
+
+            align-items:
+                flex-start;
+        }
+
+    }
+
+
+    @media(max-width: 600px) {
+
+        .channel-stat-grid {
+
+            grid-template-columns:
+                1fr;
+        }
+
+        .destination-details,
+        .bot-details {
+
+            grid-template-columns:
+                1fr;
+        }
+
+        .channels-hero h1 {
+
+            font-size:
+                23px;
+        }
+
+    }
+
+</style>
+
+{% endblock %}
+
+
 {% block content %}
 
-<div class="container-fluid py-4">
+<div class="channels-page">
 
-    <!-- ============================================================
+
+    <!-- =========================================================
          HEADER
-    ============================================================= -->
+    ========================================================== -->
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="channels-hero">
 
-        <div>
-            <h2 class="fw-bold mb-1">
-                Telegram Channels & Groups
-            </h2>
+        <div class="channels-hero-left">
 
-            <p class="text-muted mb-0">
-                Manage bots, destinations, users and permissions.
-            </p>
+            <div class="channels-hero-icon">
+                <i class="bi bi-telegram"></i>
+            </div>
+
+            <div>
+
+                <h1>
+                    Telegram Channels & Groups
+                </h1>
+
+                <p>
+                    Manage bots, destinations, users, permissions and publishing.
+                </p>
+
+            </div>
+
         </div>
 
-        <div class="d-flex gap-2">
 
-            <a href="{% url 'publish-page' %}"
-               class="btn btn-primary">
+        <div class="channels-actions">
+
+            <a
+                href="{% url 'publish-page' %}"
+                class="btn btn-primary btn-sm"
+            >
+
+                <i class="bi bi-rocket-takeoff me-1"></i>
+
                 Publish Deals
+
             </a>
 
-            <a href="{% url 'activity-history' %}"
-               class="btn btn-outline-secondary">
+
+            <a
+                href="{% url 'activity-history' %}"
+                class="btn btn-outline-secondary btn-sm"
+            >
+
+                <i class="bi bi-clock-history me-1"></i>
+
                 Activity History
+
             </a>
 
         </div>
@@ -37,15 +998,16 @@
     </div>
 
 
-    <!-- ============================================================
-         DJANGO MESSAGES
-    ============================================================= -->
+    <!-- =========================================================
+         MESSAGES
+    ========================================================== -->
 
     {% if messages %}
 
         {% for message in messages %}
 
-            <div class="alert
+            <div
+                class="alert
                 {% if message.tags == 'error' %}
                     alert-danger
                 {% elif message.tags == 'warning' %}
@@ -54,14 +1016,15 @@
                     alert-success
                 {% endif %}
                 alert-dismissible fade show"
-                role="alert">
+            >
 
                 {{ message }}
 
-                <button type="button"
-                        class="btn-close"
-                        data-bs-dismiss="alert">
-                </button>
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"
+                ></button>
 
             </div>
 
@@ -70,91 +1033,107 @@
     {% endif %}
 
 
-    <!-- ============================================================
+    <!-- =========================================================
          STATISTICS
-    ============================================================= -->
+    ========================================================== -->
 
-    <div class="row g-3 mb-4">
+    <div class="channel-stat-grid">
 
-        <div class="col-md-3">
+        <div class="channel-stat">
 
-            <div class="card shadow-sm border-0 h-100">
+            <div class="channel-stat-top">
 
-                <div class="card-body">
-
-                    <small class="text-muted">
-                        Connected Bots
-                    </small>
-
-                    <h3 class="fw-bold mb-0">
-                        {{ bots|length }}
-                    </h3>
-
+                <div class="channel-stat-icon icon-blue">
+                    <i class="bi bi-robot"></i>
                 </div>
 
+                <span class="channel-stat-mini">
+                    Connected
+                </span>
+
+            </div>
+
+            <div class="channel-stat-label">
+                Telegram Bots
+            </div>
+
+            <div class="channel-stat-value">
+                {{ bots|length }}
             </div>
 
         </div>
 
 
-        <div class="col-md-3">
+        <div class="channel-stat">
 
-            <div class="card shadow-sm border-0 h-100">
+            <div class="channel-stat-top">
 
-                <div class="card-body">
-
-                    <small class="text-muted">
-                        Destinations
-                    </small>
-
-                    <h3 class="fw-bold mb-0">
-                        {{ channels|length }}
-                    </h3>
-
+                <div class="channel-stat-icon icon-purple">
+                    <i class="bi bi-megaphone-fill"></i>
                 </div>
 
+                <span class="channel-stat-mini">
+                    Managed
+                </span>
+
+            </div>
+
+            <div class="channel-stat-label">
+                Destinations
+            </div>
+
+            <div class="channel-stat-value">
+                {{ channels|length }}
             </div>
 
         </div>
 
 
-        <div class="col-md-3">
+        <div class="channel-stat">
 
-            <div class="card shadow-sm border-0 h-100">
+            <div class="channel-stat-top">
 
-                <div class="card-body">
-
-                    <small class="text-muted">
-                        Telegram Users
-                    </small>
-
-                    <h3 class="fw-bold mb-0">
-                        {{ users|length }}
-                    </h3>
-
+                <div class="channel-stat-icon icon-green">
+                    <i class="bi bi-people-fill"></i>
                 </div>
 
+                <span class="channel-stat-mini">
+                    Tracked
+                </span>
+
+            </div>
+
+            <div class="channel-stat-label">
+                Telegram Users
+            </div>
+
+            <div class="channel-stat-value">
+                {{ users|length }}
             </div>
 
         </div>
 
 
-        <div class="col-md-3">
+        <div class="channel-stat">
 
-            <div class="card shadow-sm border-0 h-100">
+            <div class="channel-stat-top">
 
-                <div class="card-body">
-
-                    <small class="text-muted">
-                        Permissions
-                    </small>
-
-                    <h3 class="fw-bold mb-0">
-                        {{ permissions|length }}
-                    </h3>
-
+                <div class="channel-stat-icon icon-orange">
+                    <i class="bi bi-shield-check"></i>
                 </div>
 
+                <span class="channel-stat-mini">
+                    Access
+                </span>
+
+            </div>
+
+            <div class="channel-stat-label">
+                Permissions
+            </div>
+
+            <div class="channel-stat-value">
+                {{ permissions|length }}
             </div>
 
         </div>
@@ -162,65 +1141,93 @@
     </div>
 
 
+    <!-- =========================================================
+         CONNECT BOT
+    ========================================================== -->
 
-    <!-- ============================================================
-         CONNECT TELEGRAM BOT
-    ============================================================= -->
+    <div class="channel-panel">
 
-    <div class="card shadow-sm border-0 mb-4">
+        <div class="channel-panel-header">
 
-        <div class="card-header bg-white">
+            <div class="channel-panel-heading">
 
-            <h5 class="mb-0 fw-bold">
-                Connect Telegram Bot
-            </h5>
+                <div class="channel-panel-icon">
+                    <i class="bi bi-robot"></i>
+                </div>
+
+                <div>
+
+                    <h5>
+                        Connect Telegram Bot
+                    </h5>
+
+                    <p>
+                        Add a bot token to enable Telegram automation.
+                    </p>
+
+                </div>
+
+            </div>
 
         </div>
 
-        <div class="card-body">
 
-            <form method="post"
-                  action="{% url 'add-bot' %}">
+        <div class="channel-panel-body">
+
+            <form
+                method="post"
+                action="{% url 'add-bot' %}"
+            >
 
                 {% csrf_token %}
 
-                <div class="row g-3">
+                <div class="row g-3 align-items-end">
 
-                    <div class="col-md-4">
+                    <div class="col-lg-4">
 
-                        <label class="form-label">
+                        <label class="form-label fw-semibold small">
                             Bot Name
                         </label>
 
-                        <input type="text"
-                               name="name"
-                               class="form-control"
-                               placeholder="My Telegram Bot"
-                               required>
+                        <input
+                            type="text"
+                            name="name"
+                            class="form-control"
+                            placeholder="Telegram Deals Publisher"
+                            required
+                        >
 
                     </div>
 
 
-                    <div class="col-md-6">
+                    <div class="col-lg-6">
 
-                        <label class="form-label">
+                        <label class="form-label fw-semibold small">
                             Bot Token
                         </label>
 
-                        <input type="text"
-                               name="bot_token"
-                               class="form-control"
-                               placeholder="123456:ABC..."
-                               required>
+                        <input
+                            type="text"
+                            name="bot_token"
+                            class="form-control"
+                            placeholder="123456:ABC..."
+                            required
+                        >
 
                     </div>
 
 
-                    <div class="col-md-2 d-flex align-items-end">
+                    <div class="col-lg-2">
 
-                        <button type="submit"
-                                class="btn btn-primary w-100">
-                            Connect Bot
+                        <button
+                            type="submit"
+                            class="btn btn-primary w-100"
+                        >
+
+                            <i class="bi bi-link-45deg me-1"></i>
+
+                            Connect
+
                         </button>
 
                     </div>
@@ -234,133 +1241,192 @@
     </div>
 
 
-
-    <!-- ============================================================
+    <!-- =========================================================
          CONNECTED BOTS
-    ============================================================= -->
+    ========================================================== -->
 
-    <div class="card shadow-sm border-0 mb-4">
+    <div class="channel-panel">
 
-        <div class="card-header bg-white">
+        <div class="channel-panel-header">
 
-            <h5 class="mb-0 fw-bold">
-                Connected Bots
-            </h5>
+            <div class="channel-panel-heading">
+
+                <div class="channel-panel-icon">
+                    <i class="bi bi-hdd-network-fill"></i>
+                </div>
+
+                <div>
+
+                    <h5>
+                        Connected Bots
+                    </h5>
+
+                    <p>
+                        Telegram bot identities currently connected to your system.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <span class="badge bg-light text-dark border">
+                {{ bots|length }}
+                Bot{{ bots|length|pluralize }}
+            </span>
 
         </div>
 
-        <div class="card-body">
+
+        <div class="channel-panel-body">
 
             {% if bots %}
 
-                <div class="table-responsive">
+                <div class="row g-3">
 
-                    <table class="table align-middle">
+                    {% for bot in bots %}
 
-                        <thead>
+                        <div class="col-xl-4 col-lg-6">
 
-                            <tr>
-                                <th>Name</th>
-                                <th>Username</th>
-                                <th>Bot ID</th>
-                                <th>Status</th>
-                                <th class="text-end">Action</th>
-                            </tr>
+                            <div class="bot-card">
 
-                        </thead>
+                                <div class="bot-top">
 
-                        <tbody>
+                                    <div class="bot-info">
 
-                            {% for bot in bots %}
+                                        <div class="bot-avatar">
 
-                                <tr>
+                                            <i class="bi bi-robot"></i>
 
-                                    <td>
-                                        <strong>
-                                            {{ bot.name }}
+                                        </div>
+
+
+                                        <div>
+
+                                            <h6 class="bot-name">
+                                                {{ bot.name }}
+                                            </h6>
+
+                                            <div class="bot-username">
+
+                                                {% if bot.username %}
+
+                                                    @{{ bot.username|cut:"@" }}
+
+                                                {% else %}
+
+                                                    Username unavailable
+
+                                                {% endif %}
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+
+                                    {% if bot.status == "active" %}
+
+                                        <span class="badge bg-success">
+                                            Active
+                                        </span>
+
+                                    {% elif bot.status == "inactive" %}
+
+                                        <span class="badge bg-secondary">
+                                            Inactive
+                                        </span>
+
+                                    {% else %}
+
+                                        <span class="badge bg-danger">
+                                            {{ bot.status|title }}
+                                        </span>
+
+                                    {% endif %}
+
+                                </div>
+
+
+                                <div class="bot-details">
+
+                                    <div class="bot-detail">
+
+                                        <span class="bot-detail-label">
+                                            Bot ID
+                                        </span>
+
+                                        <strong class="bot-detail-value">
+                                            {{ bot.bot_id|default:"—" }}
                                         </strong>
-                                    </td>
+
+                                    </div>
 
 
-                                    <td>
+                                    <div class="bot-detail">
 
-                                        {% if bot.username %}
+                                        <span class="bot-detail-label">
+                                            Created
+                                        </span>
 
-                                            @{{ bot.username|cut:"@" }}
+                                        <strong class="bot-detail-value">
+                                            {{ bot.created_at|date:"d M Y" }}
+                                        </strong>
 
-                                        {% else %}
+                                    </div>
 
-                                            —
-
-                                        {% endif %}
-
-                                    </td>
-
-
-                                    <td>
-                                        {{ bot.bot_id|default:"—" }}
-                                    </td>
+                                </div>
 
 
-                                    <td>
+                                <div class="bot-actions">
 
-                                        {% if bot.status == "active" %}
+                                    <form
+                                        method="post"
+                                        action="{% url 'delete-bot' bot.id %}"
+                                        onsubmit="return confirm('Delete this bot?');"
+                                    >
 
-                                            <span class="badge bg-success">
-                                                Active
-                                            </span>
+                                        {% csrf_token %}
 
-                                        {% elif bot.status == "inactive" %}
+                                        <button
+                                            type="submit"
+                                            class="btn btn-sm btn-outline-danger"
+                                        >
 
-                                            <span class="badge bg-secondary">
-                                                Inactive
-                                            </span>
+                                            <i class="bi bi-trash3 me-1"></i>
 
-                                        {% else %}
+                                            Delete
 
-                                            <span class="badge bg-danger">
-                                                {{ bot.status|title }}
-                                            </span>
+                                        </button>
 
-                                        {% endif %}
+                                    </form>
 
-                                    </td>
+                                </div>
 
+                            </div>
 
-                                    <td class="text-end">
+                        </div>
 
-                                        <form method="post"
-                                              action="{% url 'delete-bot' bot.id %}"
-                                              onsubmit="return confirm('Delete this bot?');">
-
-                                            {% csrf_token %}
-
-                                            <button type="submit"
-                                                    class="btn btn-sm btn-outline-danger">
-
-                                                Delete
-
-                                            </button>
-
-                                        </form>
-
-                                    </td>
-
-                                </tr>
-
-                            {% endfor %}
-
-                        </tbody>
-
-                    </table>
+                    {% endfor %}
 
                 </div>
 
             {% else %}
 
-                <div class="text-center py-4 text-muted">
+                <div class="empty-state">
 
-                    No Telegram bots connected yet.
+                    <div class="empty-icon">
+                        <i class="bi bi-robot"></i>
+                    </div>
+
+                    <h6>
+                        No Telegram bots connected
+                    </h6>
+
+                    <p>
+                        Connect a bot using the form above.
+                    </p>
 
                 </div>
 
@@ -371,75 +1437,91 @@
     </div>
 
 
+    <!-- =========================================================
+         ADD DESTINATION
+    ========================================================== -->
 
-    <!-- ============================================================
-         ADD CHANNEL / GROUP
-    ============================================================= -->
+    <div class="channel-panel">
 
-    <div class="card shadow-sm border-0 mb-4">
+        <div class="channel-panel-header">
 
-        <div class="card-header bg-white">
+            <div class="channel-panel-heading">
 
-            <h5 class="mb-0 fw-bold">
-                Add Channel / Group
-            </h5>
+                <div class="channel-panel-icon">
+                    <i class="bi bi-plus-circle-fill"></i>
+                </div>
 
-            <small class="text-muted">
-                Connect a Telegram destination using its username
-                or Chat ID.
-            </small>
+                <div>
+
+                    <h5>
+                        Add Channel / Group
+                    </h5>
+
+                    <p>
+                        Connect a public channel or group using username or Chat ID.
+                    </p>
+
+                </div>
+
+            </div>
 
         </div>
 
 
-        <div class="card-body">
+        <div class="channel-panel-body">
 
-            <form method="post"
-                  action="{% url 'add-channel' %}"
-                  id="addChannelForm">
+            <form
+                method="post"
+                action="{% url 'add-channel' %}"
+                id="addChannelForm"
+            >
 
                 {% csrf_token %}
 
 
-                <!-- =================================================
-                     BASIC DESTINATION INFORMATION
-                ================================================== -->
-
                 <div class="row g-3">
 
-                    <div class="col-md-4">
+                    <div class="col-lg-4">
 
-                        <label class="form-label">
+                        <label class="form-label small fw-semibold">
                             Destination Name
                         </label>
 
-                        <input type="text"
-                               name="name"
-                               id="destination_name"
-                               class="form-control"
-                               placeholder="Deals Channel"
-                               required>
+                        <input
+                            type="text"
+                            name="name"
+                            id="destination_name"
+                            class="form-control"
+                            placeholder="My Deals Channel"
+                            required
+                        >
 
                     </div>
 
 
-                    <div class="col-md-5">
+                    <div class="col-lg-5">
 
-                        <label class="form-label">
+                        <label class="form-label small fw-semibold">
                             Username
                         </label>
 
                         <div class="input-group">
 
-                            <input type="text"
-                                   name="username"
-                                   id="username"
-                                   class="form-control"
-                                   placeholder="@mychannel">
+                            <input
+                                type="text"
+                                name="username"
+                                id="username"
+                                class="form-control"
+                                placeholder="@mychannel"
+                            >
 
-                            <button type="button"
-                                    class="btn btn-outline-primary"
-                                    id="findChatBtn">
+                            <button
+                                type="button"
+                                class="btn btn-outline-primary"
+                                id="findChatBtn"
+                            >
+
+                                <i class="bi bi-search me-1"></i>
 
                                 Find Chat
 
@@ -448,22 +1530,23 @@
                         </div>
 
                         <div class="form-text">
-                            Enter public channel/group username
-                            and click Find Chat.
+                            Enter public Telegram username and verify it.
                         </div>
 
                     </div>
 
 
-                    <div class="col-md-3">
+                    <div class="col-lg-3">
 
-                        <label class="form-label">
+                        <label class="form-label small fw-semibold">
                             Telegram Bot
                         </label>
 
-                        <select name="bot_id"
-                                id="bot_id"
-                                class="form-select">
+                        <select
+                            name="bot_id"
+                            id="bot_id"
+                            class="form-select"
+                        >
 
                             <option value="">
                                 Select Bot
@@ -492,39 +1575,38 @@
                     </div>
 
 
-                    <!-- =================================================
-                         CHAT ID SECTION
-                    ================================================== -->
+                    <div class="col-lg-5">
 
-                    <div class="col-md-6">
-
-                        <label class="form-label">
+                        <label class="form-label small fw-semibold">
                             Chat ID
                         </label>
 
-                        <input type="text"
-                               name="chat_id"
-                               id="chat_id"
-                               class="form-control"
-                               placeholder="-1001234567890">
+                        <input
+                            type="text"
+                            name="chat_id"
+                            id="chat_id"
+                            class="form-control"
+                            placeholder="-1001234567890"
+                        >
 
                         <div class="form-text">
-                            Chat ID will be automatically filled
-                            after Find Chat.
+                            Automatically filled after Find Chat.
                         </div>
 
                     </div>
 
 
-                    <div class="col-md-3">
+                    <div class="col-lg-3">
 
-                        <label class="form-label">
+                        <label class="form-label small fw-semibold">
                             Destination Type
                         </label>
 
-                        <select name="chat_type"
-                                id="chat_type"
-                                class="form-select">
+                        <select
+                            name="chat_type"
+                            id="chat_type"
+                            class="form-select"
+                        >
 
                             <option value="channel">
                                 Channel
@@ -539,67 +1621,70 @@
                     </div>
 
 
-                    <div class="col-md-3">
+                    <div class="col-lg-4">
 
-                        <label class="form-label">
+                        <label class="form-label small fw-semibold">
                             Description
                         </label>
 
-                        <input type="text"
-                               name="description"
-                               id="description"
-                               class="form-control"
-                               placeholder="Optional description">
+                        <input
+                            type="text"
+                            name="description"
+                            id="description"
+                            class="form-control"
+                            placeholder="Optional description"
+                        >
 
                     </div>
 
 
-                    <!-- =================================================
-                         FIND CHAT RESULT
-                    ================================================== -->
+                    <!-- FIND RESULT -->
 
                     <div class="col-12">
 
-                        <div id="chatResult"
-                             class="alert alert-light border d-none mb-0">
+                        <div
+                            id="chatResult"
+                            class="alert alert-success d-none mb-0"
+                        >
 
-                            <div class="d-flex justify-content-between">
+                            <div class="d-flex align-items-center gap-3">
+
+                                <i class="bi bi-check-circle-fill fs-5"></i>
 
                                 <div>
 
                                     <strong>
-                                        Telegram Chat Found
+                                        Telegram chat verified
                                     </strong>
 
-                                    <div class="small mt-2">
+                                    <div class="small mt-1">
 
-                                        <div>
-                                            <strong>Title:</strong>
-                                            <span id="foundTitle">—</span>
-                                        </div>
+                                        <span id="foundTitle">
+                                            —
+                                        </span>
 
-                                        <div>
-                                            <strong>Username:</strong>
-                                            <span id="foundUsername">—</span>
-                                        </div>
+                                        ·
 
-                                        <div>
-                                            <strong>Chat ID:</strong>
-                                            <span id="foundChatId">—</span>
-                                        </div>
+                                        <span id="foundUsername">
+                                            —
+                                        </span>
 
-                                        <div>
-                                            <strong>Type:</strong>
-                                            <span id="foundType">—</span>
-                                        </div>
+                                        ·
+
+                                        ID:
+                                        <span id="foundChatId">
+                                            —
+                                        </span>
+
+                                        ·
+
+                                        <span id="foundType">
+                                            —
+                                        </span>
 
                                     </div>
 
                                 </div>
-
-                                <span class="badge bg-success align-self-start">
-                                    Verified
-                                </span>
 
                             </div>
 
@@ -608,149 +1693,255 @@
                     </div>
 
 
+                    <!-- USER SETTINGS -->
 
-                    <!-- =================================================
-                         USER SETTINGS
-                    ================================================== -->
+                    <div class="col-12 mt-2">
+
+                        <div class="channel-panel"
+                             style="margin-bottom:0;">
+
+                            <div
+                                class="px-3 py-2"
+                                style="
+                                    border-bottom:1px solid #eef2f7;
+                                    font-size:12px;
+                                    font-weight:800;
+                                "
+                            >
+
+                                <i class="bi bi-people-fill me-1 text-primary"></i>
+
+                                User Settings
+
+                            </div>
+
+
+                            <div class="p-3">
+
+                                <div class="row g-3">
+
+                                    <div class="col-md-6">
+
+                                        <div
+                                            class="p-3 rounded-3 border bg-light"
+                                        >
+
+                                            <div class="form-check">
+
+                                                <input
+                                                    class="form-check-input"
+                                                    type="checkbox"
+                                                    name="auto_allow_users"
+                                                    id="auto_allow_users"
+                                                >
+
+                                                <label
+                                                    class="form-check-label fw-semibold small"
+                                                    for="auto_allow_users"
+                                                >
+                                                    Automatically allow users
+                                                </label>
+
+                                            </div>
+
+                                            <div class="text-muted mt-1"
+                                                 style="font-size:9px;">
+
+                                                Automatically enable new users for this destination.
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <div class="col-md-6">
+
+                                        <div
+                                            class="p-3 rounded-3 border bg-light"
+                                        >
+
+                                            <div class="form-check">
+
+                                                <input
+                                                    class="form-check-input"
+                                                    type="checkbox"
+                                                    name="allow_direct_messages"
+                                                    id="allow_direct_messages"
+                                                >
+
+                                                <label
+                                                    class="form-check-label fw-semibold small"
+                                                    for="allow_direct_messages"
+                                                >
+                                                    Allow direct messages
+                                                </label>
+
+                                            </div>
+
+                                            <div class="text-muted mt-1"
+                                                 style="font-size:9px;">
+
+                                                Allow users to interact with the connected bot privately.
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- PUBLISHING SETTINGS -->
 
                     <div class="col-12">
 
-                        <hr>
+                        <div
+                            class="channel-panel"
+                            style="margin-bottom:0;"
+                        >
 
-                        <h6 class="fw-bold mb-3">
-                            User Settings
-                        </h6>
+                            <div
+                                class="px-3 py-2"
+                                style="
+                                    border-bottom:1px solid #eef2f7;
+                                    font-size:12px;
+                                    font-weight:800;
+                                "
+                            >
 
-                    </div>
+                                <i class="bi bi-broadcast-pin me-1 text-primary"></i>
+
+                                Publishing Settings
+
+                            </div>
 
 
-                    <div class="col-md-4">
+                            <div class="p-3">
 
-                        <div class="form-check">
+                                <div class="row g-3">
 
-                            <input class="form-check-input"
-                                   type="checkbox"
-                                   name="auto_allow_users"
-                                   id="auto_allow_users">
+                                    <div class="col-md-6">
 
-                            <label class="form-check-label"
-                                   for="auto_allow_users">
+                                        <div
+                                            class="p-3 rounded-3 border bg-light"
+                                        >
 
-                                Automatically allow users
+                                            <div class="form-check">
 
-                            </label>
+                                                <input
+                                                    class="form-check-input"
+                                                    type="checkbox"
+                                                    name="auto_publish_deals"
+                                                    id="auto_publish_deals"
+                                                >
+
+                                                <label
+                                                    class="form-check-label fw-semibold small"
+                                                    for="auto_publish_deals"
+                                                >
+                                                    Automatic deal publishing
+                                                </label>
+
+                                            </div>
+
+                                            <div class="text-muted mt-1"
+                                                 style="font-size:9px;">
+
+                                                Automatically publish newly created deals.
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <div class="col-md-6">
+
+                                        <div
+                                            class="p-3 rounded-3 border bg-light"
+                                        >
+
+                                            <div class="form-check">
+
+                                                <input
+                                                    class="form-check-input"
+                                                    type="checkbox"
+                                                    name="send_welcome_message"
+                                                    id="send_welcome_message"
+                                                >
+
+                                                <label
+                                                    class="form-check-label fw-semibold small"
+                                                    for="send_welcome_message"
+                                                >
+                                                    Send welcome message
+                                                </label>
+
+                                            </div>
+
+                                            <div class="text-muted mt-1"
+                                                 style="font-size:9px;">
+
+                                                Send a welcome message when a user joins.
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <div class="col-12">
+
+                                        <label class="form-label small fw-semibold">
+                                            Welcome Message
+                                        </label>
+
+                                        <textarea
+                                            name="welcome_message"
+                                            id="welcome_message"
+                                            rows="3"
+                                            class="form-control"
+                                            placeholder="Welcome to our Telegram channel!"
+                                        ></textarea>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
 
                         </div>
 
                     </div>
 
-
-                    <div class="col-md-4">
-
-                        <div class="form-check">
-
-                            <input class="form-check-input"
-                                   type="checkbox"
-                                   name="allow_direct_messages"
-                                   id="allow_direct_messages">
-
-                            <label class="form-check-label"
-                                   for="allow_direct_messages">
-
-                                Allow direct messages
-
-                            </label>
-
-                        </div>
-
-                    </div>
-
-
-
-                    <!-- =================================================
-                         PUBLISHING SETTINGS
-                    ================================================== -->
 
                     <div class="col-12">
 
-                        <hr>
+                        <div class="d-flex justify-content-end">
 
-                        <h6 class="fw-bold mb-3">
-                            Publishing Settings
-                        </h6>
+                            <button
+                                type="submit"
+                                class="btn btn-success px-4"
+                            >
 
-                    </div>
+                                <i class="bi bi-plus-circle me-1"></i>
 
+                                Add Destination
 
-                    <div class="col-md-4">
-
-                        <div class="form-check">
-
-                            <input class="form-check-input"
-                                   type="checkbox"
-                                   name="auto_publish_deals"
-                                   id="auto_publish_deals">
-
-                            <label class="form-check-label"
-                                   for="auto_publish_deals">
-
-                                Automatic deal publishing
-
-                            </label>
+                            </button>
 
                         </div>
-
-                    </div>
-
-
-                    <div class="col-md-4">
-
-                        <div class="form-check">
-
-                            <input class="form-check-input"
-                                   type="checkbox"
-                                   name="send_welcome_message"
-                                   id="send_welcome_message">
-
-                            <label class="form-check-label"
-                                   for="send_welcome_message">
-
-                                Send welcome message
-
-                            </label>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="col-md-8">
-
-                        <label class="form-label">
-                            Welcome Message
-                        </label>
-
-                        <textarea name="welcome_message"
-                                  id="welcome_message"
-                                  class="form-control"
-                                  rows="3"
-                                  placeholder="Welcome to our Telegram channel!"></textarea>
-
-                    </div>
-
-
-                    <!-- =================================================
-                         SUBMIT
-                    ================================================== -->
-
-                    <div class="col-12">
-
-                        <button type="submit"
-                                class="btn btn-success">
-
-                            Add Destination
-
-                        </button>
 
                     </div>
 
@@ -763,23 +1954,49 @@
     </div>
 
 
-
-    <!-- ============================================================
+    <!-- =========================================================
          DESTINATIONS
-    ============================================================= -->
+    ========================================================== -->
 
-    <div class="card shadow-sm border-0 mb-4">
+    <div class="channel-panel">
 
-        <div class="card-header bg-white">
+        <div class="channel-panel-header">
 
-            <h5 class="mb-0 fw-bold">
-                Channels & Groups
-            </h5>
+            <div class="channel-panel-heading">
+
+                <div class="channel-panel-icon">
+
+                    <i class="bi bi-broadcast-pin"></i>
+
+                </div>
+
+                <div>
+
+                    <h5>
+                        Channels & Groups
+                    </h5>
+
+                    <p>
+                        Connected Telegram destinations and their automation settings.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <span class="badge bg-light text-dark border">
+
+                {{ channels|length }}
+
+                Destination{{ channels|length|pluralize }}
+
+            </span>
 
         </div>
 
 
-        <div class="card-body">
+        <div class="channel-panel-body">
 
             {% if channels %}
 
@@ -787,35 +2004,44 @@
 
                     {% for channel in channels %}
 
-                        <div class="col-lg-6">
+                        <div class="col-xl-6">
 
-                            <div class="card h-100 border">
+                            <div class="destination-card">
 
-                                <div class="card-body">
+                                <div class="destination-top">
 
-                                    <div class="d-flex justify-content-between">
+                                    <div class="destination-title-wrap">
+
+                                        <div class="destination-avatar">
+
+                                            {% if channel.chat_type == "group" %}
+
+                                                <i class="bi bi-people-fill"></i>
+
+                                            {% else %}
+
+                                                <i class="bi bi-megaphone-fill"></i>
+
+                                            {% endif %}
+
+                                        </div>
+
 
                                         <div>
 
-                                            <h5 class="fw-bold mb-1">
+                                            <h6 class="destination-title">
                                                 {{ channel.name }}
-                                            </h5>
+                                            </h6>
 
-                                            <div class="text-muted small">
+                                            <div class="destination-subtitle">
 
                                                 {% if channel.username %}
+
                                                     {{ channel.username }}
-                                                {% endif %}
 
-                                                {% if channel.chat_id %}
+                                                {% else %}
 
-                                                    <br>
-
-                                                    <strong>
-                                                        Chat ID:
-                                                    </strong>
-
-                                                    {{ channel.chat_id }}
+                                                    Private destination
 
                                                 {% endif %}
 
@@ -823,45 +2049,61 @@
 
                                         </div>
 
+                                    </div>
 
-                                        {% if channel.status == "active" %}
 
-                                            <span class="badge bg-success">
-                                                Active
-                                            </span>
+                                    {% if channel.status == "active" %}
 
-                                        {% else %}
+                                        <span class="badge bg-success">
+                                            Active
+                                        </span>
 
-                                            <span class="badge bg-secondary">
-                                                Inactive
-                                            </span>
+                                    {% else %}
 
-                                        {% endif %}
+                                        <span class="badge bg-secondary">
+                                            Inactive
+                                        </span>
+
+                                    {% endif %}
+
+                                </div>
+
+
+                                <div class="destination-details">
+
+                                    <div class="destination-detail">
+
+                                        <small>
+                                            Type
+                                        </small>
+
+                                        <strong>
+                                            {{ channel.chat_type|title }}
+                                        </strong>
 
                                     </div>
 
 
-                                    <hr>
+                                    <div class="destination-detail">
+
+                                        <small>
+                                            Chat ID
+                                        </small>
+
+                                        <strong>
+                                            {{ channel.chat_id|default:"Not set" }}
+                                        </strong>
+
+                                    </div>
 
 
-                                    <div class="row g-2 small">
+                                    <div class="destination-detail">
 
-                                        <div class="col-6">
+                                        <small>
+                                            Connected Bot
+                                        </small>
 
-                                            <strong>
-                                                Type:
-                                            </strong>
-
-                                            {{ channel.chat_type|title }}
-
-                                        </div>
-
-
-                                        <div class="col-6">
-
-                                            <strong>
-                                                Bot:
-                                            </strong>
+                                        <strong>
 
                                             {% if channel.bot %}
 
@@ -883,141 +2125,181 @@
 
                                             {% endif %}
 
+                                        </strong>
+
+                                    </div>
+
+
+                                    <div class="destination-detail">
+
+                                        <small>
+                                            Created
+                                        </small>
+
+                                        <strong>
+                                            {{ channel.created_at|date:"d M Y" }}
+                                        </strong>
+
+                                    </div>
+
+                                </div>
+
+
+                                <div class="destination-badges">
+
+                                    {% if channel.auto_publish_deals %}
+
+                                        <span class="destination-setting setting-on">
+
+                                            <i class="bi bi-lightning-fill"></i>
+
+                                            Auto Publish
+
+                                        </span>
+
+                                    {% else %}
+
+                                        <span class="destination-setting setting-off">
+
+                                            Auto Publish Off
+
+                                        </span>
+
+                                    {% endif %}
+
+
+                                    {% if channel.send_welcome_message %}
+
+                                        <span class="destination-setting setting-blue">
+
+                                            <i class="bi bi-chat-heart-fill"></i>
+
+                                            Welcome
+
+                                        </span>
+
+                                    {% else %}
+
+                                        <span class="destination-setting setting-off">
+
+                                            Welcome Off
+
+                                        </span>
+
+                                    {% endif %}
+
+
+                                    {% if channel.auto_allow_users %}
+
+                                        <span class="destination-setting setting-on">
+
+                                            <i class="bi bi-person-check-fill"></i>
+
+                                            Auto Allow
+
+                                        </span>
+
+                                    {% else %}
+
+                                        <span class="destination-setting setting-off">
+
+                                            Auto Allow Off
+
+                                        </span>
+
+                                    {% endif %}
+
+                                </div>
+
+
+                                {% if channel.description %}
+
+                                    <div class="text-muted mt-2"
+                                         style="font-size:10px;">
+
+                                        {{ channel.description }}
+
+                                    </div>
+
+                                {% endif %}
+
+
+                                {% if channel.send_welcome_message and channel.welcome_message %}
+
+                                    <div class="welcome-preview">
+
+                                        <strong>
+                                            Welcome Message
+                                        </strong>
+
+                                        <div class="mt-1">
+                                            {{ channel.welcome_message|linebreaksbr }}
                                         </div>
 
                                     </div>
 
-
-                                    {% if channel.description %}
-
-                                        <p class="text-muted mt-3 mb-2">
-                                            {{ channel.description }}
-                                        </p>
-
-                                    {% endif %}
+                                {% endif %}
 
 
-                                    <!-- SETTINGS -->
+                                <div class="destination-actions">
 
-                                    <div class="mt-3">
+                                    {% if channel.bot %}
 
-                                        {% if channel.auto_publish_deals %}
-
-                                            <span class="badge bg-success me-1">
-                                                Auto Publishing ON
-                                            </span>
-
-                                        {% else %}
-
-                                            <span class="badge bg-secondary me-1">
-                                                Auto Publishing OFF
-                                            </span>
-
-                                        {% endif %}
-
-
-                                        {% if channel.send_welcome_message %}
-
-                                            <span class="badge bg-info text-dark me-1">
-                                                Welcome Message ON
-                                            </span>
-
-                                        {% else %}
-
-                                            <span class="badge bg-secondary me-1">
-                                                Welcome Message OFF
-                                            </span>
-
-                                        {% endif %}
-
-
-                                        {% if channel.auto_allow_users %}
-
-                                            <span class="badge bg-success me-1">
-                                                Auto Allow ON
-                                            </span>
-
-                                        {% else %}
-
-                                            <span class="badge bg-secondary me-1">
-                                                Auto Allow OFF
-                                            </span>
-
-                                        {% endif %}
-
-                                    </div>
-
-
-                                    <!-- WELCOME MESSAGE -->
-
-                                    {% if channel.send_welcome_message %}
-
-                                        {% if channel.welcome_message %}
-
-                                            <div class="alert alert-light border mt-3 mb-0">
-
-                                                <strong>
-                                                    Welcome Message:
-                                                </strong>
-
-                                                <div class="mt-1">
-                                                    {{ channel.welcome_message|linebreaksbr }}
-                                                </div>
-
-                                            </div>
-
-                                        {% endif %}
-
-                                    {% endif %}
-
-
-                                    <!-- ACTIONS -->
-
-                                    <div class="d-flex flex-wrap gap-2 mt-3">
-
-                                        {% if channel.bot %}
-
-                                            <form method="post"
-                                                  action="{% url 'test-channel' channel.id %}">
-
-                                                {% csrf_token %}
-
-                                                <button type="submit"
-                                                        class="btn btn-sm btn-outline-primary">
-
-                                                    Test
-
-                                                </button>
-
-                                            </form>
-
-                                        {% endif %}
-
-
-                                        <a href="{% url 'edit-channel' channel.id %}"
-                                           class="btn btn-sm btn-outline-secondary">
-
-                                            Edit
-
-                                        </a>
-
-
-                                        <form method="post"
-                                              action="{% url 'delete-channel' channel.id %}"
-                                              onsubmit="return confirm('Delete this destination?');">
+                                        <form
+                                            method="post"
+                                            action="{% url 'test-channel' channel.id %}"
+                                        >
 
                                             {% csrf_token %}
 
-                                            <button type="submit"
-                                                    class="btn btn-sm btn-outline-danger">
+                                            <button
+                                                type="submit"
+                                                class="btn btn-sm btn-outline-primary"
+                                            >
 
-                                                Delete
+                                                <i class="bi bi-send-check me-1"></i>
+
+                                                Test
 
                                             </button>
 
                                         </form>
 
-                                    </div>
+                                    {% endif %}
+
+
+                                    <a
+                                        href="{% url 'edit-channel' channel.id %}"
+                                        class="btn btn-sm btn-outline-secondary"
+                                    >
+
+                                        <i class="bi bi-pencil-square me-1"></i>
+
+                                        Edit
+
+                                    </a>
+
+
+                                    <form
+                                        method="post"
+                                        action="{% url 'delete-channel' channel.id %}"
+                                        onsubmit="return confirm('Delete this destination?');"
+                                    >
+
+                                        {% csrf_token %}
+
+                                        <button
+                                            type="submit"
+                                            class="btn btn-sm btn-outline-danger"
+                                        >
+
+                                            <i class="bi bi-trash3 me-1"></i>
+
+                                            Delete
+
+                                        </button>
+
+                                    </form>
 
                                 </div>
 
@@ -1031,14 +2313,20 @@
 
             {% else %}
 
-                <div class="text-center py-5 text-muted">
+                <div class="empty-state">
 
-                    <h5>
+                    <div class="empty-icon">
+
+                        <i class="bi bi-broadcast"></i>
+
+                    </div>
+
+                    <h6>
                         No destinations found
-                    </h5>
+                    </h6>
 
-                    <p class="mb-0">
-                        Add a Telegram channel or group above.
+                    <p>
+                        Add your first Telegram channel or group above.
                     </p>
 
                 </div>
@@ -1050,37 +2338,54 @@
     </div>
 
 
-
-    <!-- ============================================================
+    <!-- =========================================================
          TELEGRAM USERS
-    ============================================================= -->
+    ========================================================== -->
 
-    <div class="card shadow-sm border-0 mb-4">
+    <div class="channel-panel">
 
-        <div class="card-header bg-white">
+        <div class="channel-panel-header">
 
-            <h5 class="mb-0 fw-bold">
-                Telegram Users
-            </h5>
+            <div class="channel-panel-heading">
+
+                <div class="channel-panel-icon">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+
+                <div>
+
+                    <h5>
+                        Telegram Users
+                    </h5>
+
+                    <p>
+                        Users detected and tracked by the connected bots.
+                    </p>
+
+                </div>
+
+            </div>
 
         </div>
 
 
-        <div class="card-body">
+        <div class="channel-panel-body">
 
             {% if users %}
 
-                <div class="table-responsive">
+                <div class="table-wrap">
 
-                    <table class="table table-hover align-middle">
+                    <table class="table table-hover align-middle modern-table">
 
                         <thead>
 
                             <tr>
+
                                 <th>User</th>
                                 <th>Telegram ID</th>
                                 <th>Language</th>
                                 <th>Last Seen</th>
+
                             </tr>
 
                         </thead>
@@ -1094,30 +2399,75 @@
 
                                     <td>
 
-                                        <strong>
+                                        <div class="d-flex align-items-center">
 
-                                            {% if user.username %}
+                                            <span class="user-mini">
 
-                                                @{{ user.username|cut:"@" }}
+                                                {% if user.first_name %}
 
-                                            {% else %}
+                                                    {{ user.first_name|first|upper }}
 
-                                                {{ user.first_name|default:"Unknown User" }}
+                                                {% elif user.username %}
 
-                                            {% endif %}
+                                                    {{ user.username|first|upper }}
 
-                                        </strong>
+                                                {% else %}
+
+                                                    U
+
+                                                {% endif %}
+
+                                            </span>
+
+
+                                            <div>
+
+                                                <strong>
+
+                                                    {% if user.username %}
+
+                                                        @{{ user.username|cut:"@" }}
+
+                                                    {% else %}
+
+                                                        {{ user.first_name|default:"Unknown User" }}
+
+                                                    {% endif %}
+
+                                                </strong>
+
+                                            </div>
+
+                                        </div>
 
                                     </td>
 
 
                                     <td>
-                                        {{ user.user_id }}
+
+                                        <code>
+                                            {{ user.user_id }}
+                                        </code>
+
                                     </td>
 
 
                                     <td>
-                                        {{ user.language_code|default:"—" }}
+
+                                        {% if user.language_code %}
+
+                                            <span class="badge bg-light text-dark border">
+
+                                                {{ user.language_code }}
+
+                                            </span>
+
+                                        {% else %}
+
+                                            —
+
+                                        {% endif %}
+
                                     </td>
 
 
@@ -1137,8 +2487,20 @@
 
             {% else %}
 
-                <div class="text-center text-muted py-4">
-                    No Telegram users found.
+                <div class="empty-state">
+
+                    <div class="empty-icon">
+                        <i class="bi bi-people"></i>
+                    </div>
+
+                    <h6>
+                        No Telegram users found
+                    </h6>
+
+                    <p>
+                        Users will appear as bot activity is detected.
+                    </p>
+
                 </div>
 
             {% endif %}
@@ -1148,29 +2510,44 @@
     </div>
 
 
+    <!-- =========================================================
+         MEMBERSHIP
+    ========================================================== -->
 
-    <!-- ============================================================
-         CHANNEL USERS / MEMBERSHIP
-    ============================================================= -->
+    <div class="channel-panel">
 
-    <div class="card shadow-sm border-0 mb-4">
+        <div class="channel-panel-header">
 
-        <div class="card-header bg-white">
+            <div class="channel-panel-heading">
 
-            <h5 class="mb-0 fw-bold">
-                Channel Users / Membership
-            </h5>
+                <div class="channel-panel-icon">
+                    <i class="bi bi-person-lines-fill"></i>
+                </div>
+
+                <div>
+
+                    <h5>
+                        Channel Membership
+                    </h5>
+
+                    <p>
+                        Destination-level Telegram membership status.
+                    </p>
+
+                </div>
+
+            </div>
 
         </div>
 
 
-        <div class="card-body">
+        <div class="channel-panel-body">
 
             {% if channel_users %}
 
-                <div class="table-responsive">
+                <div class="table-wrap">
 
-                    <table class="table table-hover align-middle">
+                    <table class="table table-hover align-middle modern-table">
 
                         <thead>
 
@@ -1193,6 +2570,21 @@
                                 <tr>
 
                                     <td>
+
+                                        <span class="user-mini">
+
+                                            {% if item.user.first_name %}
+
+                                                {{ item.user.first_name|first|upper }}
+
+                                            {% else %}
+
+                                                U
+
+                                            {% endif %}
+
+                                        </span>
+
 
                                         {% if item.user.username %}
 
@@ -1259,8 +2651,20 @@
 
             {% else %}
 
-                <div class="text-center text-muted py-4">
-                    No channel membership records found.
+                <div class="empty-state">
+
+                    <div class="empty-icon">
+                        <i class="bi bi-person-lines-fill"></i>
+                    </div>
+
+                    <h6>
+                        No membership records
+                    </h6>
+
+                    <p>
+                        Channel membership events will appear here.
+                    </p>
+
                 </div>
 
             {% endif %}
@@ -1270,29 +2674,44 @@
     </div>
 
 
+    <!-- =========================================================
+         PERMISSIONS
+    ========================================================== -->
 
-    <!-- ============================================================
-         USER PERMISSIONS
-    ============================================================= -->
+    <div class="channel-panel">
 
-    <div class="card shadow-sm border-0 mb-4">
+        <div class="channel-panel-header">
 
-        <div class="card-header bg-white">
+            <div class="channel-panel-heading">
 
-            <h5 class="mb-0 fw-bold">
-                User Permissions
-            </h5>
+                <div class="channel-panel-icon">
+                    <i class="bi bi-shield-lock-fill"></i>
+                </div>
+
+                <div>
+
+                    <h5>
+                        User Permissions
+                    </h5>
+
+                    <p>
+                        Manage message and publishing access.
+                    </p>
+
+                </div>
+
+            </div>
 
         </div>
 
 
-        <div class="card-body">
+        <div class="channel-panel-body">
 
             {% if permissions %}
 
-                <div class="table-responsive">
+                <div class="table-wrap">
 
-                    <table class="table table-hover align-middle">
+                    <table class="table table-hover align-middle modern-table">
 
                         <thead>
 
@@ -1397,14 +2816,20 @@
 
                                         {% if permission.is_allowed %}
 
-                                            <form method="post"
-                                                  action="{% url 'block-user' permission.id %}"
-                                                  class="d-inline">
+                                            <form
+                                                method="post"
+                                                action="{% url 'block-user' permission.id %}"
+                                                class="d-inline"
+                                            >
 
                                                 {% csrf_token %}
 
-                                                <button type="submit"
-                                                        class="btn btn-sm btn-outline-danger">
+                                                <button
+                                                    type="submit"
+                                                    class="btn btn-sm btn-outline-danger"
+                                                >
+
+                                                    <i class="bi bi-person-x me-1"></i>
 
                                                     Block
 
@@ -1414,14 +2839,20 @@
 
                                         {% else %}
 
-                                            <form method="post"
-                                                  action="{% url 'allow-user' permission.id %}"
-                                                  class="d-inline">
+                                            <form
+                                                method="post"
+                                                action="{% url 'allow-user' permission.id %}"
+                                                class="d-inline"
+                                            >
 
                                                 {% csrf_token %}
 
-                                                <button type="submit"
-                                                        class="btn btn-sm btn-outline-success">
+                                                <button
+                                                    type="submit"
+                                                    class="btn btn-sm btn-outline-success"
+                                                >
+
+                                                    <i class="bi bi-person-check me-1"></i>
 
                                                     Allow
 
@@ -1445,8 +2876,20 @@
 
             {% else %}
 
-                <div class="text-center text-muted py-4">
-                    No user permissions found.
+                <div class="empty-state">
+
+                    <div class="empty-icon">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+
+                    <h6>
+                        No user permissions found
+                    </h6>
+
+                    <p>
+                        Destination permissions will appear here.
+                    </p>
+
                 </div>
 
             {% endif %}
@@ -1456,44 +2899,72 @@
     </div>
 
 
-
-    <!-- ============================================================
+    <!-- =========================================================
          RECENT ACTIVITY
-    ============================================================= -->
+    ========================================================== -->
 
-    <div class="card shadow-sm border-0">
+    <div class="channel-panel">
 
-        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <div class="channel-panel-header">
 
-            <h5 class="mb-0 fw-bold">
-                Recent Activity
-            </h5>
+            <div class="channel-panel-heading">
 
-            <a href="{% url 'activity-history' %}"
-               class="btn btn-sm btn-outline-primary">
+                <div class="channel-panel-icon">
+                    <i class="bi bi-activity"></i>
+                </div>
+
+                <div>
+
+                    <h5>
+                        Recent Activity
+                    </h5>
+
+                    <p>
+                        Latest bot, user, publishing and destination events.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <a
+                href="{% url 'activity-history' %}"
+                class="btn btn-sm btn-outline-primary"
+            >
 
                 View All
+
+                <i class="bi bi-arrow-right ms-1"></i>
 
             </a>
 
         </div>
 
 
-        <div class="card-body">
+        <div class="channel-panel-body">
 
             {% if activities %}
 
-                <div class="table-responsive">
+                <div class="table-wrap">
 
-                    <table class="table table-hover align-middle">
+                    <table class="table table-hover align-middle modern-table">
 
                         <thead>
 
                             <tr>
 
-                                <th>Event</th>
-                                <th>Message</th>
-                                <th>Created</th>
+                                <th>
+                                    Event
+                                </th>
+
+                                <th>
+                                    Message
+                                </th>
+
+                                <th>
+                                    Created
+                                </th>
 
                             </tr>
 
@@ -1509,9 +2980,7 @@
                                     <td>
 
                                         <span class="badge bg-primary">
-
                                             {{ activity.event_type|title }}
-
                                         </span>
 
                                     </td>
@@ -1538,8 +3007,20 @@
 
             {% else %}
 
-                <div class="text-center text-muted py-4">
-                    No activity recorded yet.
+                <div class="empty-state">
+
+                    <div class="empty-icon">
+                        <i class="bi bi-activity"></i>
+                    </div>
+
+                    <h6>
+                        No activity yet
+                    </h6>
+
+                    <p>
+                        Telegram system events will appear here.
+                    </p>
+
                 </div>
 
             {% endif %}
@@ -1548,275 +3029,317 @@
 
     </div>
 
+
 </div>
 
 
-
-<!-- ================================================================
-     FIND TELEGRAM CHAT JAVASCRIPT
-================================================================ -->
+<!-- =========================================================
+     FIND TELEGRAM CHAT
+========================================================= -->
 
 <script>
 
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
 
-    const findButton = document.getElementById("findChatBtn");
+        const findButton =
+            document.getElementById(
+                "findChatBtn"
+            );
 
-    const botSelect = document.getElementById("bot_id");
+        const botSelect =
+            document.getElementById(
+                "bot_id"
+            );
 
-    const usernameInput = document.getElementById("username");
+        const usernameInput =
+            document.getElementById(
+                "username"
+            );
 
-    const chatIdInput = document.getElementById("chat_id");
+        const chatIdInput =
+            document.getElementById(
+                "chat_id"
+            );
 
-    const destinationNameInput =
-        document.getElementById("destination_name");
+        const destinationNameInput =
+            document.getElementById(
+                "destination_name"
+            );
 
-    const chatTypeInput =
-        document.getElementById("chat_type");
+        const chatTypeInput =
+            document.getElementById(
+                "chat_type"
+            );
 
-    const descriptionInput =
-        document.getElementById("description");
+        const descriptionInput =
+            document.getElementById(
+                "description"
+            );
 
-    const chatResult =
-        document.getElementById("chatResult");
+        const chatResult =
+            document.getElementById(
+                "chatResult"
+            );
 
-    const foundTitle =
-        document.getElementById("foundTitle");
+        const foundTitle =
+            document.getElementById(
+                "foundTitle"
+            );
 
-    const foundUsername =
-        document.getElementById("foundUsername");
+        const foundUsername =
+            document.getElementById(
+                "foundUsername"
+            );
 
-    const foundChatId =
-        document.getElementById("foundChatId");
+        const foundChatId =
+            document.getElementById(
+                "foundChatId"
+            );
 
-    const foundType =
-        document.getElementById("foundType");
-
-
-    if (!findButton) {
-        return;
-    }
-
-
-    findButton.addEventListener("click", async function () {
-
-        const botId = botSelect.value;
-
-        const username = usernameInput.value.trim();
+        const foundType =
+            document.getElementById(
+                "foundType"
+            );
 
 
-        /* ---------------------------------------------------------
-           VALIDATION
-        --------------------------------------------------------- */
-
-        if (!botId) {
-
-            alert("Please select a Telegram bot.");
-
+        if (!findButton) {
             return;
         }
 
 
-        if (!username) {
+        findButton.addEventListener(
+            "click",
+            async function () {
 
-            alert("Please enter a Telegram username.");
+                const botId =
+                    botSelect.value;
 
-            usernameInput.focus();
-
-            return;
-        }
-
-
-        /* ---------------------------------------------------------
-           BUTTON LOADING
-        --------------------------------------------------------- */
-
-        const originalText = findButton.innerText;
-
-        findButton.disabled = true;
-
-        findButton.innerText = "Finding...";
+                const username =
+                    usernameInput.value.trim();
 
 
-        chatResult.classList.add("d-none");
+                if (!botId) {
 
+                    alert(
+                        "Please select a Telegram bot."
+                    );
 
-        try {
-
-            const formData = new FormData();
-
-            formData.append(
-                "bot_id",
-                botId
-            );
-
-            formData.append(
-                "username",
-                username
-            );
-
-
-            /* -----------------------------------------------------
-               CSRF TOKEN
-            ----------------------------------------------------- */
-
-            const csrfToken =
-                document.querySelector(
-                    '[name="csrfmiddlewaretoken"]'
-                ).value;
-
-
-            const response = await fetch(
-                "{% url 'find-chat' %}",
-                {
-                    method: "POST",
-
-                    headers: {
-                        "X-CSRFToken": csrfToken
-                    },
-
-                    body: formData
+                    return;
                 }
-            );
 
 
-            const data = await response.json();
+                if (!username) {
+
+                    alert(
+                        "Please enter a Telegram username."
+                    );
+
+                    usernameInput.focus();
+
+                    return;
+                }
 
 
-            /* -----------------------------------------------------
-               ERROR
-            ----------------------------------------------------- */
+                const originalText =
+                    findButton.innerHTML;
 
-            if (!data.success) {
+                findButton.disabled = true;
 
-                alert(
-                    data.error ||
-                    "Unable to find Telegram chat."
+                findButton.innerHTML =
+                    '<span class="spinner-border spinner-border-sm me-1"></span> Finding...';
+
+
+                chatResult.classList.add(
+                    "d-none"
                 );
 
-                return;
-            }
+
+                try {
+
+                    const formData =
+                        new FormData();
+
+                    formData.append(
+                        "bot_id",
+                        botId
+                    );
+
+                    formData.append(
+                        "username",
+                        username
+                    );
 
 
-            /* -----------------------------------------------------
-               CHAT FOUND
-            ----------------------------------------------------- */
+                    const csrfElement =
+                        document.querySelector(
+                            '[name="csrfmiddlewaretoken"]'
+                        );
 
-            const chat = data.chat;
+                    if (!csrfElement) {
 
+                        throw new Error(
+                            "CSRF token not found."
+                        );
 
-            if (chat.id !== null &&
-                chat.id !== undefined) {
-
-                chatIdInput.value = chat.id;
-
-                foundChatId.innerText = chat.id;
-
-            }
+                    }
 
 
-            if (chat.title) {
+                    const response =
+                        await fetch(
+                            "{% url 'find-chat' %}",
+                            {
+                                method: "POST",
 
-                foundTitle.innerText =
-                    chat.title;
+                                headers: {
+                                    "X-CSRFToken":
+                                        csrfElement.value,
 
-                if (!destinationNameInput.value.trim()) {
+                                    "X-Requested-With":
+                                        "XMLHttpRequest"
+                                },
 
-                    destinationNameInput.value =
-                        chat.title;
+                                body:
+                                    formData
+                            }
+                        );
+
+
+                    const data =
+                        await response.json();
+
+
+                    if (!data.success) {
+
+                        alert(
+                            data.error ||
+                            "Unable to find Telegram chat."
+                        );
+
+                        return;
+                    }
+
+
+                    const chat =
+                        data.chat;
+
+
+                    if (
+                        chat.id !== null &&
+                        chat.id !== undefined
+                    ) {
+
+                        chatIdInput.value =
+                            chat.id;
+
+                        foundChatId.innerText =
+                            chat.id;
+
+                    }
+
+
+                    if (chat.title) {
+
+                        foundTitle.innerText =
+                            chat.title;
+
+                        if (
+                            !destinationNameInput.value.trim()
+                        ) {
+
+                            destinationNameInput.value =
+                                chat.title;
+
+                        }
+
+                    }
+
+
+                    if (chat.username) {
+
+                        const cleanUsername =
+                            "@" +
+                            chat.username
+                                .toString()
+                                .replace(
+                                    /^@/,
+                                    ""
+                                );
+
+                        usernameInput.value =
+                            cleanUsername;
+
+                        foundUsername.innerText =
+                            cleanUsername;
+
+                    }
+
+
+                    if (chat.type) {
+
+                        foundType.innerText =
+                            chat.type;
+
+                        if (
+                            chat.type === "group" ||
+                            chat.type === "supergroup"
+                        ) {
+
+                            chatTypeInput.value =
+                                "group";
+
+                        } else if (
+                            chat.type === "channel"
+                        ) {
+
+                            chatTypeInput.value =
+                                "channel";
+                        }
+
+                    }
+
+
+                    if (chat.description) {
+
+                        descriptionInput.value =
+                            chat.description;
+
+                    }
+
+
+                    chatResult.classList.remove(
+                        "d-none"
+                    );
+
+
+                } catch (error) {
+
+                    console.error(
+                        error
+                    );
+
+                    alert(
+                        "Something went wrong while finding the Telegram chat."
+                    );
+
+                } finally {
+
+                    findButton.disabled =
+                        false;
+
+                    findButton.innerHTML =
+                        originalText;
 
                 }
 
-            } else {
-
-                foundTitle.innerText = "—";
-
             }
+        );
 
-
-            if (chat.username) {
-
-                const cleanUsername =
-                    "@" +
-                    chat.username
-                        .toString()
-                        .replace(/^@/, "");
-
-                usernameInput.value =
-                    cleanUsername;
-
-                foundUsername.innerText =
-                    cleanUsername;
-
-            } else {
-
-                foundUsername.innerText =
-                    "—";
-
-            }
-
-
-            if (chat.type) {
-
-                foundType.innerText =
-                    chat.type;
-
-                if (
-                    chat.type === "group" ||
-                    chat.type === "supergroup"
-                ) {
-
-                    chatTypeInput.value =
-                        "group";
-
-                } else if (
-                    chat.type === "channel"
-                ) {
-
-                    chatTypeInput.value =
-                        "channel";
-
-                }
-
-            } else {
-
-                foundType.innerText = "—";
-
-            }
-
-
-            if (chat.description) {
-
-                descriptionInput.value =
-                    chat.description;
-
-            }
-
-
-            chatResult.classList.remove("d-none");
-
-
-        } catch (error) {
-
-            console.error(error);
-
-            alert(
-                "Something went wrong while finding the Telegram chat."
-            );
-
-        } finally {
-
-            findButton.disabled = false;
-
-            findButton.innerText =
-                originalText;
-
-        }
-
-    });
-
-});
+    }
+);
 
 </script>
+
 
 {% endblock %}

@@ -1,223 +1,1114 @@
 {% extends "base/base.html" %}
 
 {% block title %}
-Published Deals
+    Published Deals
 {% endblock %}
 
-{% block content %}
+
+{% block extra_css %}
 
 <style>
 
-.history-container {
-    width: 92%;
-    max-width: 1250px;
-    margin: 35px auto;
-}
+    /* =========================================================
+       PUBLISHED HISTORY PAGE
+    ========================================================== */
 
-.header {
-    margin-bottom: 25px;
-}
-
-.header h1 {
-    margin: 0 0 7px;
-}
-
-.header p {
-    margin: 0;
-    color: #6b7280;
-}
-
-.card {
-    background: white;
-    padding: 25px;
-    border-radius: 16px;
-    box-shadow: 0 4px 18px rgba(0,0,0,.07);
-}
-
-.table-wrapper {
-    overflow-x: auto;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-th,
-td {
-    padding: 14px;
-    border-bottom: 1px solid #eee;
-    text-align: left;
-    vertical-align: top;
-}
-
-th {
-    background: #f8fafc;
-    font-weight: 700;
-}
-
-.success {
-    color: #15803d;
-    font-weight: 700;
-}
-
-.failed {
-    color: #dc2626;
-    font-weight: 700;
-}
-
-.error-text {
-    max-width: 300px;
-    color: #991b1b;
-    font-size: 13px;
-    word-break: break-word;
-}
-
-.empty {
-    text-align: center;
-    padding: 45px;
-    color: #777;
-}
-
-@media(max-width:700px) {
-
-    .history-container {
-        width: 94%;
+    .published-page {
+        max-width: 1550px;
+        margin: 0 auto;
+        padding-bottom: 30px;
     }
 
-}
+
+    /* =========================================================
+       HERO
+    ========================================================== */
+
+    .published-hero {
+        display: flex;
+
+        align-items: center;
+
+        justify-content: space-between;
+
+        gap: 20px;
+
+        margin-bottom: 24px;
+    }
+
+    .published-hero-left {
+        display: flex;
+
+        align-items: center;
+
+        gap: 14px;
+    }
+
+    .published-hero-icon {
+        width: 56px;
+        height: 56px;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        border-radius: 16px;
+
+        background:
+            linear-gradient(
+                135deg,
+                #0f766e,
+                #0d9488
+            );
+
+        color: #ffffff;
+
+        font-size: 23px;
+
+        box-shadow:
+            0 12px 28px
+            rgba(13,148,136,.20);
+    }
+
+    .published-hero h1 {
+        margin: 0;
+
+        font-size: 28px;
+
+        font-weight: 800;
+
+        letter-spacing: -.65px;
+    }
+
+    .published-hero p {
+        margin: 5px 0 0;
+
+        color: #64748b;
+
+        font-size: 12px;
+    }
+
+    .published-hero-actions {
+        display: flex;
+
+        gap: 8px;
+
+        flex-wrap: wrap;
+    }
+
+
+    /* =========================================================
+       STATISTICS
+    ========================================================== */
+
+    .history-stat-grid {
+        display: grid;
+
+        grid-template-columns:
+            repeat(4, minmax(0, 1fr));
+
+        gap: 14px;
+
+        margin-bottom: 24px;
+    }
+
+    .history-stat {
+        position: relative;
+
+        min-height: 125px;
+
+        padding: 17px;
+
+        overflow: hidden;
+
+        background: #ffffff;
+
+        border:
+            1px solid #e7ebf0;
+
+        border-radius: 16px;
+
+        box-shadow:
+            0 4px 15px
+            rgba(15,23,42,.045);
+
+        transition:
+            transform .18s ease,
+            box-shadow .18s ease;
+    }
+
+    .history-stat:hover {
+        transform:
+            translateY(-3px);
+
+        box-shadow:
+            0 12px 28px
+            rgba(15,23,42,.075);
+    }
+
+    .history-stat-top {
+        display: flex;
+
+        align-items: center;
+
+        justify-content: space-between;
+    }
+
+    .history-stat-icon {
+        width: 43px;
+        height: 43px;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        border-radius: 12px;
+
+        font-size: 18px;
+    }
+
+    .history-total {
+        color: #2563eb;
+        background: #eff6ff;
+    }
+
+    .history-success {
+        color: #16a34a;
+        background: #f0fdf4;
+    }
+
+    .history-failed {
+        color: #dc2626;
+        background: #fef2f2;
+    }
+
+    .history-skipped {
+        color: #ea580c;
+        background: #fff7ed;
+    }
+
+    .history-stat-mini {
+        color: #94a3b8;
+
+        font-size: 9px;
+
+        font-weight: 750;
+    }
+
+    .history-stat-label {
+        margin-top: 15px;
+
+        color: #64748b;
+
+        font-size: 10px;
+
+        font-weight: 800;
+
+        text-transform: uppercase;
+
+        letter-spacing: .55px;
+    }
+
+    .history-stat-value {
+        margin-top: 2px;
+
+        color: #0f172a;
+
+        font-size: 27px;
+
+        font-weight: 800;
+    }
+
+
+    /* =========================================================
+       PANEL
+    ========================================================== */
+
+    .history-panel {
+        overflow: hidden;
+
+        background: #ffffff;
+
+        border:
+            1px solid #e7ebf0;
+
+        border-radius: 17px;
+
+        box-shadow:
+            0 4px 16px
+            rgba(15,23,42,.045);
+    }
+
+    .history-panel-header {
+        display: flex;
+
+        align-items: center;
+
+        justify-content: space-between;
+
+        gap: 15px;
+
+        padding:
+            16px 18px;
+
+        border-bottom:
+            1px solid #eef2f7;
+
+        background:
+            linear-gradient(
+                180deg,
+                #ffffff,
+                #fbfcfe
+            );
+    }
+
+    .history-panel-heading {
+        display: flex;
+
+        align-items: center;
+
+        gap: 10px;
+    }
+
+    .history-panel-icon {
+        width: 37px;
+        height: 37px;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        border-radius: 11px;
+
+        background: #f0fdfa;
+
+        color: #0f766e;
+
+        font-size: 16px;
+    }
+
+    .history-panel-heading h5 {
+        margin: 0;
+
+        font-size: 15px;
+
+        font-weight: 800;
+    }
+
+    .history-panel-heading p {
+        margin: 2px 0 0;
+
+        color: #94a3b8;
+
+        font-size: 10px;
+    }
+
+    .history-panel-body {
+        padding: 18px;
+    }
+
+
+    /* =========================================================
+       TABLE
+    ========================================================== */
+
+    .published-table-wrap {
+        overflow-x: auto;
+
+        border:
+            1px solid #edf1f5;
+
+        border-radius: 13px;
+    }
+
+    .published-table {
+        min-width: 1100px;
+
+        margin: 0;
+    }
+
+    .published-table thead th {
+        padding:
+            12px 13px;
+
+        background: #f8fafc;
+
+        color: #64748b;
+
+        font-size: 9px;
+
+        font-weight: 800;
+
+        text-transform: uppercase;
+
+        letter-spacing: .6px;
+
+        border-bottom:
+            1px solid #e8edf2;
+
+        white-space: nowrap;
+    }
+
+    .published-table tbody td {
+        padding:
+            13px;
+
+        color: #334155;
+
+        font-size: 11px;
+
+        border-color:
+            #eef2f7;
+
+        vertical-align: middle;
+    }
+
+    .published-table tbody tr {
+        transition:
+            background .15s ease;
+    }
+
+    .published-table tbody tr:hover {
+        background: #fbfdff;
+    }
+
+
+    /* =========================================================
+       DEAL PILL
+    ========================================================== */
+
+    .deal-pill {
+        display: inline-flex;
+
+        align-items: center;
+
+        gap: 5px;
+
+        padding:
+            5px 8px;
+
+        border-radius: 7px;
+
+        background: #eff6ff;
+
+        color: #2563eb;
+
+        font-size: 9px;
+
+        font-weight: 800;
+    }
+
+
+    /* =========================================================
+       SOURCE / DESTINATION
+    ========================================================== */
+
+    .destination-name {
+        font-weight: 750;
+
+        color: #334155;
+    }
+
+    .destination-username {
+        margin-top: 2px;
+
+        color: #94a3b8;
+
+        font-size: 9px;
+    }
+
+
+    /* =========================================================
+       STATUS PILLS
+    ========================================================== */
+
+    .status-pill {
+        display: inline-flex;
+
+        align-items: center;
+
+        gap: 5px;
+
+        padding:
+            5px 8px;
+
+        border-radius: 7px;
+
+        font-size: 9px;
+
+        font-weight: 800;
+    }
+
+    .status-success {
+        color: #15803d;
+
+        background: #f0fdf4;
+    }
+
+    .status-failed {
+        color: #dc2626;
+
+        background: #fef2f2;
+    }
+
+    .status-skipped {
+        color: #c2410c;
+
+        background: #fff7ed;
+    }
+
+
+    /* =========================================================
+       MESSAGE ID
+    ========================================================== */
+
+    .telegram-id {
+
+        display: inline-flex;
+
+        align-items: center;
+
+        padding:
+            5px 7px;
+
+        border-radius: 7px;
+
+        background: #f8fafc;
+
+        border:
+            1px solid #e8edf3;
+
+        color: #475569;
+
+        font-family:
+            Consolas,
+            "Courier New",
+            monospace;
+
+        font-size: 9px;
+
+        white-space: nowrap;
+    }
+
+
+    /* =========================================================
+       ERROR
+    ========================================================== */
+
+    .error-box {
+
+        max-width: 300px;
+
+        padding: 8px 9px;
+
+        border-radius: 8px;
+
+        background: #fef2f2;
+
+        border:
+            1px solid #fee2e2;
+
+        color: #991b1b;
+
+        font-size: 9px;
+
+        line-height: 1.5;
+
+        word-break: break-word;
+    }
+
+    .no-error {
+        color: #94a3b8;
+    }
+
+
+    /* =========================================================
+       EMPTY
+    ========================================================== */
+
+    .history-empty {
+        padding:
+            58px 25px;
+
+        text-align:
+            center;
+    }
+
+    .history-empty-icon {
+        width: 62px;
+        height: 62px;
+
+        margin:
+            0 auto 14px;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        border-radius: 18px;
+
+        background: #f0fdfa;
+
+        color: #0f766e;
+
+        font-size: 25px;
+    }
+
+    .history-empty h6 {
+        margin:
+            0 0 5px;
+
+        color: #1f2937;
+
+        font-size: 14px;
+
+        font-weight: 800;
+    }
+
+    .history-empty p {
+        margin: 0;
+
+        color: #94a3b8;
+
+        font-size: 11px;
+    }
+
+
+    /* =========================================================
+       RESPONSIVE
+    ========================================================== */
+
+    @media(max-width: 1050px) {
+
+        .history-stat-grid {
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+        }
+
+    }
+
+    @media(max-width: 800px) {
+
+        .published-hero {
+            flex-direction:
+                column;
+
+            align-items:
+                flex-start;
+        }
+
+    }
+
+    @media(max-width: 600px) {
+
+        .history-stat-grid {
+            grid-template-columns:
+                1fr;
+        }
+
+        .published-hero h1 {
+            font-size:
+                23px;
+        }
+
+    }
 
 </style>
 
-
-<div class="history-container">
-
-    <div class="header">
-
-        <h1>📋 Published Deals</h1>
-
-        <p>
-            Complete history of deal publishing operations.
-        </p>
-
-    </div>
+{% endblock %}
 
 
-    <div class="card">
+{% block content %}
 
-        {% if records %}
-
-            <div class="table-wrapper">
-
-                <table>
-
-                    <thead>
-
-                        <tr>
-
-                            <th>#</th>
-                            <th>Deal</th>
-                            <th>Source</th>
-                            <th>Destination</th>
-                            <th>Status</th>
-                            <th>Telegram Message ID</th>
-                            <th>Published At</th>
-                            <th>Error</th>
-
-                        </tr>
-
-                    </thead>
+<div class="published-page">
 
 
-                    <tbody>
+    <!-- =========================================================
+         HEADER
+    ========================================================== -->
 
-                        {% for record in records %}
+    <div class="published-hero">
 
-                            <tr>
+        <div class="published-hero-left">
 
-                                <td>
-                                    {{ forloop.counter }}
-                                </td>
+            <div class="published-hero-icon">
 
-                                <td>
-                                    #{{ record.deal.id }}
-                                </td>
-
-                                <td>
-                                    {{ record.deal.channel }}
-                                </td>
-
-                                <td>
-                                    {{ record.channel.username|default:record.channel.name }}
-                                </td>
-
-                                <td>
-
-                                    {% if record.status == "success" %}
-
-                                        <span class="success">
-                                            Success
-                                        </span>
-
-                                    {% else %}
-
-                                        <span class="failed">
-                                            Failed
-                                        </span>
-
-                                    {% endif %}
-
-                                </td>
-
-                                <td>
-                                    {{ record.telegram_message_id|default:"-" }}
-                                </td>
-
-                                <td>
-                                    {{ record.published_at|date:"d M Y H:i:s" }}
-                                </td>
-
-                                <td>
-
-                                    {% if record.error %}
-
-                                        <div class="error-text">
-                                            {{ record.error }}
-                                        </div>
-
-                                    {% else %}
-
-                                        -
-
-                                    {% endif %}
-
-                                </td>
-
-                            </tr>
-
-                        {% endfor %}
-
-                    </tbody>
-
-                </table>
+                <i class="bi bi-journal-check"></i>
 
             </div>
 
-        {% else %}
+            <div>
 
-            <div class="empty">
-
-                <h3>No Publishing History</h3>
+                <h1>
+                    Published Deals
+                </h1>
 
                 <p>
-                    Published deals will appear here.
+                    Complete history of deal publishing operations.
                 </p>
 
             </div>
 
-        {% endif %}
+        </div>
+
+
+        <div class="published-hero-actions">
+
+            <a
+                href="{% url 'publish-page' %}"
+                class="btn btn-primary"
+            >
+
+                <i class="bi bi-rocket-takeoff me-1"></i>
+
+                Publish Deals
+
+            </a>
+
+
+            <a
+                href="{% url 'channels' %}"
+                class="btn btn-outline-secondary"
+            >
+
+                <i class="bi bi-megaphone me-1"></i>
+
+                Channels
+
+            </a>
+
+        </div>
 
     </div>
+
+
+    <!-- =========================================================
+         STATISTICS
+    ========================================================== -->
+
+    <div class="history-stat-grid">
+
+        <div class="history-stat">
+
+            <div class="history-stat-top">
+
+                <div class="history-stat-icon history-total">
+
+                    <i class="bi bi-journal-text"></i>
+
+                </div>
+
+                <span class="history-stat-mini">
+                    Records
+                </span>
+
+            </div>
+
+            <div class="history-stat-label">
+                Total Records
+            </div>
+
+            <div class="history-stat-value">
+                {{ records|length }}
+            </div>
+
+        </div>
+
+
+        <div class="history-stat">
+
+            <div class="history-stat-top">
+
+                <div class="history-stat-icon history-success">
+
+                    <i class="bi bi-check-circle-fill"></i>
+
+                </div>
+
+                <span class="history-stat-mini">
+                    Delivered
+                </span>
+
+            </div>
+
+            <div class="history-stat-label">
+                Successful
+            </div>
+
+            <div class="history-stat-value">
+                {{ successful_count }}
+            </div>
+
+        </div>
+
+
+        <div class="history-stat">
+
+            <div class="history-stat-top">
+
+                <div class="history-stat-icon history-failed">
+
+                    <i class="bi bi-x-circle-fill"></i>
+
+                </div>
+
+                <span class="history-stat-mini">
+                    Errors
+                </span>
+
+            </div>
+
+            <div class="history-stat-label">
+                Failed
+            </div>
+
+            <div class="history-stat-value">
+                {{ failed_count }}
+            </div>
+
+        </div>
+
+
+        <div class="history-stat">
+
+            <div class="history-stat-top">
+
+                <div class="history-stat-icon history-skipped">
+
+                    <i class="bi bi-skip-forward-fill"></i>
+
+                </div>
+
+                <span class="history-stat-mini">
+                    Duplicate
+                </span>
+
+            </div>
+
+            <div class="history-stat-label">
+                Skipped
+            </div>
+
+            <div class="history-stat-value">
+                {{ skipped_count }}
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         HISTORY PANEL
+    ========================================================== -->
+
+    <div class="history-panel">
+
+        <div class="history-panel-header">
+
+            <div class="history-panel-heading">
+
+                <div class="history-panel-icon">
+
+                    <i class="bi bi-clock-history"></i>
+
+                </div>
+
+                <div>
+
+                    <h5>
+                        Publishing History
+                    </h5>
+
+                    <p>
+                        Every publishing attempt recorded by the system.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <span class="badge bg-light text-dark border">
+
+                {{ records|length }}
+
+                Record{{ records|length|pluralize }}
+
+            </span>
+
+        </div>
+
+
+        <div class="history-panel-body">
+
+            {% if records %}
+
+                <div class="published-table-wrap">
+
+                    <table
+                        class="table table-hover align-middle published-table"
+                    >
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    #
+                                </th>
+
+                                <th>
+                                    Deal
+                                </th>
+
+                                <th>
+                                    Source
+                                </th>
+
+                                <th>
+                                    Destination
+                                </th>
+
+                                <th>
+                                    Status
+                                </th>
+
+                                <th>
+                                    Telegram Message ID
+                                </th>
+
+                                <th>
+                                    Published At
+                                </th>
+
+                                <th>
+                                    Error
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            {% for record in records %}
+
+                                <tr>
+
+                                    <!-- ROW -->
+
+                                    <td>
+
+                                        <span class="text-muted">
+                                            {{ forloop.counter }}
+                                        </span>
+
+                                    </td>
+
+
+                                    <!-- DEAL -->
+
+                                    <td>
+
+                                        <span class="deal-pill">
+
+                                            <i class="bi bi-box-seam"></i>
+
+                                            #{{ record.deal.id }}
+
+                                        </span>
+
+                                    </td>
+
+
+                                    <!-- SOURCE -->
+
+                                    <td>
+
+                                        <div class="destination-name">
+
+                                            {{ record.deal.channel }}
+
+                                        </div>
+
+                                    </td>
+
+
+                                    <!-- DESTINATION -->
+
+                                    <td>
+
+                                        <div class="destination-name">
+
+                                            {{ record.channel.name }}
+
+                                        </div>
+
+
+                                        {% if record.channel.username %}
+
+                                            <div class="destination-username">
+
+                                                {{ record.channel.username }}
+
+                                            </div>
+
+                                        {% endif %}
+
+                                    </td>
+
+
+                                    <!-- STATUS -->
+
+                                    <td>
+
+                                        {% if record.status == "success" %}
+
+                                            <span class="status-pill status-success">
+
+                                                <i class="bi bi-check-circle-fill"></i>
+
+                                                Success
+
+                                            </span>
+
+                                        {% elif record.status == "failed" %}
+
+                                            <span class="status-pill status-failed">
+
+                                                <i class="bi bi-x-circle-fill"></i>
+
+                                                Failed
+
+                                            </span>
+
+                                        {% elif record.status == "skipped" %}
+
+                                            <span class="status-pill status-skipped">
+
+                                                <i class="bi bi-skip-forward-fill"></i>
+
+                                                Skipped
+
+                                            </span>
+
+                                        {% else %}
+
+                                            <span class="badge bg-secondary">
+
+                                                {{ record.status|title }}
+
+                                            </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+
+                                    <!-- TELEGRAM MESSAGE ID -->
+
+                                    <td>
+
+                                        {% if record.telegram_message_id %}
+
+                                            <span class="telegram-id">
+
+                                                <i class="bi bi-telegram me-1"></i>
+
+                                                {{ record.telegram_message_id }}
+
+                                            </span>
+
+                                        {% else %}
+
+                                            <span class="no-error">
+                                                —
+                                            </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+
+                                    <!-- TIME -->
+
+                                    <td>
+
+                                        {{ record.published_at|date:"d M Y, H:i:s" }}
+
+                                    </td>
+
+
+                                    <!-- ERROR -->
+
+                                    <td>
+
+                                        {% if record.error %}
+
+                                            <div class="error-box">
+
+                                                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+
+                                                {{ record.error }}
+
+                                            </div>
+
+                                        {% else %}
+
+                                            <span class="no-error">
+                                                —
+                                            </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            {% else %}
+
+                <div class="history-empty">
+
+                    <div class="history-empty-icon">
+
+                        <i class="bi bi-journal-x"></i>
+
+                    </div>
+
+                    <h6>
+                        No Publishing History
+                    </h6>
+
+                    <p>
+                        Published deals will appear here after the first publishing attempt.
+                    </p>
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
 
 </div>
 

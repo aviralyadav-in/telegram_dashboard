@@ -16,9 +16,8 @@
         {% endblock %}
     </title>
 
-
     <!-- =====================================================
-         BOOTSTRAP 5.3.3
+         BOOTSTRAP
     ====================================================== -->
 
     <link
@@ -26,12 +25,61 @@
         rel="stylesheet"
     >
 
+    <!-- =====================================================
+         ICONS
+    ====================================================== -->
+
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    >
 
     <!-- =====================================================
          CUSTOM CSS
     ====================================================== -->
 
     <style>
+
+        /* =====================================================
+           ROOT
+        ====================================================== */
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --primary-soft: #eff6ff;
+
+            --dark: #111827;
+            --dark-2: #1f2937;
+            --dark-3: #374151;
+
+            --text: #111827;
+            --muted: #6b7280;
+
+            --bg: #f4f7fb;
+            --card: #ffffff;
+            --border: #e5e7eb;
+
+            --success: #16a34a;
+            --warning: #d97706;
+            --danger: #dc2626;
+
+            --sidebar-width: 250px;
+
+            --radius-sm: 10px;
+            --radius-md: 14px;
+            --radius-lg: 18px;
+
+            --shadow-sm:
+                0 2px 8px rgba(15, 23, 42, 0.05);
+
+            --shadow-md:
+                0 8px 24px rgba(15, 23, 42, 0.07);
+
+            --shadow-lg:
+                0 14px 40px rgba(15, 23, 42, 0.10);
+        }
+
 
         /* =====================================================
            GLOBAL
@@ -41,6 +89,9 @@
             box-sizing: border-box;
         }
 
+        html {
+            scroll-behavior: smooth;
+        }
 
         html,
         body {
@@ -49,16 +100,25 @@
             min-height: 100%;
         }
 
-
         body {
-            font-family: Arial, sans-serif;
-            background: #f4f6f9;
-            color: #222;
+            font-family:
+                Inter,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Arial,
+                sans-serif;
+
+            background: var(--bg);
+            color: var(--text);
+
+            font-size: 14px;
+            line-height: 1.55;
         }
 
 
         /* =====================================================
-           MAIN LAYOUT
+           LAYOUT
         ====================================================== */
 
         .layout {
@@ -67,7 +127,7 @@
 
 
         /* =====================================================
-           FIXED SIDEBAR
+           SIDEBAR
         ====================================================== */
 
         .sidebar {
@@ -78,41 +138,44 @@
             top: 0;
             bottom: 0;
 
-            width: 245px;
+            width: var(--sidebar-width);
             height: 100vh;
 
-            background: #111827;
+            background:
+                linear-gradient(
+                    180deg,
+                    #0f172a 0%,
+                    #111827 52%,
+                    #0f172a 100%
+                );
 
             color: white;
 
-            padding: 22px 14px;
+            padding: 18px 14px;
 
             overflow-y: auto;
             overflow-x: hidden;
 
             z-index: 9999;
 
-            border-right: 1px solid #1f2937;
+            border-right: 1px solid rgba(255,255,255,0.05);
+
+            box-shadow:
+                8px 0 30px rgba(15, 23, 42, 0.08);
         }
 
-
-        /* =====================================================
-           SIDEBAR SCROLLBAR
-        ====================================================== */
 
         .sidebar::-webkit-scrollbar {
-            width: 6px;
+            width: 5px;
         }
-
 
         .sidebar::-webkit-scrollbar-track {
-            background: #111827;
+            background: transparent;
         }
-
 
         .sidebar::-webkit-scrollbar-thumb {
             background: #374151;
-            border-radius: 10px;
+            border-radius: 999px;
         }
 
 
@@ -122,33 +185,58 @@
 
         .brand {
 
-            padding: 8px 12px 24px;
-
-            border-bottom: 1px solid #374151;
+            padding: 10px 12px 22px;
 
             margin-bottom: 18px;
+
+            border-bottom:
+                1px solid rgba(255,255,255,0.08);
         }
 
+        .brand-logo {
+
+            width: 42px;
+            height: 42px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 13px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #2563eb,
+                    #3b82f6
+                );
+
+            font-size: 21px;
+
+            box-shadow:
+                0 8px 20px rgba(37, 99, 235, 0.28);
+        }
 
         .brand h2 {
 
             margin: 0;
 
-            font-size: 20px;
+            font-size: 18px;
 
-            font-weight: 700;
+            font-weight: 750;
+
+            letter-spacing: -0.3px;
 
             color: #ffffff;
         }
 
-
         .brand p {
 
-            margin: 6px 0 0;
+            margin: 3px 0 0;
 
-            color: #9ca3af;
+            color: #94a3b8;
 
-            font-size: 12px;
+            font-size: 11px;
         }
 
 
@@ -158,15 +246,17 @@
 
         .menu-title {
 
-            color: #9ca3af;
+            color: #64748b;
 
-            font-size: 11px;
+            font-size: 10px;
+
+            font-weight: 700;
 
             text-transform: uppercase;
 
-            margin: 18px 12px 8px;
+            margin: 20px 10px 8px;
 
-            letter-spacing: 0.5px;
+            letter-spacing: 0.9px;
         }
 
 
@@ -180,117 +270,128 @@
 
             align-items: center;
 
-            gap: 10px;
+            gap: 11px;
 
-            color: #d1d5db;
+            color: #cbd5e1;
 
             text-decoration: none;
 
-            padding: 12px;
+            padding: 10px 12px;
 
-            border-radius: 7px;
+            border-radius: 11px;
 
-            margin-bottom: 5px;
+            margin-bottom: 4px;
 
-            font-size: 14px;
+            font-size: 13px;
+
+            font-weight: 500;
 
             transition:
-                background 0.15s ease,
-                color 0.15s ease;
+                background 0.18s ease,
+                color 0.18s ease,
+                transform 0.18s ease;
         }
-
 
         .sidebar a:hover {
 
-            background: #1f2937;
+            background: rgba(255,255,255,0.06);
 
             color: #ffffff;
-        }
 
+            transform: translateX(2px);
+        }
 
         .sidebar a.active {
 
-            background: #2563eb;
+            background:
+                linear-gradient(
+                    135deg,
+                    #2563eb,
+                    #1d4ed8
+                );
 
             color: #ffffff;
+
+            box-shadow:
+                0 6px 18px rgba(37,99,235,0.25);
         }
 
 
         /* =====================================================
-           MENU ICON
+           ICON
         ====================================================== */
 
         .menu-icon {
 
-            width: 22px;
+            width: 28px;
+            min-width: 28px;
 
-            min-width: 22px;
+            height: 28px;
 
-            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
 
-            font-size: 16px;
+            border-radius: 8px;
+
+            font-size: 15px;
         }
 
+        .sidebar a.active .menu-icon {
 
-        .icon {
-
-            width: 22px;
-
-            min-width: 22px;
-
-            text-align: center;
-
-            font-size: 16px;
+            background:
+                rgba(255,255,255,0.12);
         }
 
 
         /* =====================================================
-           DEALS SUBMENU
+           SUBMENU
         ====================================================== */
 
         .submenu {
 
-            margin: 0 0 10px 34px;
+            margin:
+                2px 0 10px 25px;
 
-            border-left: 1px solid #374151;
+            padding-left: 9px;
 
-            padding-left: 8px;
+            border-left:
+                1px solid rgba(255,255,255,0.10);
         }
-
 
         .submenu a {
 
-            padding: 9px 10px;
+            padding: 8px 10px;
 
-            margin-bottom: 3px;
+            margin-bottom: 2px;
 
-            font-size: 13px;
+            font-size: 12px;
 
-            color: #9ca3af;
+            color: #94a3b8;
+
+            border-radius: 9px;
         }
-
 
         .submenu a:hover {
 
-            background: #1f2937;
-
             color: #ffffff;
-        }
 
+            background:
+                rgba(255,255,255,0.05);
+        }
 
         .submenu a.active {
 
-            background: #1d4ed8;
-
             color: #ffffff;
-        }
 
+            background:
+                rgba(37,99,235,0.28);
+        }
 
         .submenu-icon {
 
-            width: 18px;
-
-            min-width: 18px;
+            width: 20px;
+            min-width: 20px;
 
             text-align: center;
         }
@@ -302,160 +403,308 @@
 
         .main-content {
 
-            margin-left: 245px;
+            margin-left: var(--sidebar-width);
 
-            width: calc(100% - 245px);
+            width:
+                calc(100% - var(--sidebar-width));
 
             min-height: 100vh;
 
-            padding: 30px;
+            padding: 26px 30px 40px;
 
-            overflow-x: auto;
+            overflow-x: hidden;
         }
 
 
         /* =====================================================
-           BACK TO DASHBOARD
+           TOP BAR
+        ====================================================== */
+
+        .app-topbar {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            gap: 20px;
+
+            margin-bottom: 22px;
+
+            padding:
+                14px 18px;
+
+            background: rgba(255,255,255,0.86);
+
+            backdrop-filter: blur(12px);
+
+            border:
+                1px solid rgba(229,231,235,0.85);
+
+            border-radius: var(--radius-md);
+
+            box-shadow: var(--shadow-sm);
+        }
+
+        .topbar-title {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+            font-size: 13px;
+
+            color: var(--muted);
+        }
+
+        .topbar-dot {
+
+            width: 9px;
+            height: 9px;
+
+            border-radius: 50%;
+
+            background: #22c55e;
+
+            box-shadow:
+                0 0 0 4px rgba(34,197,94,0.10);
+        }
+
+
+        /* =====================================================
+           BACK DASHBOARD
         ====================================================== */
 
         .back-dashboard {
 
-            display: inline-block;
+            display: inline-flex;
 
-            margin-bottom: 20px;
+            align-items: center;
 
-            padding: 9px 15px;
+            gap: 7px;
+
+            margin-bottom: 18px;
+
+            padding: 9px 13px;
 
             background: #ffffff;
 
-            color: #2563eb;
+            color: var(--primary);
 
             text-decoration: none;
 
-            border: 1px solid #ddd;
+            border:
+                1px solid var(--border);
 
-            border-radius: 6px;
+            border-radius: 10px;
 
-            font-size: 14px;
+            font-size: 13px;
 
-            transition: 0.2s ease;
+            font-weight: 600;
+
+            box-shadow: var(--shadow-sm);
+
+            transition:
+                all 0.18s ease;
         }
-
 
         .back-dashboard:hover {
 
-            background: #eff6ff;
+            background: var(--primary-soft);
 
-            color: #1d4ed8;
+            color: var(--primary-dark);
+
+            border-color:
+                #bfdbfe;
+
+            transform:
+                translateY(-1px);
         }
 
 
         /* =====================================================
-           PAGE CONTENT
+           HEADINGS
         ====================================================== */
 
-        .main-content > .container,
-        .main-content > .container-fluid {
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
 
-            max-width: 100%;
+            color: var(--text);
+
+            letter-spacing:
+                -0.25px;
         }
 
+        .page-heading {
 
-        /* =====================================================
-           BOOTSTRAP CARD IMPROVEMENT
-        ====================================================== */
+            font-size: 26px;
 
-        .card {
+            font-weight: 750;
 
-            border-radius: 10px;
+            margin-bottom: 4px;
         }
 
+        .page-subheading {
 
-        .card-header {
+            color: var(--muted);
 
-            padding: 15px 18px;
-        }
-
-
-        .card-body {
-
-            padding: 20px;
-        }
-
-
-        /* =====================================================
-           TABLE
-        ====================================================== */
-
-        .table {
+            font-size: 13px;
 
             margin-bottom: 0;
         }
 
 
-        .table th {
+        /* =====================================================
+           CARDS
+        ====================================================== */
+
+        .card {
+
+            border:
+                1px solid rgba(229,231,235,0.88);
+
+            border-radius:
+                var(--radius-md);
+
+            background:
+                var(--card);
+
+            box-shadow:
+                var(--shadow-sm);
+
+            overflow: hidden;
+
+            transition:
+                transform 0.18s ease,
+                box-shadow 0.18s ease,
+                border-color 0.18s ease;
+        }
+
+        .card:hover {
+
+            box-shadow:
+                var(--shadow-md);
+        }
+
+        .card-header {
+
+            padding:
+                16px 18px;
+
+            background:
+                #ffffff;
+
+            border-bottom:
+                1px solid var(--border);
+        }
+
+        .card-body {
+
+            padding:
+                19px;
+        }
+
+
+        /* =====================================================
+           STAT CARDS
+        ====================================================== */
+
+        .stat-card {
+
+            position: relative;
+
+            border-radius:
+                var(--radius-md);
+
+            overflow: hidden;
+
+            background: #ffffff;
+
+            border:
+                1px solid var(--border);
+
+            box-shadow:
+                var(--shadow-sm);
+
+            transition:
+                transform 0.18s ease,
+                box-shadow 0.18s ease;
+        }
+
+        .stat-card:hover {
+
+            transform:
+                translateY(-3px);
+
+            box-shadow:
+                var(--shadow-md);
+        }
+
+        .stat-card::after {
+
+            content: "";
+
+            position: absolute;
+
+            right: -35px;
+            bottom: -35px;
+
+            width: 100px;
+            height: 100px;
+
+            border-radius: 50%;
+
+            background:
+                rgba(37,99,235,0.05);
+        }
+
+        .stat-icon {
+
+            width: 42px;
+            height: 42px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            border-radius: 12px;
+
+            background:
+                var(--primary-soft);
+
+            color:
+                var(--primary);
+
+            font-size: 18px;
+        }
+
+        .stat-label {
+
+            color: var(--muted);
+
+            font-size: 12px;
 
             font-weight: 600;
-
-            white-space: nowrap;
         }
 
+        .stat-value {
 
-        .table td {
+            font-size: 25px;
 
-            vertical-align: middle;
-        }
+            font-weight: 750;
 
+            line-height: 1.1;
 
-        /* =====================================================
-           BADGES
-        ====================================================== */
-
-        .badge {
-
-            font-weight: 500;
-
-            padding: 6px 9px;
-        }
-
-
-        /* =====================================================
-           BUTTONS
-        ====================================================== */
-
-        .btn {
-
-            border-radius: 6px;
-        }
-
-
-        /* =====================================================
-           FORMS
-        ====================================================== */
-
-        .form-control,
-        .form-select {
-
-            border-radius: 6px;
-        }
-
-
-        .form-control:focus,
-        .form-select:focus {
-
-            box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.15);
-
-            border-color: #2563eb;
-        }
-
-
-        /* =====================================================
-           ALERT
-        ====================================================== */
-
-        .alert {
-
-            border-radius: 8px;
+            margin-top: 4px;
         }
 
 
@@ -465,74 +714,422 @@
 
         .destination-card {
 
+            position: relative;
+
+            height: 100%;
+
+            transition:
+                transform 0.18s ease,
+                box-shadow 0.18s ease,
+                border-color 0.18s ease;
+        }
+
+        .destination-card:hover {
+
+            transform:
+                translateY(-4px);
+
+            box-shadow:
+                var(--shadow-md);
+
+            border-color:
+                #dbeafe;
+        }
+
+
+        /* =====================================================
+           SOFT SECTION
+        ====================================================== */
+
+        .soft-section {
+
+            background:
+                linear-gradient(
+                    180deg,
+                    #ffffff 0%,
+                    #f8fafc 100%
+                );
+        }
+
+
+        /* =====================================================
+           TABLE
+        ====================================================== */
+
+        .table-responsive {
+
+            border-radius:
+                var(--radius-sm);
+        }
+
+        .table {
+
+            margin-bottom: 0;
+
+            color: var(--text);
+        }
+
+        .table thead th {
+
+            background: #f8fafc;
+
+            color: #475569;
+
+            font-size: 11px;
+
+            text-transform: uppercase;
+
+            letter-spacing: 0.45px;
+
+            font-weight: 700;
+
+            border-bottom:
+                1px solid var(--border);
+
+            white-space: nowrap;
+        }
+
+        .table td {
+
+            vertical-align: middle;
+
+            border-color:
+                #eef2f7;
+
+            font-size: 13px;
+        }
+
+        .table-hover tbody tr:hover {
+
+            background:
+                #f8fbff;
+        }
+
+
+        /* =====================================================
+           BADGES
+        ====================================================== */
+
+        .badge {
+
+            font-weight: 600;
+
+            padding:
+                6px 9px;
+
+            border-radius:
+                7px;
+        }
+
+
+        /* =====================================================
+           BUTTONS
+        ====================================================== */
+
+        .btn {
+
+            border-radius:
+                9px;
+
+            font-weight: 600;
+
             transition:
                 transform 0.15s ease,
                 box-shadow 0.15s ease;
         }
 
+        .btn:hover {
 
-        .destination-card:hover {
+            transform:
+                translateY(-1px);
+        }
 
-            transform: translateY(-2px);
+        .btn-primary {
 
-            box-shadow: 0 5px 18px rgba(0, 0, 0, 0.08);
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--primary),
+                    var(--primary-dark)
+                );
+
+            border-color:
+                var(--primary);
+
+            box-shadow:
+                0 5px 14px rgba(37,99,235,0.16);
+        }
+
+        .btn-primary:hover {
+
+            box-shadow:
+                0 7px 18px rgba(37,99,235,0.22);
         }
 
 
         /* =====================================================
-           MOBILE / TABLET
+           FORMS
         ====================================================== */
 
-        @media (max-width: 800px) {
+        .form-label {
 
-            .sidebar {
+            font-size: 12px;
 
-                width: 210px;
-            }
+            font-weight: 650;
 
+            color: #374151;
 
-            .main-content {
+            margin-bottom: 6px;
+        }
 
-                margin-left: 210px;
+        .form-control,
+        .form-select {
 
-                width: calc(100% - 210px);
+            min-height: 42px;
 
-                padding: 20px;
-            }
+            border-radius:
+                10px;
 
+            border-color:
+                #dbe2ea;
+
+            font-size: 13px;
+
+            background:
+                #ffffff;
+
+            transition:
+                border-color 0.15s ease,
+                box-shadow 0.15s ease;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+
+            border-color:
+                var(--primary);
+
+            box-shadow:
+                0 0 0 4px
+                rgba(37,99,235,0.09);
+        }
+
+        textarea.form-control {
+
+            min-height: 100px;
         }
 
 
-        @media (max-width: 600px) {
+        /* =====================================================
+           ALERTS
+        ====================================================== */
 
-            .sidebar {
+        .alert {
 
-                position: fixed;
+            border-radius:
+                11px;
 
-                width: 200px;
+            border-width:
+                1px;
 
-                height: 100vh;
+            font-size: 13px;
+
+            box-shadow:
+                var(--shadow-sm);
+        }
+
+
+        /* =====================================================
+           HR
+        ====================================================== */
+
+        hr {
+
+            border-color:
+                #e5e7eb;
+
+            opacity:
+                0.9;
+        }
+
+
+        /* =====================================================
+           EMPTY STATE
+        ====================================================== */
+
+        .empty-state {
+
+            text-align: center;
+
+            padding:
+                50px 25px;
+
+            color:
+                var(--muted);
+        }
+
+        .empty-state-icon {
+
+            width: 56px;
+            height: 56px;
+
+            margin:
+                0 auto 14px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            border-radius:
+                16px;
+
+            background:
+                #f1f5f9;
+
+            color:
+                #64748b;
+
+            font-size: 24px;
+        }
+
+
+        /* =====================================================
+           UTILITY
+        ====================================================== */
+
+        .text-muted {
+            color:
+                #6b7280 !important;
+        }
+
+        .small-muted {
+
+            font-size: 12px;
+
+            color:
+                var(--muted);
+        }
+
+
+        /* =====================================================
+           MOBILE
+        ====================================================== */
+
+        @media (max-width: 1000px) {
+
+            :root {
+                --sidebar-width: 220px;
             }
-
 
             .main-content {
 
-                margin-left: 200px;
-
-                width: calc(100% - 200px);
-
-                padding: 15px;
+                padding:
+                    22px 20px 35px;
             }
-
         }
 
+
+        @media (max-width: 760px) {
+
+            :root {
+                --sidebar-width: 76px;
+            }
+
+            .sidebar {
+
+                padding:
+                    14px 9px;
+            }
+
+            .brand {
+
+                padding:
+                    8px 4px 18px;
+
+                display:
+                    flex;
+
+                justify-content:
+                    center;
+            }
+
+            .brand-copy,
+            .menu-title,
+            .sidebar a span:not(.menu-icon),
+            .submenu span:not(.submenu-icon) {
+
+                display: none;
+            }
+
+            .sidebar a {
+
+                justify-content:
+                    center;
+
+                padding:
+                    10px;
+            }
+
+            .submenu {
+
+                margin-left: 0;
+
+                padding-left: 0;
+
+                border-left: 0;
+            }
+
+            .submenu a {
+
+                justify-content:
+                    center;
+            }
+
+            .main-content {
+
+                margin-left:
+                    var(--sidebar-width);
+
+                width:
+                    calc(100% - var(--sidebar-width));
+
+                padding:
+                    18px 14px 30px;
+            }
+
+            .app-topbar {
+
+                padding:
+                    12px 14px;
+            }
+        }
+
+
+        @media (max-width: 520px) {
+
+            .main-content {
+
+                padding:
+                    14px 10px 25px;
+            }
+
+            .card-body {
+
+                padding:
+                    15px;
+            }
+
+            .page-heading {
+
+                font-size:
+                    22px;
+            }
+        }
 
     </style>
 
-
-    <!-- =====================================================
-         EXTRA CSS BLOCK
-    ====================================================== -->
 
     {% block extra_css %}
     {% endblock %}
@@ -542,46 +1139,51 @@
 
 <body>
 
-
 <div class="layout">
 
 
     <!-- =====================================================
-         FIXED SIDEBAR
+         SIDEBAR
     ====================================================== -->
 
     <aside class="sidebar">
 
 
-        <!-- =================================================
-             BRAND
-        ================================================== -->
+        <!-- BRAND -->
 
         <div class="brand">
 
-            <h2>
-                Telegram Deals
-            </h2>
+            <div class="d-flex align-items-center gap-2">
 
-            <p>
-                Deals Management System
-            </p>
+                <div class="brand-logo">
+                    📦
+                </div>
+
+                <div class="brand-copy">
+
+                    <h2>
+                        Telegram Deals
+                    </h2>
+
+                    <p>
+                        Deals Management System
+                    </p>
+
+                </div>
+
+            </div>
 
         </div>
 
 
-        <!-- =================================================
-             MAIN MENU
-        ================================================== -->
+        <!-- MAIN -->
 
         <div class="menu-title">
             Main
         </div>
 
 
-        <!-- =================================================
-             DASHBOARD
-        ================================================== -->
+        <!-- DASHBOARD -->
 
         <a
             href="/"
@@ -589,7 +1191,7 @@
         >
 
             <span class="menu-icon">
-                🏠
+                <i class="bi bi-grid-1x2-fill"></i>
             </span>
 
             <span>
@@ -599,9 +1201,7 @@
         </a>
 
 
-        <!-- =================================================
-             DEALS
-        ================================================== -->
+        <!-- DEALS -->
 
         <a
             href="/list/"
@@ -609,7 +1209,7 @@
         >
 
             <span class="menu-icon">
-                📦
+                <i class="bi bi-box-seam-fill"></i>
             </span>
 
             <span>
@@ -619,14 +1219,9 @@
         </a>
 
 
-        <!-- =================================================
-             DEALS SUBMENU
-        ================================================== -->
-
         {% if '/list/' in request.path or '/categories/' in request.path %}
 
             <div class="submenu">
-
 
                 <a
                     href="/list/"
@@ -634,7 +1229,7 @@
                 >
 
                     <span class="submenu-icon">
-                        📋
+                        <i class="bi bi-list-ul"></i>
                     </span>
 
                     <span>
@@ -650,7 +1245,7 @@
                 >
 
                     <span class="submenu-icon">
-                        🏷️
+                        <i class="bi bi-tags-fill"></i>
                     </span>
 
                     <span>
@@ -659,15 +1254,12 @@
 
                 </a>
 
-
             </div>
 
         {% endif %}
 
 
-        <!-- =================================================
-             SCRAPING
-        ================================================== -->
+        <!-- SCRAPING -->
 
         <a
             href="/scraping/"
@@ -675,7 +1267,7 @@
         >
 
             <span class="menu-icon">
-                🔍
+                <i class="bi bi-search"></i>
             </span>
 
             <span>
@@ -685,9 +1277,7 @@
         </a>
 
 
-        <!-- =================================================
-             CHANNELS
-        ================================================== -->
+        <!-- CHANNELS -->
 
         <a
             href="/channels/"
@@ -695,7 +1285,7 @@
         >
 
             <span class="menu-icon">
-                📢
+                <i class="bi bi-megaphone-fill"></i>
             </span>
 
             <span>
@@ -705,9 +1295,7 @@
         </a>
 
 
-        <!-- =================================================
-             PUBLISH
-        ================================================== -->
+        <!-- PUBLISH -->
 
         <a
             href="/channels/publish/"
@@ -715,7 +1303,7 @@
         >
 
             <span class="menu-icon">
-                🚀
+                <i class="bi bi-rocket-takeoff-fill"></i>
             </span>
 
             <span>
@@ -725,9 +1313,7 @@
         </a>
 
 
-        <!-- =================================================
-             PUBLISHED HISTORY
-        ================================================== -->
+        <!-- PUBLISHED HISTORY -->
 
         <a
             href="/channels/published/"
@@ -735,7 +1321,7 @@
         >
 
             <span class="menu-icon">
-                📜
+                <i class="bi bi-clock-history"></i>
             </span>
 
             <span>
@@ -745,9 +1331,7 @@
         </a>
 
 
-        <!-- =================================================
-             AUTO PUBLISHING
-        ================================================== -->
+        <!-- AUTO PUBLISHING -->
 
         <a
             href="/schedules/"
@@ -755,7 +1339,7 @@
         >
 
             <span class="menu-icon">
-                🤖
+                <i class="bi bi-robot"></i>
             </span>
 
             <span>
@@ -775,9 +1359,32 @@
     <main class="main-content">
 
 
-        <!-- =================================================
-             BACK TO DASHBOARD
-        ================================================== -->
+        <!-- TOP BAR -->
+
+        {% if request.path != '/' %}
+
+            <div class="app-topbar">
+
+                <div class="topbar-title">
+
+                    <span class="topbar-dot"></span>
+
+                    <span>
+                        Telegram Deals Management
+                    </span>
+
+                </div>
+
+                <div class="small-muted">
+                    Admin Panel
+                </div>
+
+            </div>
+
+        {% endif %}
+
+
+        <!-- BACK TO DASHBOARD -->
 
         {% if request.path != '/' %}
 
@@ -785,23 +1392,19 @@
                 href="/"
                 class="back-dashboard"
             >
-                ← Back to Dashboard
+
+                <i class="bi bi-arrow-left"></i>
+
+                Back to Dashboard
+
             </a>
 
         {% endif %}
 
 
-        <!-- =================================================
-             OPTIONAL PAGE TITLE
-        ================================================== -->
-
         {% block page_title %}
         {% endblock %}
 
-
-        <!-- =================================================
-             PAGE CONTENT
-        ================================================== -->
 
         {% block content %}
         {% endblock %}
@@ -814,17 +1417,13 @@
 
 
 <!-- =====================================================
-     BOOTSTRAP JAVASCRIPT
+     BOOTSTRAP JS
 ====================================================== -->
 
 <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
 </script>
 
-
-<!-- =====================================================
-     EXTRA JAVASCRIPT
-====================================================== -->
 
 {% block extra_js %}
 {% endblock %}
