@@ -6,6 +6,7 @@ from django.shortcuts import (
     redirect,
     render,
 )
+from django.contrib.auth.decorators import login_required
 
 from publisher.models import PublishedChannel
 
@@ -20,7 +21,7 @@ from .services import (
 # ============================================================
 # SCHEDULE LIST
 # ============================================================
-
+@login_required
 def schedule_list(request):
 
     schedules = (

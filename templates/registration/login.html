@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Login | Telegram Deals
+    </title>
+
+
+    <style>
+
+        /* =====================================================
+           RESET
+        ====================================================== */
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+
+        /* =====================================================
+           BODY
+        ====================================================== */
+
+        body {
+
+            min-height: 100vh;
+
+            font-family:
+                Inter,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Arial,
+                sans-serif;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #eff6ff 0%,
+                    #f8fafc 50%,
+                    #eef2ff 100%
+                );
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            padding: 20px;
+        }
+
+
+        /* =====================================================
+           PAGE
+        ====================================================== */
+
+        .login-page {
+
+            width: 100%;
+
+            max-width: 1050px;
+
+            min-height: 600px;
+
+            display: grid;
+
+            grid-template-columns: 1fr 1fr;
+
+            background: #ffffff;
+
+            border-radius: 22px;
+
+            overflow: hidden;
+
+            box-shadow:
+                0 25px 70px
+                rgba(15, 23, 42, 0.12);
+        }
+
+
+        /* =====================================================
+           LEFT PANEL
+        ====================================================== */
+
+        .login-info {
+
+            position: relative;
+
+            padding: 55px;
+
+            display: flex;
+
+            flex-direction: column;
+
+            justify-content: center;
+
+            color: #ffffff;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    #0f172a 0%,
+                    #111827 55%,
+                    #1e3a8a 100%
+                );
+
+            overflow: hidden;
+        }
+
+
+        .login-info::before {
+
+            content: "";
+
+            position: absolute;
+
+            width: 300px;
+
+            height: 300px;
+
+            border-radius: 50%;
+
+            background:
+                rgba(37, 99, 235, 0.18);
+
+            top: -120px;
+
+            right: -100px;
+        }
+
+
+        .login-info::after {
+
+            content: "";
+
+            position: absolute;
+
+            width: 240px;
+
+            height: 240px;
+
+            border-radius: 50%;
+
+            background:
+                rgba(59, 130, 246, 0.10);
+
+            bottom: -100px;
+
+            left: -80px;
+        }
+
+
+        .info-content {
+
+            position: relative;
+
+            z-index: 2;
+        }
+
+
+        /* =====================================================
+           LOGO
+        ====================================================== */
+
+        .logo {
+
+            width: 58px;
+
+            height: 58px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            border-radius: 15px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #2563eb,
+                    #3b82f6
+                );
+
+            font-size: 23px;
+
+            font-weight: 800;
+
+            margin-bottom: 25px;
+
+            box-shadow:
+                0 10px 25px
+                rgba(37, 99, 235, 0.30);
+        }
+
+
+        .login-info h1 {
+
+            font-size: 34px;
+
+            line-height: 1.2;
+
+            font-weight: 750;
+
+            margin-bottom: 14px;
+
+            letter-spacing: -0.7px;
+        }
+
+
+        .login-info .description {
+
+            max-width: 420px;
+
+            color: #cbd5e1;
+
+            font-size: 15px;
+
+            line-height: 1.7;
+
+            margin-bottom: 35px;
+        }
+
+
+        /* =====================================================
+           FEATURES
+        ====================================================== */
+
+        .features {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 14px;
+        }
+
+
+        .feature {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 12px;
+
+            color: #e2e8f0;
+
+            font-size: 14px;
+        }
+
+
+        .feature-icon {
+
+            width: 34px;
+
+            height: 34px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            border-radius: 9px;
+
+            background:
+                rgba(255,255,255,0.08);
+
+            color: #93c5fd;
+        }
+
+
+        /* =====================================================
+           RIGHT LOGIN PANEL
+        ====================================================== */
+
+        .login-form-panel {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            padding: 55px;
+        }
+
+
+        .login-form {
+
+            width: 100%;
+
+            max-width: 370px;
+        }
+
+
+        .login-form-header {
+
+            margin-bottom: 30px;
+        }
+
+
+        .login-form-header h2 {
+
+            margin: 0 0 7px;
+
+            color: #111827;
+
+            font-size: 28px;
+
+            font-weight: 750;
+        }
+
+
+        .login-form-header p {
+
+            margin: 0;
+
+            color: #6b7280;
+
+            font-size: 14px;
+        }
+
+
+        /* =====================================================
+           ERROR
+        ====================================================== */
+
+        .error-message {
+
+            padding: 12px 14px;
+
+            margin-bottom: 20px;
+
+            border-radius: 10px;
+
+            background: #fef2f2;
+
+            border: 1px solid #fecaca;
+
+            color: #b91c1c;
+
+            font-size: 13px;
+        }
+
+
+        /* =====================================================
+           FORM
+        ====================================================== */
+
+        .form-group {
+
+            margin-bottom: 20px;
+        }
+
+
+        .form-group label {
+
+            display: block;
+
+            margin-bottom: 8px;
+
+            color: #374151;
+
+            font-size: 13px;
+
+            font-weight: 650;
+        }
+
+
+        .input-wrapper {
+
+            position: relative;
+        }
+
+
+        .input-icon {
+
+            position: absolute;
+
+            left: 14px;
+
+            top: 50%;
+
+            transform:
+                translateY(-50%);
+
+            color: #9ca3af;
+
+            font-size: 16px;
+        }
+
+
+        .form-group input {
+
+            width: 100%;
+
+            height: 48px;
+
+            padding:
+                0 14px 0 42px;
+
+            border:
+                1px solid #dbe2ea;
+
+            border-radius: 10px;
+
+            background: #ffffff;
+
+            color: #111827;
+
+            font-size: 14px;
+
+            transition:
+                border-color 0.18s ease,
+                box-shadow 0.18s ease;
+        }
+
+
+        .form-group input:focus {
+
+            outline: none;
+
+            border-color:
+                #2563eb;
+
+            box-shadow:
+                0 0 0 4px
+                rgba(37, 99, 235, 0.09);
+        }
+
+
+        .form-group input::placeholder {
+
+            color: #9ca3af;
+        }
+
+
+        /* =====================================================
+           LOGIN BUTTON
+        ====================================================== */
+
+        .login-button {
+
+            width: 100%;
+
+            height: 48px;
+
+            margin-top: 5px;
+
+            border: none;
+
+            border-radius: 10px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #2563eb,
+                    #1d4ed8
+                );
+
+            color: #ffffff;
+
+            font-size: 14px;
+
+            font-weight: 650;
+
+            cursor: pointer;
+
+            box-shadow:
+                0 7px 18px
+                rgba(37, 99, 235, 0.20);
+
+            transition:
+                transform 0.15s ease,
+                box-shadow 0.15s ease;
+        }
+
+
+        .login-button:hover {
+
+            transform:
+                translateY(-1px);
+
+            box-shadow:
+                0 10px 23px
+                rgba(37, 99, 235, 0.27);
+        }
+
+
+        .login-button:active {
+
+            transform:
+                translateY(0);
+        }
+
+
+        /* =====================================================
+           FOOTER
+        ====================================================== */
+
+        .login-footer {
+
+            text-align: center;
+
+            margin-top: 28px;
+
+            padding-top: 20px;
+
+            border-top:
+                1px solid #eef2f7;
+
+            color: #9ca3af;
+
+            font-size: 11px;
+        }
+
+
+        /* =====================================================
+           MOBILE
+        ====================================================== */
+
+        @media (max-width: 800px) {
+
+            .login-page {
+
+                grid-template-columns: 1fr;
+
+                max-width: 470px;
+
+                min-height: auto;
+            }
+
+
+            .login-info {
+
+                padding: 35px;
+
+                min-height: 300px;
+            }
+
+
+            .login-info h1 {
+
+                font-size: 28px;
+            }
+
+
+            .features {
+
+                display: none;
+            }
+
+
+            .login-form-panel {
+
+                padding: 40px 30px;
+            }
+        }
+
+
+        @media (max-width: 480px) {
+
+            body {
+
+                padding: 12px;
+            }
+
+
+            .login-info {
+
+                padding: 30px 25px;
+            }
+
+
+            .login-form-panel {
+
+                padding: 32px 22px;
+            }
+
+
+            .login-info h1 {
+
+                font-size: 25px;
+            }
+
+
+            .login-form-header h2 {
+
+                font-size: 24px;
+            }
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+    <div class="login-page">
+
+
+        <!-- =================================================
+             LEFT INFORMATION PANEL
+        ================================================== -->
+
+        <section class="login-info">
+
+            <div class="info-content">
+
+                <div class="logo">
+                    TD
+                </div>
+
+
+                <h1>
+                    Telegram Deals
+                </h1>
+
+
+                <p class="description">
+                    Manage your deals, scraping,
+                    Telegram channels and publishing
+                    from one centralized dashboard.
+                </p>
+
+
+                <div class="features">
+
+                    <div class="feature">
+
+                        <div class="feature-icon">
+                            ✓
+                        </div>
+
+                        <span>
+                            Manage and monitor deals
+                        </span>
+
+                    </div>
+
+
+                    <div class="feature">
+
+                        <div class="feature-icon">
+                            ✓
+                        </div>
+
+                        <span>
+                            Scrape deals from Telegram
+                        </span>
+
+                    </div>
+
+
+                    <div class="feature">
+
+                        <div class="feature-icon">
+                            ✓
+                        </div>
+
+                        <span>
+                            Publish deals to channels
+                        </span>
+
+                    </div>
+
+
+                    <div class="feature">
+
+                        <div class="feature-icon">
+                            ✓
+                        </div>
+
+                        <span>
+                            Manage automatic publishing
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             LOGIN PANEL
+        ================================================== -->
+
+        <section class="login-form-panel">
+
+            <div class="login-form">
+
+
+                <div class="login-form-header">
+
+                    <h2>
+                        Welcome Back
+                    </h2>
+
+                    <p>
+                        Sign in to continue to your dashboard.
+                    </p>
+
+                </div>
+
+
+                <!-- ERROR -->
+
+                {% if form.errors %}
+
+                    <div class="error-message">
+
+                        Invalid username or password.
+                        Please check your credentials
+                        and try again.
+
+                    </div>
+
+                {% endif %}
+
+
+                <!-- LOGIN FORM -->
+
+                <form
+                    method="post"
+                    action="{% url 'login' %}"
+                >
+
+                    {% csrf_token %}
+
+
+                    <!-- USERNAME -->
+
+                    <div class="form-group">
+
+                        <label for="id_username">
+                            Username
+                        </label>
+
+
+                        <div class="input-wrapper">
+
+                            <span class="input-icon">
+                                👤
+                            </span>
+
+
+                            <input
+                                type="text"
+                                id="id_username"
+                                name="username"
+                                placeholder="Enter your username"
+                                autocomplete="username"
+                                required
+                                autofocus
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- PASSWORD -->
+
+                    <div class="form-group">
+
+                        <label for="id_password">
+                            Password
+                        </label>
+
+
+                        <div class="input-wrapper">
+
+                            <span class="input-icon">
+                                🔒
+                            </span>
+
+
+                            <input
+                                type="password"
+                                id="id_password"
+                                name="password"
+                                placeholder="Enter your password"
+                                autocomplete="current-password"
+                                required
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- LOGIN BUTTON -->
+
+                    <button
+                        type="submit"
+                        class="login-button"
+                    >
+                        Login
+                    </button>
+
+                </form>
+
+
+                <div class="login-footer">
+
+                    Telegram Deals Management System
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+
+    </div>
+
+
+</body>
+
+</html>

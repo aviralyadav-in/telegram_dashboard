@@ -9,6 +9,11 @@ urlpatterns = [
     path("admin/", admin.site.urls),
 
     path("", include("deals.urls")),
+      # Authentication
+    path(
+        "accounts/",
+        include("accounts.urls")
+    ),
 
     path("scraping/", include("scraper.urls")),
 

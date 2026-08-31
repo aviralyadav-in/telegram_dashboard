@@ -1,194 +1,494 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base/base.html" %}
 
-<head>
-    <meta charset="UTF-8">
+{% block title %}
+    Filtered Auto Publishing
+{% endblock %}
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+{% block page_title %}
+    Filtered Auto Publishing
+{% endblock %}
 
-    <title>Filtered Auto Publishing</title>
+{% block extra_css %}
 
-    <style>
-        * {
-            box-sizing: border-box;
-        }
+<style>
 
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f4f6f9;
-            color: #1f2937;
-        }
+/* =========================================================
+   PAGE
+========================================================= */
 
-        .page {
-            max-width: 900px;
-            margin: 40px auto;
-            padding: 0 20px;
-        }
+.schedule-page {
+    width: 100%;
+    max-width: 1050px;
+    margin: 0 auto;
+    padding: 10px 0 40px;
+}
 
-        .card {
-            background: #ffffff;
-            border-radius: 16px;
-            padding: 30px;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
-        }
 
-        .heading {
-            margin-bottom: 25px;
-        }
+/* =========================================================
+   MAIN CARD
+========================================================= */
 
-        .heading h1 {
-            margin: 0 0 8px;
-            font-size: 28px;
-        }
+.schedule-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    box-shadow: 0 4px 18px rgba(15, 23, 42, 0.07);
+    overflow: hidden;
+}
 
-        .heading p {
-            margin: 0;
-            color: #6b7280;
-            line-height: 1.6;
-        }
 
-        .section {
-            margin-top: 28px;
-        }
+/* =========================================================
+   HEADER
+========================================================= */
 
-        .section-title {
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 15px;
-        }
+.schedule-header {
+    padding: 28px 32px;
+    border-bottom: 1px solid #e5e7eb;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+}
 
-        .field {
-            margin-bottom: 18px;
-        }
+.header-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+}
 
-        label {
-            display: block;
-            margin-bottom: 7px;
-            font-weight: 600;
-        }
+.header-icon {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: #eef2ff;
+    font-size: 23px;
+}
 
-        input,
-        select {
-            width: 100%;
-            padding: 12px 13px;
-            border: 1px solid #d1d5db;
-            border-radius: 9px;
-            font-size: 15px;
-            background: #ffffff;
-        }
+.schedule-header h1 {
+    margin: 0 0 6px;
+    font-size: 26px;
+    line-height: 1.25;
+    color: #111827;
+}
 
-        input:focus,
-        select:focus {
-            outline: none;
-            border-color: #4f46e5;
-        }
+.schedule-header p {
+    margin: 0;
+    color: #6b7280;
+    font-size: 14px;
+    line-height: 1.6;
+    max-width: 760px;
+}
 
-        .row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 18px;
-        }
 
-        .hint {
-            margin-top: 6px;
-            font-size: 13px;
-            color: #6b7280;
-            line-height: 1.5;
-        }
+/* =========================================================
+   MESSAGES
+========================================================= */
 
-        .example {
-            margin-top: 25px;
-            padding: 18px;
-            border-radius: 10px;
-            background: #f8fafc;
-            border: 1px solid #e5e7eb;
-        }
+.messages {
+    padding: 20px 32px 0;
+}
 
-        .example-title {
-            font-weight: 700;
-            margin-bottom: 10px;
-        }
+.message {
+    padding: 12px 15px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    background: #ecfdf5;
+    border: 1px solid #bbf7d0;
+    color: #166534;
+    font-size: 14px;
+    line-height: 1.5;
+}
 
-        .flow {
-            line-height: 1.8;
-            color: #4b5563;
-        }
 
-        .submit-btn {
-            width: 100%;
-            margin-top: 25px;
-            padding: 14px;
-            border: none;
-            border-radius: 10px;
-            background: #111827;
-            color: #ffffff;
-            font-size: 16px;
-            font-weight: 700;
-            cursor: pointer;
-        }
+/* =========================================================
+   FORM
+========================================================= */
 
-        .submit-btn:hover {
-            opacity: 0.92;
-        }
+.schedule-form {
+    padding: 30px 32px 32px;
+}
 
-        .messages {
-            margin-bottom: 20px;
-        }
 
-        .message {
-            padding: 12px 15px;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            background: #f3f4f6;
-            line-height: 1.5;
-        }
+/* =========================================================
+   SECTION
+========================================================= */
 
-        .note {
-            margin-top: 15px;
-            padding: 12px;
-            border-radius: 8px;
-            background: #fff7ed;
-            color: #9a3412;
-            font-size: 13px;
-            line-height: 1.6;
-        }
+.section {
+    padding: 24px;
+    margin-bottom: 20px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #ffffff;
+}
 
-        @media (max-width: 700px) {
-            .row {
-                grid-template-columns: 1fr;
-            }
+.section:last-of-type {
+    margin-bottom: 0;
+}
 
-            .card {
-                padding: 20px;
-            }
+.section-heading {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    margin-bottom: 20px;
+}
 
-            .heading h1 {
-                font-size: 24px;
-            }
-        }
-    </style>
-</head>
+.section-number {
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #2563eb;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 700;
+}
 
-<body>
+.section-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #111827;
+}
 
-<div class="page">
 
-    <div class="card">
+/* =========================================================
+   FIELDS
+========================================================= */
 
-        <div class="heading">
-            <h1>🤖 Filtered Auto Publishing</h1>
+.field {
+    margin-bottom: 0;
+}
 
-            <p>
-                Select a Telegram destination, apply your deal filters,
-                choose how many deals to publish, and let the bot publish
-                them automatically with the selected interval.
-            </p>
+.field label {
+    display: block;
+    margin-bottom: 8px;
+    color: #374151;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+input,
+select {
+    width: 100%;
+    min-height: 44px;
+    box-sizing: border-box;
+    padding: 10px 13px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #111827;
+    font-size: 14px;
+    font-family: Arial, sans-serif;
+    transition: border-color 0.2s ease,
+                box-shadow 0.2s ease;
+}
+
+input:hover,
+select:hover {
+    border-color: #9ca3af;
+}
+
+input:focus,
+select:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10);
+}
+
+input::placeholder {
+    color: #9ca3af;
+}
+
+
+/* =========================================================
+   GRID
+========================================================= */
+
+.row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+}
+
+
+/* =========================================================
+   HINT
+========================================================= */
+
+.hint {
+    margin-top: 8px;
+    color: #6b7280;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+
+/* =========================================================
+   EXAMPLE
+========================================================= */
+
+.example {
+    margin-top: 20px;
+    padding: 20px 22px;
+    border-radius: 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+
+.example-header {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 15px;
+}
+
+.example-icon {
+    font-size: 18px;
+}
+
+.example-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.example-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.example-item {
+    padding: 11px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+}
+
+.example-label {
+    display: block;
+    margin-bottom: 4px;
+    color: #6b7280;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.example-value {
+    color: #111827;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.flow-box {
+    padding: 14px 16px;
+    border-radius: 8px;
+    background: #ffffff;
+    border: 1px dashed #cbd5e1;
+    color: #4b5563;
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+.flow-title {
+    margin-bottom: 7px;
+    color: #374151;
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   NOTE
+========================================================= */
+
+.note {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 20px;
+    padding: 14px 16px;
+    border-radius: 9px;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    color: #92400e;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.note-icon {
+    flex-shrink: 0;
+    font-size: 16px;
+}
+
+
+/* =========================================================
+   SUBMIT
+========================================================= */
+
+.submit-area {
+    margin-top: 24px;
+    padding-top: 22px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.submit-btn {
+    width: 100%;
+    min-height: 48px;
+    padding: 13px 18px;
+    border: none;
+    border-radius: 9px;
+    background: #2563eb;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease,
+                transform 0.1s ease,
+                box-shadow 0.2s ease;
+}
+
+.submit-btn:hover {
+    background: #1d4ed8;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.20);
+}
+
+.submit-btn:active {
+    transform: translateY(1px);
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 900px) {
+
+    .schedule-page {
+        padding: 5px 15px 30px;
+    }
+
+    .schedule-header,
+    .schedule-form {
+        padding-left: 22px;
+        padding-right: 22px;
+    }
+
+    .example-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+}
+
+
+@media (max-width: 700px) {
+
+    .schedule-header {
+        padding: 22px 18px;
+    }
+
+    .schedule-form {
+        padding: 20px 18px 24px;
+    }
+
+    .header-content {
+        gap: 12px;
+    }
+
+    .header-icon {
+        width: 42px;
+        height: 42px;
+        font-size: 20px;
+    }
+
+    .schedule-header h1 {
+        font-size: 22px;
+    }
+
+    .section {
+        padding: 18px;
+    }
+
+    .row {
+        grid-template-columns: 1fr;
+        gap: 18px;
+    }
+
+    .example-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+}
+
+
+@media (max-width: 450px) {
+
+    .schedule-page {
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+
+    .schedule-header,
+    .schedule-form {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .example-grid {
+        grid-template-columns: 1fr;
+    }
+
+}
+
+</style>
+
+{% endblock %}
+
+
+{% block content %}
+
+<div class="schedule-page">
+
+    <div class="schedule-card">
+
+
+        <!-- =================================================
+             HEADER
+        ================================================== -->
+
+        <div class="schedule-header">
+
+            <div class="header-content">
+
+                <div class="header-icon">
+                    🤖
+                </div>
+
+                <div>
+
+                    <h1>
+                        Filtered Auto Publishing
+                    </h1>
+
+                    <p>
+                        Select a Telegram destination, apply your deal filters,
+                        choose how many deals to publish, and let the bot publish
+                        them automatically with the selected interval.
+                    </p>
+
+                </div>
+
+            </div>
+
         </div>
 
+
+        <!-- =================================================
+             MESSAGES
+        ================================================== -->
 
         {% if messages %}
 
@@ -207,21 +507,37 @@
         {% endif %}
 
 
+        <!-- =================================================
+             FORM
+        ================================================== -->
+
         <form
             method="post"
             action="{% url 'create_schedule' %}"
+            class="schedule-form"
         >
 
             {% csrf_token %}
 
 
-            <!-- DESTINATION -->
+            <!-- =================================================
+                 DESTINATION
+            ================================================== -->
 
             <div class="section">
 
-                <div class="section-title">
-                    1. Telegram Destination
+                <div class="section-heading">
+
+                    <div class="section-number">
+                        1
+                    </div>
+
+                    <h2 class="section-title">
+                        Telegram Destination
+                    </h2>
+
                 </div>
+
 
                 <div class="field">
 
@@ -265,13 +581,24 @@
             </div>
 
 
-            <!-- DATE -->
+            <!-- =================================================
+                 DATE
+            ================================================== -->
 
             <div class="section">
 
-                <div class="section-title">
-                    2. Date Filter
+                <div class="section-heading">
+
+                    <div class="section-number">
+                        2
+                    </div>
+
+                    <h2 class="section-title">
+                        Date Filter
+                    </h2>
+
                 </div>
+
 
                 <div class="row">
 
@@ -306,6 +633,7 @@
 
                 </div>
 
+
                 <div class="hint">
                     Leave empty if you want deals from all dates.
                 </div>
@@ -313,13 +641,24 @@
             </div>
 
 
-            <!-- PRICE -->
+            <!-- =================================================
+                 PRICE
+            ================================================== -->
 
             <div class="section">
 
-                <div class="section-title">
-                    3. Price Range
+                <div class="section-heading">
+
+                    <div class="section-number">
+                        3
+                    </div>
+
+                    <h2 class="section-title">
+                        Price Range
+                    </h2>
+
                 </div>
+
 
                 <div class="row">
 
@@ -360,6 +699,7 @@
 
                 </div>
 
+
                 <div class="hint">
                     Only deals whose stored price falls inside this
                     range will be selected.
@@ -368,13 +708,24 @@
             </div>
 
 
-            <!-- RATING -->
+            <!-- =================================================
+                 RATING
+            ================================================== -->
 
             <div class="section">
 
-                <div class="section-title">
-                    4. Rating Filter
+                <div class="section-heading">
+
+                    <div class="section-number">
+                        4
+                    </div>
+
+                    <h2 class="section-title">
+                        Rating Filter
+                    </h2>
+
                 </div>
+
 
                 <div class="field">
 
@@ -401,13 +752,24 @@
             </div>
 
 
-            <!-- PUBLISHING -->
+            <!-- =================================================
+                 PUBLISHING
+            ================================================== -->
 
             <div class="section">
 
-                <div class="section-title">
-                    5. Publishing Settings
+                <div class="section-heading">
+
+                    <div class="section-number">
+                        5
+                    </div>
+
+                    <h2 class="section-title">
+                        Publishing Settings
+                    </h2>
+
                 </div>
+
 
                 <div class="row">
 
@@ -460,45 +822,146 @@
             </div>
 
 
-            <!-- EXAMPLE -->
+            <!-- =================================================
+                 EXAMPLE
+            ================================================== -->
 
             <div class="example">
 
-                <div class="example-title">
-                    Example
+                <div class="example-header">
+
+                    <span class="example-icon">
+                        💡
+                    </span>
+
+                    <div class="example-title">
+                        Example Schedule
+                    </div>
+
                 </div>
 
-                <div class="flow">
-                    Channel: Myntra Deals<br>
-                    Price: ₹500 – ₹2000<br>
-                    Rating: 4+ ⭐<br>
-                    Deals: 5<br>
-                    Interval: 10 seconds
-                    <br><br>
+
+                <div class="example-grid">
+
+                    <div class="example-item">
+
+                        <span class="example-label">
+                            Channel
+                        </span>
+
+                        <span class="example-value">
+                            Myntra Deals
+                        </span>
+
+                    </div>
+
+
+                    <div class="example-item">
+
+                        <span class="example-label">
+                            Price
+                        </span>
+
+                        <span class="example-value">
+                            ₹500 – ₹2000
+                        </span>
+
+                    </div>
+
+
+                    <div class="example-item">
+
+                        <span class="example-label">
+                            Rating
+                        </span>
+
+                        <span class="example-value">
+                            4+ ⭐
+                        </span>
+
+                    </div>
+
+
+                    <div class="example-item">
+
+                        <span class="example-label">
+                            Deals
+                        </span>
+
+                        <span class="example-value">
+                            5
+                        </span>
+
+                    </div>
+
+
+                    <div class="example-item">
+
+                        <span class="example-label">
+                            Interval
+                        </span>
+
+                        <span class="example-value">
+                            10 sec
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="flow-box">
+
+                    <div class="flow-title">
+                        Publishing Flow
+                    </div>
 
                     Matching deals will be published automatically:
+
                     <br>
 
                     Deal 1 → 10 sec → Deal 2 → 10 sec → Deal 3
                     → 10 sec → Deal 4 → 10 sec → Deal 5
+
                 </div>
 
             </div>
 
 
+            <!-- =================================================
+                 NOTE
+            ================================================== -->
+
             <div class="note">
-                You do not need to press the normal Publish button
-                for every deal. Once this schedule starts, the bot
-                handles the publishing automatically.
+
+                <span class="note-icon">
+                    ℹ️
+                </span>
+
+                <span>
+                    You do not need to press the normal Publish button
+                    for every deal. Once this schedule starts, the bot
+                    handles the publishing automatically.
+                </span>
+
             </div>
 
 
-            <button
-                type="submit"
-                class="submit-btn"
-            >
-                🚀 Filter & Start Auto Publishing
-            </button>
+            <!-- =================================================
+                 SUBMIT
+            ================================================== -->
+
+            <div class="submit-area">
+
+                <button
+                    type="submit"
+                    class="submit-btn"
+                >
+                    🚀 Filter & Start Auto Publishing
+                </button>
+
+            </div>
+
 
         </form>
 
@@ -506,6 +969,5 @@
 
 </div>
 
-</body>
+{% endblock %}
 
-</html>

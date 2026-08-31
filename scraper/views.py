@@ -1,5 +1,6 @@
 import threading
 import secrets
+from django.contrib.auth.decorators import login_required
 
 from django.shortcuts import render
 from django.contrib.auth import authenticate
@@ -26,7 +27,7 @@ sessions = {}
 # =========================================================
 # SCRAPING PAGE
 # =========================================================
-
+@login_required
 def scraping_page(request):
     return render(
         request,

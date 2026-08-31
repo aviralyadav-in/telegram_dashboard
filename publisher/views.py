@@ -1,4 +1,5 @@
 import asyncio
+from django.contrib.auth.decorators import login_required
 
 from django.contrib import messages
 from django.db import transaction
@@ -31,7 +32,7 @@ from .telegram_bot import (
 # ============================================================
 # CHANNEL LIST / DASHBOARD
 # ============================================================
-
+@login_required
 def channel_list(request):
 
     bots = (
@@ -998,7 +999,7 @@ def test_channel(request, channel_id):
 # ============================================================
 # PUBLISH PAGE
 # ============================================================
-
+@login_required
 def publish_page(request):
 
     deals = (
@@ -1082,7 +1083,7 @@ def publish_page(request):
 # ============================================================
 # SINGLE PUBLISH
 # ============================================================
-
+@login_required
 def publish_deal(request):
 
     if request.method != "POST":
@@ -1421,7 +1422,7 @@ def bulk_publish_deals(request):
 # ============================================================
 # PUBLISHED HISTORY
 # ============================================================
-
+@login_required
 def published_deals(request):
 
     records = (

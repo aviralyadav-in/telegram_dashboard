@@ -3,6 +3,7 @@ from django.shortcuts import (
     redirect,
     get_object_or_404
 )
+from django.contrib.auth.decorators import login_required
 
 from django.http import JsonResponse
 from django.core.paginator import Paginator
@@ -16,7 +17,7 @@ from publisher.models import PublishedChannel
 # ============================================================
 # DASHBOARD
 # ============================================================
-
+@login_required
 def dashboard(request):
 
     total_deals = Deal.objects.count()
@@ -56,7 +57,7 @@ def dashboard(request):
 # ============================================================
 # DEAL LIST
 # ============================================================
-
+@login_required
 def deal_list(request):
 
     deals = Deal.objects.all().order_by(
@@ -337,7 +338,7 @@ def deal_list(request):
 # ============================================================
 # CATEGORY LIST
 # ============================================================
-
+@login_required
 def category_list(request):
 
     categories = Category.objects.all().order_by(
