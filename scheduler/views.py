@@ -20,8 +20,7 @@ from .services import (
 
 # ============================================================
 # SCHEDULE LIST
-# ============================================================
-@login_required
+
 def schedule_list(request):
 
     schedules = (

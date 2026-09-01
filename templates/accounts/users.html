@@ -1,0 +1,251 @@
+{% extends "base/base.html" %}
+
+{% block title %}
+Users | Telegram Deals
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+
+            <h1 class="page-heading">
+                Users
+            </h1>
+
+            <p class="page-subheading">
+                Manage administrators and system users.
+            </p>
+
+        </div>
+
+        <a
+            href="/accounts/users/add/"
+            class="btn btn-primary"
+        >
+
+            <i class="bi bi-person-plus-fill"></i>
+
+            Add User
+
+        </a>
+
+    </div>
+
+
+    <div class="card">
+
+        <div class="card-body p-0">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                User
+                            </th>
+
+                            <th>
+                                Email
+                            </th>
+
+                            <th>
+                                Role
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                            <th>
+                                Joined
+                            </th>
+
+                            <th class="text-end">
+                                Actions
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for item in users %}
+
+                        <tr>
+
+                            <td>
+
+                                <div class="d-flex align-items-center gap-2">
+
+                                    <div
+                                        class="d-flex align-items-center justify-content-center"
+                                        style="
+                                            width:38px;
+                                            height:38px;
+                                            border-radius:10px;
+                                            background:#eff6ff;
+                                            color:#2563eb;
+                                            font-weight:700;
+                                        "
+                                    >
+                                        {{ item.username|first|upper }}
+                                    </div>
+
+                                    <div>
+
+                                        <strong>
+                                            {{ item.username }}
+                                        </strong>
+
+                                        <div class="small-muted">
+
+                                            {{ item.first_name }}
+                                            {{ item.last_name }}
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </td>
+
+
+                            <td>
+                                {{ item.email|default:"—" }}
+                            </td>
+
+
+                            <td>
+
+                                {% if item.is_staff or item.is_superuser %}
+
+                                <span class="badge bg-primary">
+
+                                    <i class="bi bi-shield-check"></i>
+
+                                    Admin
+
+                                </span>
+
+                                {% else %}
+
+                                <span class="badge bg-secondary">
+
+                                    <i class="bi bi-person"></i>
+
+                                    User
+
+                                </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <td>
+
+                                {% if item.is_active %}
+
+                                <span class="badge bg-success">
+                                    Active
+                                </span>
+
+                                {% else %}
+
+                                <span class="badge bg-danger">
+                                    Inactive
+                                </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <td>
+                                {{ item.date_joined|date:"d M Y" }}
+                            </td>
+
+
+                            <td class="text-end">
+
+                                <a
+                                    href="/accounts/users/{{ item.id }}/edit/"
+                                    class="btn btn-sm btn-outline-primary"
+                                    title="Edit"
+                                >
+
+                                    <i class="bi bi-pencil"></i>
+
+                                </a>
+
+
+                                {% if item.id != request.user.id %}
+
+                                <form
+                                    method="POST"
+                                    action="/accounts/users/{{ item.id }}/delete/"
+                                    class="d-inline"
+                                    onsubmit="return confirm('Delete this user?');"
+                                >
+
+                                    {% csrf_token %}
+
+                                    <button
+                                        type="submit"
+                                        class="btn btn-sm btn-outline-danger"
+                                        title="Delete"
+                                    >
+
+                                        <i class="bi bi-trash"></i>
+
+                                    </button>
+
+                                </form>
+
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+                        {% empty %}
+
+                        <tr>
+
+                            <td
+                                colspan="6"
+                                class="text-center py-5 text-muted"
+                            >
+
+                                No users found.
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

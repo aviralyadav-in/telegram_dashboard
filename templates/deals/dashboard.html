@@ -539,6 +539,51 @@
 
 <div class="dashboard-page">
 
+    <!-- =========================================================
+         ROLE BASED DASHBOARD
+    ========================================================== -->
+
+    {% if request.user.is_staff or request.user.is_superuser %}
+
+        <!-- ADMIN DASHBOARD -->
+
+        <div class="alert alert-primary d-flex align-items-center mb-4">
+
+            <i class="bi bi-shield-check fs-4 me-3"></i>
+
+            <div>
+                <strong>
+                    Admin Dashboard
+                </strong>
+
+                <div class="small">
+                    You have full access to the Telegram Deals Management System.
+                </div>
+            </div>
+
+        </div>
+
+    {% else %}
+
+        <!-- USER DASHBOARD -->
+
+        <div class="alert alert-info d-flex align-items-center mb-4">
+
+            <i class="bi bi-person-circle fs-4 me-3"></i>
+
+            <div>
+                <strong>
+                    Welcome, {{ request.user.username }}
+                </strong>
+
+                <div class="small">
+                    You have access to your assigned deal management features.
+                </div>
+            </div>
+
+        </div>
+
+    {% endif %}
 
     <!-- =========================================================
          STATISTICS

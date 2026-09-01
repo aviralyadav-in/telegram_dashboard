@@ -1,0 +1,252 @@
+{% extends "base/base.html" %}
+
+{% block title %}
+Profile | Telegram Deals
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h1 class="page-heading">
+                My Profile
+            </h1>
+
+            <p class="page-subheading">
+                Manage your account information.
+            </p>
+        </div>
+
+        {% if is_admin %}
+        <span class="badge bg-primary">
+            Administrator
+        </span>
+        {% else %}
+        <span class="badge bg-secondary">
+            User
+        </span>
+        {% endif %}
+
+    </div>
+
+
+    <div class="row g-4">
+
+        <!-- PROFILE CARD -->
+
+        <div class="col-lg-4">
+
+            <div class="card h-100">
+
+                <div class="card-body text-center py-5">
+
+                    <div
+                        class="mx-auto mb-3 d-flex align-items-center justify-content-center"
+                        style="
+                            width:90px;
+                            height:90px;
+                            border-radius:50%;
+                            background:#eff6ff;
+                            color:#2563eb;
+                            font-size:34px;
+                            font-weight:700;
+                        "
+                    >
+                        {{ user_obj.username|first|upper }}
+                    </div>
+
+                    <h4 class="mb-1">
+                        {{ user_obj.get_full_name|default:user_obj.username }}
+                    </h4>
+
+                    <p class="text-muted mb-3">
+                        @{{ user_obj.username }}
+                    </p>
+
+                    {% if is_admin %}
+
+                    <span class="badge bg-primary">
+                        <i class="bi bi-shield-check"></i>
+                        Admin
+                    </span>
+
+                    {% else %}
+
+                    <span class="badge bg-secondary">
+                        <i class="bi bi-person"></i>
+                        User
+                    </span>
+
+                    {% endif %}
+
+                    <hr class="my-4">
+
+                    <div class="small-muted">
+                        Member since
+                    </div>
+
+                    <strong>
+                        {{ user_obj.date_joined|date:"d M Y" }}
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- EDIT PROFILE -->
+
+        <div class="col-lg-8">
+
+            <div class="card">
+
+                <div class="card-header">
+
+                    <h5 class="mb-0">
+                        Account Information
+                    </h5>
+
+                </div>
+
+                <div class="card-body">
+
+                    <form
+                        method="POST"
+                        action="/accounts/profile/update/"
+                    >
+
+                        {% csrf_token %}
+
+                        <div class="row g-3">
+
+                            <div class="col-md-6">
+
+                                <label class="form-label">
+                                    Username
+                                </label>
+
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    value="{{ user_obj.username }}"
+                                    disabled
+                                >
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label">
+                                    Email
+                                </label>
+
+                                <input
+                                    type="email"
+                                    name="email"
+                                    class="form-control"
+                                    value="{{ user_obj.email }}"
+                                >
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label">
+                                    First Name
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="first_name"
+                                    class="form-control"
+                                    value="{{ user_obj.first_name }}"
+                                >
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label">
+                                    Last Name
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="last_name"
+                                    class="form-control"
+                                    value="{{ user_obj.last_name }}"
+                                >
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label">
+                                    Phone
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="phone"
+                                    class="form-control"
+                                    value="{{ profile.phone|default:'' }}"
+                                >
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label">
+                                    Designation
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="designation"
+                                    class="form-control"
+                                    value="{{ profile.designation|default:'' }}"
+                                >
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="mt-4">
+
+                            <button
+                                type="submit"
+                                class="btn btn-primary"
+                            >
+
+                                <i class="bi bi-check2-circle"></i>
+
+                                Save Changes
+
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

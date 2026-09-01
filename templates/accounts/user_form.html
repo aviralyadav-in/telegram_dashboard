@@ -1,0 +1,218 @@
+{% extends "base/base.html" %}
+
+{% block title %}
+{{ form_title }} | Telegram Deals
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <div class="mb-4">
+
+        <h1 class="page-heading">
+            {{ form_title }}
+        </h1>
+
+        <p class="page-subheading">
+            Create or update a system account.
+        </p>
+
+    </div>
+
+
+    <div class="card">
+
+        <div class="card-body">
+
+            {% if error %}
+
+            <div class="alert alert-danger">
+                {{ error }}
+            </div>
+
+            {% endif %}
+
+
+            <form method="POST">
+
+                {% csrf_token %}
+
+                <div class="row g-3">
+
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            Username
+                        </label>
+
+                        {% if edit_user %}
+
+                        <input
+                            type="text"
+                            class="form-control"
+                            value="{{ edit_user.username }}"
+                            disabled
+                        >
+
+                        {% else %}
+
+                        <input
+                            type="text"
+                            name="username"
+                            class="form-control"
+                            required
+                        >
+
+                        {% endif %}
+
+                    </div>
+
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            Email
+                        </label>
+
+                        <input
+                            type="email"
+                            name="email"
+                            class="form-control"
+                            value="{{ edit_user.email|default:'' }}"
+                        >
+
+                    </div>
+
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            First Name
+                        </label>
+
+                        <input
+                            type="text"
+                            name="first_name"
+                            class="form-control"
+                            value="{{ edit_user.first_name|default:'' }}"
+                        >
+
+                    </div>
+
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            Last Name
+                        </label>
+
+                        <input
+                            type="text"
+                            name="last_name"
+                            class="form-control"
+                            value="{{ edit_user.last_name|default:'' }}"
+                        >
+
+                    </div>
+
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            Role
+                        </label>
+
+                        <select
+                            name="role"
+                            class="form-select"
+                        >
+
+                            <option
+                                value="user"
+                                {% if profile.role == "user" or not profile %}
+                                    selected
+                                {% endif %}
+                            >
+                                User
+                            </option>
+
+                            <option
+                                value="admin"
+                                {% if profile.role == "admin" %}
+                                    selected
+                                {% endif %}
+                            >
+                                Admin
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+
+                            {% if edit_user %}
+                                New Password
+                            {% else %}
+                                Password
+                            {% endif %}
+
+                        </label>
+
+                        <input
+                            type="password"
+                            name="password"
+                            class="form-control"
+                            {% if not edit_user %}required{% endif %}
+                        >
+
+                        {% if edit_user %}
+
+                        <div class="small-muted mt-1">
+                            Leave blank to keep the current password.
+                        </div>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                <div class="mt-4 d-flex gap-2">
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                    >
+
+                        <i class="bi bi-check-lg"></i>
+
+                        Save User
+
+                    </button>
+
+
+                    <a
+                        href="/accounts/users/"
+                        class="btn btn-light border"
+                    >
+                        Cancel
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

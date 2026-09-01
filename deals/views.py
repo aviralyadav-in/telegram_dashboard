@@ -13,11 +13,14 @@ from django.contrib import messages
 from .models import Deal, Category
 from publisher.models import PublishedChannel
 
-
+from django.views.decorators.cache import never_cache
 # ============================================================
 # DASHBOARD
 # ============================================================
-@login_required
+@login_required(login_url="/login/")
+
+@never_cache
+
 def dashboard(request):
 
     total_deals = Deal.objects.count()
@@ -57,7 +60,8 @@ def dashboard(request):
 # ============================================================
 # DEAL LIST
 # ============================================================
-@login_required
+
+@never_cache
 def deal_list(request):
 
     deals = Deal.objects.all().order_by(
@@ -337,8 +341,9 @@ def deal_list(request):
 
 # ============================================================
 # CATEGORY LIST
-# ============================================================
-@login_required
+
+
+@never_cache
 def category_list(request):
 
     categories = Category.objects.all().order_by(
@@ -358,6 +363,7 @@ def category_list(request):
 # ADD CATEGORY
 # ============================================================
 
+@never_cache
 def category_add(request):
 
     if request.method == "POST":
@@ -436,6 +442,7 @@ def category_add(request):
 # EDIT CATEGORY
 # ============================================================
 
+@never_cache
 def category_edit(request, category_id):
 
     category = get_object_or_404(
@@ -531,8 +538,8 @@ def category_edit(request, category_id):
 
 # ============================================================
 # DELETE CATEGORY
-# ============================================================
 
+@never_cache
 def category_delete(request, category_id):
 
     category = get_object_or_404(
@@ -556,7 +563,8 @@ def category_delete(request, category_id):
 
 # ============================================================
 # TOGGLE CATEGORY
-# ============================================================
+
+@never_cache
 
 def category_toggle(request, category_id):
 
@@ -591,6 +599,7 @@ def category_toggle(request, category_id):
 # CATEGORY DEALS
 # ============================================================
 
+@never_cache
 def category_deals(request, category_id):
 
     category = get_object_or_404(
@@ -898,8 +907,8 @@ def category_deals(request, category_id):
 
 # ============================================================
 # EDIT DEAL
-# ============================================================
 
+@never_cache
 def deal_edit(request, deal_id):
 
     deal = get_object_or_404(
@@ -1020,7 +1029,8 @@ def deal_edit(request, deal_id):
 
 # ============================================================
 # DELETE DEAL
-# ============================================================
+
+@never_cache
 
 def deal_delete(request, deal_id):
 
@@ -1045,7 +1055,8 @@ def deal_delete(request, deal_id):
 
 # ============================================================
 # UPDATE DEAL STATUS
-# ============================================================
+
+@never_cache
 
 def deal_status_update(request, deal_id):
 
@@ -1101,7 +1112,8 @@ def deal_status_update(request, deal_id):
 
 # ============================================================
 # DEAL API
-# ============================================================
+
+@never_cache
 
 def deal_api(request):
 

@@ -26,8 +26,7 @@ sessions = {}
 
 # =========================================================
 # SCRAPING PAGE
-# =========================================================
-@login_required
+
 def scraping_page(request):
     return render(
         request,
