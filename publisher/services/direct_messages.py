@@ -1,20 +1,44 @@
-from datetime import datetime, timedelta
-import asyncio
 import re
 import traceback
+
+from datetime import datetime, timedelta
 from html import escape
 
 from asgiref.sync import sync_to_async
+
 from django.core.cache import cache
 from django.utils import timezone
 
-from telegram import Bot, ReplyKeyboardMarkup
+from telegram import (
+    Bot,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    ReplyKeyboardMarkup,
+)
 
 from deals.models import Deal, Category
+
+from publisher.models import (
+    TelegramUser,
+    PublishedChannel,
+    UserDestinationPermission,
+)
 
 from publisher.services.user_tracking import (
     get_or_create_telegram_user,
 )
+
+
+# ============================================================
+# CONSTANTS
+# ============================================================
+
+CACHE_TIMEOUT = 1800
+
+MAIN_MENU = "main"
+CATEGORY_STEP = "category"
+PRICE_STEP = "price"
+DATE_STEP = "date"
 
 
 # ============================================================
@@ -32,7 +56,218 @@ MAIN_KEYBOARD = ReplyKeyboardMarkup(
 
 
 # ============================================================
-# SEND MESSAGE
+# CACHE
+# ============================================================
+
+def get_user_cache_key(user_id):
+    return f"deal_filter_state_{user_id}"
+
+
+def set_user_state(
+    user_id,
+    state,
+):
+    cache.set(
+        get_user_cache_key(user_id),
+        state,
+        timeout=CACHE_TIMEOUT,
+    )
+
+
+def get_user_state(user_id):
+    return cache.get(
+        get_user_cache_key(user_id)
+    )
+
+
+def clear_user_state(user_id):
+    cache.delete(
+        get_user_cache_key(user_id)
+    )
+
+
+# ============================================================
+# DATABASE
+# ============================================================
+
+@sync_to_async(thread_sensitive=True)
+def get_telegram_user_from_update(
+    telegram_user,
+):
+    return get_or_create_telegram_user(
+        telegram_user
+    )
+
+
+@sync_to_async(thread_sensitive=True)
+def check_saved_permission(user):
+
+    if not user:
+        return False
+
+    return (
+        UserDestinationPermission.objects
+        .filter(
+            user=user,
+            is_allowed=True,
+        )
+        .exists()
+    )
+
+
+@sync_to_async(thread_sensitive=True)
+def grant_user_access_for_destination(
+    user,
+    channel,
+):
+    """
+    Create permission when Telegram membership has already
+    been verified by the bot.
+    """
+
+    if not user or not channel:
+        return False
+
+    UserDestinationPermission.objects.update_or_create(
+        user=user,
+        destination=channel,
+        defaults={
+            "can_message": bool(
+                channel.allow_direct_messages
+            ),
+            "can_publish": False,
+            "is_allowed": True,
+        },
+    )
+
+    return True
+
+
+@sync_to_async(thread_sensitive=True)
+def get_active_destinations():
+    return list(
+        PublishedChannel.objects
+        .filter(
+            status="active",
+        )
+        .select_related("bot")
+    )
+
+
+# ============================================================
+# ACCESS CONTROL
+# ============================================================
+
+async def is_user_allowed_to_use_bot(
+    user,
+    bot=None,
+):
+    """
+    Access logic:
+
+    1. Existing allowed permission -> allow.
+    2. Otherwise check active destinations.
+    3. Ask Telegram whether the user is member/admin/creator.
+    4. If yes, automatically create permission.
+    """
+
+    if not user:
+        return False
+
+    # --------------------------------------------------------
+    # Existing permission
+    # --------------------------------------------------------
+
+    if await check_saved_permission(user):
+        return True
+
+    # --------------------------------------------------------
+    # Automatic membership verification
+    # --------------------------------------------------------
+
+    if bot is None:
+        return False
+
+    destinations = (
+        await get_active_destinations()
+    )
+
+    for destination in destinations:
+
+        if not destination.bot:
+            continue
+
+        if (
+            destination.bot.bot_token
+            != bot.token
+        ):
+            continue
+
+        chat_id = (
+            destination.chat_id
+            or destination.username
+        )
+
+        if not chat_id:
+            continue
+
+        try:
+
+            member = await bot.get_chat_member(
+                chat_id=chat_id,
+                user_id=user.user_id,
+            )
+
+            status = member.status
+
+            if status in {
+                "member",
+                "administrator",
+                "creator",
+            }:
+
+                await grant_user_access_for_destination(
+                    user,
+                    destination,
+                )
+
+                return True
+
+        except Exception as error:
+
+            print(
+                "⚠️ Membership check failed | "
+                f"user={user.user_id} | "
+                f"destination={destination.id} | "
+                f"error={error}"
+            )
+
+            continue
+
+    return False
+
+
+# ============================================================
+# SEND ACCESS DENIED
+# ============================================================
+
+async def send_access_denied(
+    bot,
+    chat_id,
+):
+
+    await bot.send_message(
+        chat_id=chat_id,
+        text=(
+            "🚫 Access denied.\n\n"
+            "You are currently blocked or not allowed "
+            "to use the deal finder."
+        ),
+    )
+
+
+# ============================================================
+# BASIC SEND
 # ============================================================
 
 async def send_bot_message(
@@ -41,6 +276,7 @@ async def send_bot_message(
     text,
     keyboard=None,
 ):
+
     return await bot.send_message(
         chat_id=chat_id,
         text=text,
@@ -57,17 +293,17 @@ async def send_main_menu(
     chat_id,
     name=None,
 ):
+
     name = name or "there"
 
     text = (
-        f"👋 Hi {name}!\n\n"
-        "Welcome to MyDeals Deal Finder.\n\n"
-        "You can browse deals directly here without "
-        "opening any website or UI.\n\n"
+        f"👋 Hello {name}!\n\n"
+        "Welcome to MyDeals Deal Finder. 🎁\n\n"
+        "Let's find the best deals for you.\n\n"
         "👇 Choose an option:"
     )
 
-    await send_bot_message(
+    return await send_bot_message(
         bot,
         chat_id,
         text,
@@ -76,99 +312,75 @@ async def send_main_menu(
 
 
 # ============================================================
-# CATEGORY INPUT
+# CATEGORY MENU
 # ============================================================
+
+@sync_to_async(thread_sensitive=True)
+def get_active_categories():
+
+    return list(
+        Category.objects
+        .filter(
+            status="active"
+        )
+        .order_by("name")
+    )
+
 
 async def send_category_menu(
     bot,
     chat_id,
 ):
-    await send_bot_message(
-        bot,
-        chat_id,
-        (
-            "🔎 Find Deals\n\n"
-            "Enter the category you want.\n\n"
-            "Examples:\n"
-            "• Electronics\n"
-            "• Grocery\n"
-            "• Fashion\n"
-            "• Home\n"
-            "• All Categories\n\n"
-            "You can type the category name."
-        ),
-        MAIN_KEYBOARD,
+
+    try:
+
+        categories = (
+            await get_active_categories()
+        )
+
+    except Exception as error:
+
+        print(
+            "❌ CATEGORY LOAD ERROR:",
+            repr(error),
+        )
+
+        categories = []
+
+    buttons = []
+
+    for category in categories[:20]:
+
+        buttons.append(
+            [
+                InlineKeyboardButton(
+                    text=category.name,
+                    callback_data=(
+                        f"category:{category.id}"
+                    ),
+                )
+            ]
+        )
+
+    buttons.append(
+        [
+            InlineKeyboardButton(
+                text="📦 All Categories",
+                callback_data="category:all",
+            )
+        ]
     )
 
-
-# ============================================================
-# PRICE INPUT
-# ============================================================
-
-async def send_price_menu(
-    bot,
-    chat_id,
-    category,
-):
-    await send_bot_message(
-        bot,
-        chat_id,
-        (
-            f"✅ Category: {category}\n\n"
-            "Now enter your price range.\n\n"
-            "Examples:\n"
-            "• 500-700\n"
-            "• 700-1000\n"
-            "• under 300\n"
-            "• above 1000\n"
-            "• any"
-        ),
-        MAIN_KEYBOARD,
+    keyboard = InlineKeyboardMarkup(
+        buttons
     )
 
-
-# ============================================================
-# DATE INPUT
-# ============================================================
-
-async def send_date_menu(
-    bot,
-    chat_id,
-    category,
-    price_label,
-):
-    await send_bot_message(
-        bot,
-        chat_id,
-        (
-            f"✅ Category: {category}\n"
-            f"✅ Price: {price_label}\n\n"
-            "Finally, enter the date range.\n\n"
-            "Examples:\n"
-            "• today\n"
-            "• 7   → last 7 days\n"
-            "• 30  → last 30 days\n"
-            "• 25-08-2026 → particular date\n"
-            "• any"
-        ),
-        MAIN_KEYBOARD,
-    )
-
-
-# ============================================================
-# SEARCH AGAIN
-# ============================================================
-
-async def send_search_again_prompt(
-    bot,
-    chat_id,
-):
-    await send_bot_message(
-        bot,
-        chat_id,
-        (
-            "🔎 Start another search.\n\n"
-            "Enter the category you want.\n\n"
+    await bot.send_message(
+        chat_id=chat_id,
+        text=(
+            "🔎 <b>Find Deals</b>\n\n"
+            "Choose a category below.\n\n"
+            "You can also type the category name.\n\n"
             "Examples:\n"
             "• Electronics\n"
             "• Grocery\n"
@@ -176,7 +388,8 @@ async def send_search_again_prompt(
             "• Home\n"
             "• All Categories"
         ),
-        MAIN_KEYBOARD,
+        parse_mode="HTML",
+        reply_markup=keyboard,
     )
 
 
@@ -184,19 +397,10 @@ async def send_search_again_prompt(
 # CATEGORY RESOLUTION
 # ============================================================
 
-def resolve_category(
+@sync_to_async(thread_sensitive=True)
+def resolve_category_db(
     user_input,
 ):
-    """
-    Converts user input into the actual Category name.
-
-    Examples:
-        Electronics -> Electronics & Gadgets
-        Grocery -> Grocery
-        Home -> Home & Kitchen
-        Fashion -> Fashion
-        all -> All Categories
-    """
 
     value = (
         user_input or ""
@@ -205,22 +409,14 @@ def resolve_category(
     if not value:
         return None
 
-    # --------------------------------------------------------
-    # ALL CATEGORIES
-    # --------------------------------------------------------
-
-    if value in [
+    if value in {
         "all",
         "all categories",
         "all category",
         "any",
         "*",
-    ]:
+    }:
         return "All Categories"
-
-    # --------------------------------------------------------
-    # EXACT DATABASE CATEGORY
-    # --------------------------------------------------------
 
     category = (
         Category.objects
@@ -233,10 +429,6 @@ def resolve_category(
 
     if category:
         return category.name
-
-    # --------------------------------------------------------
-    # COMMON ALIASES
-    # --------------------------------------------------------
 
     aliases = {
         "electronics": "Electronics & Gadgets",
@@ -263,16 +455,14 @@ def resolve_category(
         "toys": "Kids & Toys",
     }
 
-    category_name = aliases.get(
-        value
-    )
+    alias_name = aliases.get(value)
 
-    if category_name:
+    if alias_name:
 
         category = (
             Category.objects
             .filter(
-                name__iexact=category_name,
+                name__iexact=alias_name,
                 status="active",
             )
             .first()
@@ -281,13 +471,11 @@ def resolve_category(
         if category:
             return category.name
 
-    # --------------------------------------------------------
-    # PARTIAL DATABASE NAME
-    # --------------------------------------------------------
-
     categories = (
         Category.objects
-        .filter(status="active")
+        .filter(
+            status="active"
+        )
     )
 
     for category in categories:
@@ -303,88 +491,34 @@ def resolve_category(
     return None
 
 
-# ============================================================
-# CATEGORY MATCH
-# ============================================================
-
-def category_matches(
-    deal,
-    category_name,
+@sync_to_async(thread_sensitive=True)
+def get_category_by_id(
+    category_id,
 ):
-    """
-    Strict keyword based category matching.
-    """
-
-    if category_name == "All Categories":
-        return True
-
-    content = (
-        f"{deal.content or ''} "
-        f"{deal.product_link or ''}"
-    ).lower()
 
     try:
 
-        category = (
+        return (
             Category.objects
             .filter(
-                name__iexact=category_name,
+                id=int(category_id),
                 status="active",
             )
             .first()
         )
 
-        if category:
+    except Exception:
 
-            keywords = (
-                category.get_keywords_list()
-            )
-
-            if keywords:
-
-                return any(
-                    keyword in content
-                    for keyword in keywords
-                )
-
-            return (
-                category_name.lower()
-                in content
-            )
-
-    except Exception as error:
-
-        print(
-            "❌ CATEGORY MATCH ERROR:",
-            repr(error),
-        )
-
-        traceback.print_exc()
-
-    return (
-        category_name.lower()
-        in content
-    )
+        return None
 
 
 # ============================================================
-# PRICE INPUT PARSER
+# PRICE
 # ============================================================
 
 def parse_price_input(
     user_input,
 ):
-    """
-    Supported:
-
-        500-700
-        500 - 700
-        under 300
-        below 300
-        above 1000
-        over 1000
-        any
-    """
 
     value = (
         user_input or ""
@@ -400,25 +534,17 @@ def parse_price_input(
         "",
     )
 
-    # --------------------------------------------------------
-    # ANY
-    # --------------------------------------------------------
-
-    if value in [
+    if value in {
         "any",
         "any price",
         "all",
         "no filter",
-    ]:
+    }:
 
         return {
             "type": "any",
             "label": "Any Price",
         }
-
-    # --------------------------------------------------------
-    # UNDER
-    # --------------------------------------------------------
 
     match = re.match(
         r"^(under|below|less than)\s*(\d+(?:\.\d+)?)$",
@@ -437,10 +563,6 @@ def parse_price_input(
             "label": f"Under ₹{amount:g}",
         }
 
-    # --------------------------------------------------------
-    # ABOVE
-    # --------------------------------------------------------
-
     match = re.match(
         r"^(above|over|more than)\s*(\d+(?:\.\d+)?)$",
         value,
@@ -457,10 +579,6 @@ def parse_price_input(
             "min": amount,
             "label": f"Above ₹{amount:g}",
         }
-
-    # --------------------------------------------------------
-    # RANGE
-    # --------------------------------------------------------
 
     match = re.match(
         r"^(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)$",
@@ -492,10 +610,6 @@ def parse_price_input(
             ),
         }
 
-    # --------------------------------------------------------
-    # SINGLE EXACT PRICE
-    # --------------------------------------------------------
-
     if re.match(
         r"^\d+(?:\.\d+)?$",
         value,
@@ -514,105 +628,39 @@ def parse_price_input(
 
 
 # ============================================================
-# PRICE FILTER
-# ============================================================
-
-def apply_price_filter(
-    queryset,
-    price_data,
-):
-
-    if not price_data:
-        return queryset
-
-    price_type = price_data.get(
-        "type"
-    )
-
-    if price_type == "any":
-        return queryset
-
-    if price_type == "under":
-        return queryset.filter(
-            price__lt=price_data["max"]
-        )
-
-    if price_type == "above":
-        return queryset.filter(
-            price__gt=price_data["min"]
-        )
-
-    if price_type == "range":
-        return queryset.filter(
-            price__gte=price_data["min"],
-            price__lte=price_data["max"],
-        )
-
-    if price_type == "single":
-        return queryset.filter(
-            price=price_data["min"]
-        )
-
-    return queryset
-
-
-# ============================================================
-# DATE INPUT PARSER
+# DATE
 # ============================================================
 
 def parse_date_input(
     user_input,
 ):
-    """
-    Supported:
-
-        today
-        7
-        30
-        any
-        25-08-2026
-        25/08/2026
-        25.08.2026
-    """
 
     value = (
         user_input or ""
     ).strip().lower()
 
-    # --------------------------------------------------------
-    # ANY
-    # --------------------------------------------------------
-
-    if value in [
+    if value in {
         "any",
         "any date",
         "all",
         "no filter",
-    ]:
+    }:
 
         return {
             "type": "any",
             "label": "Any Date",
         }
 
-    # --------------------------------------------------------
-    # TODAY
-    # --------------------------------------------------------
-
-    if value in [
+    if value in {
         "today",
         "todays",
         "today's",
-    ]:
+    }:
 
         return {
             "type": "today",
             "label": "Today",
         }
-
-    # --------------------------------------------------------
-    # LAST N DAYS
-    # --------------------------------------------------------
 
     if re.match(
         r"^\d+$",
@@ -621,10 +669,7 @@ def parse_date_input(
 
         days = int(value)
 
-        if days <= 0:
-            return None
-
-        if days > 3650:
+        if days <= 0 or days > 3650:
             return None
 
         return {
@@ -632,10 +677,6 @@ def parse_date_input(
             "days": days,
             "label": f"Last {days} Days",
         }
-
-    # --------------------------------------------------------
-    # PARTICULAR DATE
-    # --------------------------------------------------------
 
     for date_format in [
         "%d-%m-%Y",
@@ -645,10 +686,12 @@ def parse_date_input(
 
         try:
 
-            selected_date = datetime.strptime(
-                value,
-                date_format,
-            ).date()
+            selected_date = (
+                datetime.strptime(
+                    value,
+                    date_format,
+                ).date()
+            )
 
             return {
                 "type": "specific",
@@ -659,220 +702,201 @@ def parse_date_input(
             }
 
         except ValueError:
+
             continue
 
     return None
 
 
 # ============================================================
-# DATE FILTER
+# FIND DEALS
 # ============================================================
 
-def apply_date_filter(
-    queryset,
-    date_data,
-):
-
-    if not date_data:
-        return queryset
-
-    date_type = date_data.get(
-        "type"
-    )
-
-    # --------------------------------------------------------
-    # ANY DATE
-    # --------------------------------------------------------
-
-    if date_type == "any":
-        return queryset
-
-    now = timezone.now()
-
-    # --------------------------------------------------------
-    # TODAY
-    # --------------------------------------------------------
-
-    if date_type == "today":
-
-        start = now.replace(
-            hour=0,
-            minute=0,
-            second=0,
-            microsecond=0,
-        )
-
-        end = (
-            start
-            + timedelta(days=1)
-        )
-
-        return queryset.filter(
-            date__gte=start,
-            date__lt=end,
-        )
-
-    # --------------------------------------------------------
-    # LAST N DAYS
-    # --------------------------------------------------------
-
-    if date_type == "days":
-
-        return queryset.filter(
-            date__gte=(
-                now
-                - timedelta(
-                    days=date_data["days"]
-                )
-            )
-        )
-
-    # --------------------------------------------------------
-    # PARTICULAR DATE
-    # --------------------------------------------------------
-
-    if date_type == "specific":
-
-        selected_date = date_data["date"]
-
-        start = timezone.make_aware(
-            datetime.combine(
-                selected_date,
-                datetime.min.time(),
-            )
-        )
-
-        end = (
-            start
-            + timedelta(days=1)
-        )
-
-        return queryset.filter(
-            date__gte=start,
-            date__lt=end,
-        )
-
-    return queryset
-
-
-# ============================================================
-# FIND MATCHING DEALS
-# ============================================================
-
-def find_matching_deals(
+@sync_to_async(thread_sensitive=True)
+def find_matching_deals_sync(
     category,
     price_data,
     date_data,
 ):
 
-    print("\n========================================")
-    print("🔎 FIND DEALS START")
-    print("Category:", category)
-    print("Price:", price_data)
-    print("Date:", date_data)
-    print("========================================")
+    deals = (
+        Deal.objects
+        .filter(
+            status__in=[
+                "new",
+                "processed",
+                "published",
+            ]
+        )
+        .order_by(
+            "-date",
+            "-id",
+        )
+    )
 
-    try:
+    # --------------------------------------------------------
+    # PRICE
+    # --------------------------------------------------------
 
-        deals = (
-            Deal.objects
-            .filter(
-                status__in=[
-                    "new",
-                    "processed",
-                    "published",
-                ]
+    if price_data:
+
+        price_type = (
+            price_data.get("type")
+        )
+
+        if price_type == "under":
+
+            deals = deals.filter(
+                price__lt=price_data["max"]
             )
-            .order_by(
-                "-date",
-                "-id",
+
+        elif price_type == "above":
+
+            deals = deals.filter(
+                price__gt=price_data["min"]
             )
+
+        elif price_type == "range":
+
+            deals = deals.filter(
+                price__gte=price_data["min"],
+                price__lte=price_data["max"],
+            )
+
+        elif price_type == "single":
+
+            deals = deals.filter(
+                price=price_data["min"]
+            )
+
+    # --------------------------------------------------------
+    # DATE
+    # --------------------------------------------------------
+
+    if date_data:
+
+        date_type = (
+            date_data.get("type")
         )
 
-        # ----------------------------------------------------
-        # PRICE
-        # ----------------------------------------------------
+        now = timezone.now()
 
-        deals = apply_price_filter(
-            deals,
-            price_data,
-        )
+        if date_type == "today":
 
-        # ----------------------------------------------------
-        # DATE
-        # ----------------------------------------------------
+            start = now.replace(
+                hour=0,
+                minute=0,
+                second=0,
+                microsecond=0,
+            )
 
-        deals = apply_date_filter(
-            deals,
-            date_data,
-        )
+            end = (
+                start
+                + timedelta(days=1)
+            )
 
-        # ----------------------------------------------------
-        # LOAD DATABASE RECORDS
-        # ----------------------------------------------------
+            deals = deals.filter(
+                date__gte=start,
+                date__lt=end,
+            )
 
-        deals = list(
-            deals[:200]
-        )
+        elif date_type == "days":
 
-        print(
-            "STEP 1 - Deals loaded:",
-            len(deals),
-        )
-
-        # ----------------------------------------------------
-        # CATEGORY
-        # ----------------------------------------------------
-
-        results = []
-
-        for deal in deals:
-
-            try:
-
-                if category_matches(
-                    deal,
-                    category,
-                ):
-
-                    results.append(
-                        deal
+            deals = deals.filter(
+                date__gte=(
+                    now
+                    - timedelta(
+                        days=date_data["days"]
                     )
-
-            except Exception as error:
-
-                print(
-                    f"❌ Category error "
-                    f"for Deal #{deal.id}:",
-                    repr(error),
                 )
+            )
 
-                traceback.print_exc()
+        elif date_type == "specific":
 
-            if len(results) >= 20:
-                break
+            selected_date = (
+                date_data["date"]
+            )
 
-        print(
-            "STEP 2 - Matching deals:",
-            len(results),
+            start = timezone.make_aware(
+                datetime.combine(
+                    selected_date,
+                    datetime.min.time(),
+                )
+            )
+
+            end = (
+                start
+                + timedelta(days=1)
+            )
+
+            deals = deals.filter(
+                date__gte=start,
+                date__lt=end,
+            )
+
+    deals = list(
+        deals[:300]
+    )
+
+    # --------------------------------------------------------
+    # CATEGORY
+    # --------------------------------------------------------
+
+    if category == "All Categories":
+        return deals[:20]
+
+    category_obj = (
+        Category.objects
+        .filter(
+            name__iexact=category,
+            status="active",
+        )
+        .first()
+    )
+
+    keywords = []
+
+    if category_obj:
+
+        keywords = (
+            category_obj.get_keywords_list()
+            or []
         )
 
-        print("========================================")
-        print("🔎 FIND DEALS END")
-        print("========================================")
+    results = []
 
-        return results
+    for deal in deals:
 
-    except Exception as error:
+        content = (
+            f"{deal.content or ''} "
+            f"{deal.product_link or ''}"
+        ).lower()
 
-        print(
-            "❌ FIND DEALS DATABASE ERROR:",
-            repr(error),
-        )
+        if keywords:
 
-        traceback.print_exc()
+            matched = any(
+                keyword.lower() in content
+                for keyword in keywords
+                if keyword
+            )
 
-        raise
+        else:
+
+            matched = (
+                category.lower()
+                in content
+            )
+
+        if matched:
+
+            results.append(
+                deal
+            )
+
+        if len(results) >= 20:
+            break
+
+    return results
 
 
 # ============================================================
@@ -882,12 +906,10 @@ def find_matching_deals(
 def format_deal(
     deal,
 ):
-    """
-    Creates HTML-safe Telegram message.
-    """
 
     content = escape(
-        deal.content or "Deal available"
+        deal.content
+        or "Deal available"
     )
 
     text = (
@@ -910,14 +932,14 @@ def format_deal(
     if deal.date:
 
         text += (
-            f"📅 "
+            "📅 "
             f"{deal.date.strftime('%d %b %Y')}\n"
         )
 
     if deal.channel:
 
         text += (
-            f"📢 Source: "
+            "📢 Source: "
             f"{escape(str(deal.channel))}\n"
         )
 
@@ -937,66 +959,53 @@ def format_deal(
 
 
 # ============================================================
-# SPLIT LONG TELEGRAM MESSAGE
+# FIND MY DEALS BUTTON
+# ============================================================
+
+async def get_find_deals_keyboard(
+    bot,
+):
+
+    me = await bot.get_me()
+
+    if not me.username:
+        raise ValueError(
+            "Telegram bot username could not be determined."
+        )
+
+    url = (
+        f"https://t.me/{me.username}"
+        "?start=find_deals"
+    )
+
+    return InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton(
+                    text="🔎 Find My Deals",
+                    url=url,
+                )
+            ]
+        ]
+    )
+
+
+# ============================================================
+# SPLIT
 # ============================================================
 
 def split_telegram_message(
     text,
     max_length=3500,
 ):
-    """
-    Telegram has a finite message size.
-
-    Long scraped deals are split into multiple messages
-    instead of being rejected.
-    """
 
     if len(text) <= max_length:
         return [text]
 
     chunks = []
-
     current = ""
 
-    # Prefer splitting on newlines.
-    lines = text.split("\n")
-
-    for line in lines:
-
-        # ----------------------------------------------------
-        # A single line is itself too long
-        # ----------------------------------------------------
-
-        if len(line) > max_length:
-
-            if current:
-
-                chunks.append(
-                    current.rstrip()
-                )
-
-                current = ""
-
-            start = 0
-
-            while start < len(line):
-
-                end = (
-                    start
-                    + max_length
-                )
-
-                chunks.append(
-                    line[start:end]
-                )
-
-                start = end
-
-            continue
-
-        # ----------------------------------------------------
-        # Normal line
-        # ----------------------------------------------------
+    for line in text.split("\n"):
 
         candidate = (
             f"{current}\n{line}"
@@ -1007,16 +1016,32 @@ def split_telegram_message(
         if len(candidate) <= max_length:
 
             current = candidate
+            continue
 
-        else:
+        if current:
 
-            if current:
+            chunks.append(
+                current.rstrip()
+            )
 
-                chunks.append(
-                    current.rstrip()
-                )
+            current = ""
+
+        if len(line) <= max_length:
 
             current = line
+            continue
+
+        for start in range(
+            0,
+            len(line),
+            max_length,
+        ):
+
+            chunks.append(
+                line[
+                    start:start + max_length
+                ]
+            )
 
     if current:
 
@@ -1028,7 +1053,69 @@ def split_telegram_message(
 
 
 # ============================================================
-# SEND FILTERED DEALS
+# SEND DEAL LIST
+# ============================================================
+
+async def send_deal_list(
+    bot,
+    chat_id,
+    deals,
+    header,
+):
+
+    await bot.send_message(
+        chat_id=chat_id,
+        text=header,
+        parse_mode="HTML",
+        reply_markup=MAIN_KEYBOARD,
+    )
+
+    find_keyboard = (
+        await get_find_deals_keyboard(
+            bot
+        )
+    )
+
+    for deal in deals:
+
+        try:
+
+            text = format_deal(
+                deal
+            )
+
+            chunks = split_telegram_message(
+                text
+            )
+
+            for index, chunk in enumerate(
+                chunks
+            ):
+
+                await bot.send_message(
+                    chat_id=chat_id,
+                    text=chunk,
+                    parse_mode="HTML",
+                    disable_web_page_preview=False,
+                    reply_markup=(
+                        find_keyboard
+                        if index == 0
+                        else None
+                    ),
+                )
+
+        except Exception as error:
+
+            print(
+                f"❌ Deal #{deal.id} send error:",
+                repr(error),
+            )
+
+            traceback.print_exc()
+
+
+# ============================================================
+# FILTERED DEALS
 # ============================================================
 
 async def send_filtered_deals(
@@ -1037,213 +1124,107 @@ async def send_filtered_deals(
     category,
     price_data,
     date_data,
-    user_cache_key,
+    user_id,
 ):
 
     try:
 
-        print("\n########################################")
-        print("FILTER REQUEST")
-        print(
-            "CATEGORY =",
-            category,
-        )
-        print(
-            "PRICE =",
-            price_data,
-        )
-        print(
-            "DATE =",
-            date_data,
-        )
-        print("########################################")
-
-        # IMPORTANT:
-        # Django sync ORM runs only at this boundary.
-        deals = await sync_to_async(
-            find_matching_deals,
-            thread_sensitive=False,
-        )(
-            category,
-            price_data,
-            date_data,
-        )
-
-        print(
-            "FILTER RESULT:",
-            len(deals),
-            "deals",
+        deals = (
+            await find_matching_deals_sync(
+                category,
+                price_data,
+                date_data,
+            )
         )
 
     except Exception as error:
 
-        print("\n########################################")
-        print("❌ DEAL FETCH ERROR")
         print(
-            "ERROR:",
-            type(error).__name__,
-            str(error),
+            "❌ FIND DEALS ERROR:",
+            repr(error),
         )
-        print("########################################")
 
         traceback.print_exc()
 
-        # Allow another search.
-        cache.set(
-            user_cache_key,
-            {
-                "step": "category",
-            },
-            timeout=1800,
-        )
-
-        await send_bot_message(
-            bot,
-            chat_id,
-            (
+        await bot.send_message(
+            chat_id=chat_id,
+            text=(
                 "⚠️ Sorry, deals fetch karte time "
-                "problem aa gayi.\n\n"
-                "Let's try another search."
+                "problem aa gayi."
             ),
-            MAIN_KEYBOARD,
-        )
-
-        await send_search_again_prompt(
-            bot,
-            chat_id,
+            reply_markup=MAIN_KEYBOARD,
         )
 
         return
-
-    # ========================================================
-    # NO RESULTS
-    # ========================================================
 
     if not deals:
 
-        cache.set(
-            user_cache_key,
-            {
-                "step": "category",
-            },
-            timeout=1800,
-        )
-
-        await send_bot_message(
-            bot,
-            chat_id,
-            (
-                "😔 No deals found for your "
-                "selected filters.\n\n"
+        await bot.send_message(
+            chat_id=chat_id,
+            text=(
+                "😔 No deals found.\n\n"
                 f"📂 Category: {category}\n"
                 f"💰 Price: {price_data['label']}\n"
-                f"📅 Date: {date_data['label']}"
+                f"📅 Date: {date_data['label']}\n\n"
+                "Try another search."
             ),
-            MAIN_KEYBOARD,
+            reply_markup=MAIN_KEYBOARD,
         )
 
-        await send_search_again_prompt(
+        set_user_state(
+            user_id,
+            {
+                "step": CATEGORY_STEP
+            },
+        )
+
+        await send_category_menu(
             bot,
             chat_id,
         )
 
         return
 
-    # ========================================================
-    # RESULTS HEADER
-    # ========================================================
-
-    # Reset state so next message can start a new search.
-    cache.set(
-        user_cache_key,
+    set_user_state(
+        user_id,
         {
-            "step": "category",
+            "step": CATEGORY_STEP
         },
-        timeout=1800,
+    )
+
+    header = (
+        f"🎯 <b>Found {len(deals)} deal(s)!</b>\n\n"
+        f"📂 {escape(category)}\n"
+        f"💰 {escape(price_data['label'])}\n"
+        f"📅 {escape(date_data['label'])}"
+    )
+
+    await send_deal_list(
+        bot,
+        chat_id,
+        deals,
+        header,
     )
 
     await bot.send_message(
         chat_id=chat_id,
         text=(
-            f"🎯 Found {len(deals)} matching deal(s)!\n\n"
-            f"📂 {category}\n"
-            f"💰 {price_data['label']}\n"
-            f"📅 {date_data['label']}"
+            "🔎 Want to search again?\n"
+            "Choose <b>Find Deals</b> below."
         ),
+        parse_mode="HTML",
         reply_markup=MAIN_KEYBOARD,
     )
 
-    # ========================================================
-    # SEND EACH DEAL
-    # ========================================================
-
-    for deal in deals:
-
-        try:
-
-            formatted_text = format_deal(
-                deal
-            )
-
-            chunks = split_telegram_message(
-                formatted_text
-            )
-
-            for index, chunk in enumerate(
-                chunks
-            ):
-
-                try:
-
-                    await bot.send_message(
-                        chat_id=chat_id,
-                        text=chunk,
-                        parse_mode="HTML",
-                        disable_web_page_preview=False,
-                    )
-
-                except Exception as error:
-
-                    print(
-                        f"❌ Failed sending Deal "
-                        f"#{deal.id} "
-                        f"chunk {index + 1}:",
-                        repr(error),
-                    )
-
-                    traceback.print_exc()
-
-        except Exception as error:
-
-            print(
-                f"❌ Failed formatting Deal "
-                f"#{deal.id}:",
-                repr(error),
-            )
-
-            traceback.print_exc()
-
-    # ========================================================
-    # SEARCH AGAIN
-    # ========================================================
-
-    await send_search_again_prompt(
-        bot,
-        chat_id,
-    )
-
 
 # ============================================================
-# GET LATEST DEALS
+# LATEST DEALS
 # ============================================================
 
-def get_latest_deals():
+@sync_to_async(thread_sensitive=True)
+def get_latest_deals_sync():
 
-    print(
-        "🔎 Loading latest deals..."
-    )
-
-    deals = list(
+    return list(
         Deal.objects
         .filter(
             status__in=[
@@ -1258,17 +1239,6 @@ def get_latest_deals():
         )[:10]
     )
 
-    print(
-        "Latest deals loaded:",
-        len(deals),
-    )
-
-    return deals
-
-
-# ============================================================
-# SEND LATEST DEALS
-# ============================================================
 
 async def send_latest_deals(
     bot,
@@ -1277,90 +1247,195 @@ async def send_latest_deals(
 
     try:
 
-        deals = await sync_to_async(
-            get_latest_deals,
-            thread_sensitive=False,
-        )()
+        deals = (
+            await get_latest_deals_sync()
+        )
 
     except Exception as error:
 
         print(
-            "❌ LATEST DEAL ERROR:",
+            "❌ LATEST DEALS ERROR:",
             repr(error),
         )
 
-        traceback.print_exc()
-
-        await send_bot_message(
-            bot,
-            chat_id,
-            (
+        await bot.send_message(
+            chat_id=chat_id,
+            text=(
                 "⚠️ Latest deals fetch karte time "
-                "problem aa gayi.\n\n"
-                f"{type(error).__name__}: {error}"
+                "problem aa gayi."
             ),
-            MAIN_KEYBOARD,
+            reply_markup=MAIN_KEYBOARD,
         )
 
         return
 
     if not deals:
 
-        await send_bot_message(
-            bot,
-            chat_id,
-            "😔 No deals available right now.",
-            MAIN_KEYBOARD,
+        await bot.send_message(
+            chat_id=chat_id,
+            text=(
+                "😔 No deals available right now."
+            ),
+            reply_markup=MAIN_KEYBOARD,
         )
 
         return
 
-    await send_bot_message(
+    await send_deal_list(
         bot,
         chat_id,
-        "🆕 Here are the latest deals:",
-        MAIN_KEYBOARD,
+        deals,
+        (
+            "🆕 <b>Latest Deals</b>\n\n"
+            "Here are the newest deals:"
+        ),
     )
 
-    for deal in deals:
+
+# ============================================================
+# CALLBACK
+# ============================================================
+
+async def handle_callback_query(
+    bot,
+    update,
+):
+
+    query = update.callback_query
+
+    if not query:
+        return
+
+    telegram_user = query.from_user
+
+    user, created = (
+        await get_telegram_user_from_update(
+            telegram_user
+        )
+    )
+
+    allowed = (
+        await is_user_allowed_to_use_bot(
+            user,
+            bot,
+        )
+    )
+
+    try:
+        await query.answer()
+    except Exception:
+        pass
+
+    if not allowed:
 
         try:
+            await query.answer(
+                "🚫 Access denied.",
+                show_alert=True,
+            )
+        except Exception:
+            pass
 
-            formatted_text = format_deal(
-                deal
+        await send_access_denied(
+            bot,
+            query.message.chat_id,
+        )
+
+        return
+
+    data = (
+        query.data or ""
+    )
+
+    chat_id = (
+        query.message.chat_id
+    )
+
+    user_id = user.user_id
+
+    # --------------------------------------------------------
+    # CATEGORY
+    # --------------------------------------------------------
+
+    if data.startswith(
+        "category:"
+    ):
+
+        category_id = (
+            data.split(
+                ":",
+                1,
+            )[1]
+        )
+
+        if category_id == "all":
+
+            category_name = (
+                "All Categories"
             )
 
-            chunks = split_telegram_message(
-                formatted_text
+        else:
+
+            category = (
+                await get_category_by_id(
+                    category_id
+                )
             )
 
-            for chunk in chunks:
+            if not category:
 
                 await bot.send_message(
                     chat_id=chat_id,
-                    text=chunk,
-                    parse_mode="HTML",
-                    disable_web_page_preview=False,
+                    text=(
+                        "❌ Category is no longer available."
+                    ),
+                    reply_markup=MAIN_KEYBOARD,
                 )
 
-        except Exception as error:
+                return
 
-            print(
-                f"❌ Latest Deal "
-                f"#{deal.id} send error:",
-                repr(error),
+            category_name = (
+                category.name
             )
 
-            traceback.print_exc()
+        set_user_state(
+            user_id,
+            {
+                "step": PRICE_STEP,
+                "category": category_name,
+            },
+        )
+
+        await bot.send_message(
+            chat_id=chat_id,
+            text=(
+                f"✅ Category: <b>"
+                f"{escape(category_name)}"
+                f"</b>\n\n"
+                "💰 Now enter your price range.\n\n"
+                "Examples:\n"
+                "• <code>any</code>\n"
+                "• <code>500-1000</code>\n"
+                "• <code>500-4000</code>\n"
+                "• <code>under 500</code>\n"
+                "• <code>above 2000</code>\n"
+                "• <code>2000</code>"
+            ),
+            parse_mode="HTML",
+            reply_markup=MAIN_KEYBOARD,
+        )
+
+        return
 
 
 # ============================================================
-# PRIVATE MESSAGE HANDLER
+# PRIVATE MESSAGE
 # ============================================================
 
-def handle_private_message(
+async def handle_private_message(
     bot_record,
     update,
+    bot,
 ):
 
     message = update.message
@@ -1368,207 +1443,221 @@ def handle_private_message(
     if not message:
         return
 
+    if not message.chat:
+        return
+
+    # --------------------------------------------------------
+    # ONLY PRIVATE CHAT
+    # --------------------------------------------------------
+
+    if message.chat.type != "private":
+
+        print(
+            "⏭️ Ignored non-private message | "
+            f"chat_type={message.chat.type} | "
+            f"chat_id={message.chat.id}"
+        )
+
+        return
+
     if not message.from_user:
         return
 
-    telegram_user = message.from_user
+    telegram_user = (
+        message.from_user
+    )
 
-    user, created = (
-        get_or_create_telegram_user(
-            telegram_user
+    # --------------------------------------------------------
+    # USER
+    # --------------------------------------------------------
+
+    try:
+
+        user, created = (
+            await get_telegram_user_from_update(
+                telegram_user
+            )
+        )
+
+    except Exception as error:
+
+        print(
+            "❌ TELEGRAM USER ERROR:",
+            repr(error),
+        )
+
+        traceback.print_exc()
+
+        return
+
+    # --------------------------------------------------------
+    # ACCESS
+    # --------------------------------------------------------
+
+    allowed = (
+        await is_user_allowed_to_use_bot(
+            user,
+            bot,
         )
     )
+
+    if not allowed:
+
+        print(
+            "🚫 BOT ACCESS DENIED | "
+            f"USER ID: {user.user_id}"
+        )
+
+        await send_access_denied(
+            bot,
+            message.chat_id,
+        )
+
+        return
+
+    # --------------------------------------------------------
+    # TEXT
+    # --------------------------------------------------------
 
     text = (
         message.text or ""
     ).strip()
 
-    normalized_text = (
-        text.lower().strip()
+    normalized = (
+        text.lower()
     )
 
-    user_cache_key = (
-        f"deal_filter_state_{user.user_id}"
-    )
+    user_id = user.user_id
 
-    # ========================================================
+    # --------------------------------------------------------
     # START
-    # ========================================================
+    # --------------------------------------------------------
 
-    if normalized_text.startswith(
+    if normalized.startswith(
         "/start"
     ):
 
-        cache.delete(
-            user_cache_key
+        clear_user_state(
+            user_id
         )
 
-        async def send():
+        parts = normalized.split(
+            maxsplit=1
+        )
 
-            bot = Bot(
-                token=bot_record.bot_token
+        payload = (
+            parts[1].strip()
+            if len(parts) > 1
+            else ""
+        )
+
+        if payload == "find_deals":
+
+            set_user_state(
+                user_id,
+                {
+                    "step": CATEGORY_STEP
+                },
             )
 
-            try:
+            await send_category_menu(
+                bot,
+                message.chat_id,
+            )
 
-                await send_main_menu(
-                    bot,
-                    message.chat_id,
-                    telegram_user.first_name,
-                )
+            return
 
-            finally:
-
-                await bot.shutdown()
-
-        asyncio.run(send())
+        await send_main_menu(
+            bot,
+            message.chat_id,
+            telegram_user.first_name,
+        )
 
         return
 
-    # ========================================================
+    # --------------------------------------------------------
     # BACK
-    # ========================================================
+    # --------------------------------------------------------
 
-    if normalized_text in [
+    if normalized in {
         "back",
         "⬅️ back",
         "/back",
-    ]:
+    }:
 
-        cache.delete(
-            user_cache_key
+        clear_user_state(
+            user_id
         )
 
-        async def send():
-
-            bot = Bot(
-                token=bot_record.bot_token
-            )
-
-            try:
-
-                await send_main_menu(
-                    bot,
-                    message.chat_id,
-                    telegram_user.first_name,
-                )
-
-            finally:
-
-                await bot.shutdown()
-
-        asyncio.run(send())
+        await send_main_menu(
+            bot,
+            message.chat_id,
+            telegram_user.first_name,
+        )
 
         return
 
-    # ========================================================
+    # --------------------------------------------------------
     # FIND DEALS
-    # ========================================================
+    # --------------------------------------------------------
 
     if (
         text == "🔎 Find Deals"
-        or normalized_text in [
+        or normalized in {
             "find deals",
             "find my deals",
             "find",
-        ]
+        }
     ):
 
-        cache.set(
-            user_cache_key,
+        set_user_state(
+            user_id,
             {
-                "step": "category",
+                "step": CATEGORY_STEP
             },
-            timeout=1800,
         )
 
-        async def send():
-
-            bot = Bot(
-                token=bot_record.bot_token
-            )
-
-            try:
-
-                await send_category_menu(
-                    bot,
-                    message.chat_id,
-                )
-
-            finally:
-
-                await bot.shutdown()
-
-        asyncio.run(send())
+        await send_category_menu(
+            bot,
+            message.chat_id,
+        )
 
         return
 
-    # ========================================================
+    # --------------------------------------------------------
     # LATEST DEALS
-    # ========================================================
+    # --------------------------------------------------------
 
     if (
         text == "🆕 Latest Deals"
-        or normalized_text in [
+        or normalized in {
             "latest deals",
             "latest",
-        ]
+        }
     ):
 
-        async def send():
-
-            bot = Bot(
-                token=bot_record.bot_token
-            )
-
-            try:
-
-                await send_latest_deals(
-                    bot,
-                    message.chat_id,
-                )
-
-            finally:
-
-                await bot.shutdown()
-
-        asyncio.run(send())
+        await send_latest_deals(
+            bot,
+            message.chat_id,
+        )
 
         return
 
-    # ========================================================
-    # CURRENT STATE
-    # ========================================================
+    # --------------------------------------------------------
+    # STATE
+    # --------------------------------------------------------
 
-    state = cache.get(
-        user_cache_key
+    state = get_user_state(
+        user_id
     )
 
     if not state:
 
-        async def send():
-
-            bot = Bot(
-                token=bot_record.bot_token
-            )
-
-            try:
-
-                await send_bot_message(
-                    bot,
-                    message.chat_id,
-                    (
-                        "Please choose an option "
-                        "from the menu first."
-                    ),
-                    MAIN_KEYBOARD,
-                )
-
-            finally:
-
-                await bot.shutdown()
-
-        asyncio.run(send())
+        await send_main_menu(
+            bot,
+            message.chat_id,
+            telegram_user.first_name,
+        )
 
         return
 
@@ -1577,85 +1666,70 @@ def handle_private_message(
     )
 
     # ========================================================
-    # STEP 1 - CATEGORY
+    # CATEGORY
     # ========================================================
 
-    if step == "category":
+    if step == CATEGORY_STEP:
 
-        category = resolve_category(
-            text
+        category = (
+            await resolve_category_db(
+                text
+            )
         )
 
         if not category:
 
-            async def send():
+            await bot.send_message(
+                chat_id=message.chat_id,
+                text=(
+                    "❌ Category not found.\n\n"
+                    "Please type a valid category or "
+                    "choose one from the category menu."
+                ),
+                reply_markup=MAIN_KEYBOARD,
+            )
 
-                bot = Bot(
-                    token=bot_record.bot_token
-                )
-
-                try:
-
-                    await send_bot_message(
-                        bot,
-                        message.chat_id,
-                        (
-                            "❌ Category not found.\n\n"
-                            "Please type a valid category.\n\n"
-                            "Examples:\n"
-                            "Electronics\n"
-                            "Grocery\n"
-                            "Fashion\n"
-                            "Home\n"
-                            "All Categories"
-                        ),
-                        MAIN_KEYBOARD,
-                    )
-
-                finally:
-
-                    await bot.shutdown()
-
-            asyncio.run(send())
+            await send_category_menu(
+                bot,
+                message.chat_id,
+            )
 
             return
 
-        cache.set(
-            user_cache_key,
+        set_user_state(
+            user_id,
             {
-                "step": "price",
+                "step": PRICE_STEP,
                 "category": category,
             },
-            timeout=1800,
         )
 
-        async def send():
-
-            bot = Bot(
-                token=bot_record.bot_token
-            )
-
-            try:
-
-                await send_price_menu(
-                    bot,
-                    message.chat_id,
-                    category,
-                )
-
-            finally:
-
-                await bot.shutdown()
-
-        asyncio.run(send())
+        await bot.send_message(
+            chat_id=message.chat_id,
+            text=(
+                f"✅ Category: <b>"
+                f"{escape(category)}"
+                f"</b>\n\n"
+                "💰 Now enter your price range.\n\n"
+                "Examples:\n"
+                "• <code>any</code>\n"
+                "• <code>500-1000</code>\n"
+                "• <code>500-4000</code>\n"
+                "• <code>under 500</code>\n"
+                "• <code>above 2000</code>\n"
+                "• <code>2000</code>"
+            ),
+            parse_mode="HTML",
+            reply_markup=MAIN_KEYBOARD,
+        )
 
         return
 
     # ========================================================
-    # STEP 2 - PRICE
+    # PRICE
     # ========================================================
 
-    if step == "price":
+    if step == PRICE_STEP:
 
         price_data = parse_price_input(
             text
@@ -1663,87 +1737,80 @@ def handle_private_message(
 
         if not price_data:
 
-            async def send():
-
-                bot = Bot(
-                    token=bot_record.bot_token
-                )
-
-                try:
-
-                    await send_bot_message(
-                        bot,
-                        message.chat_id,
-                        (
-                            "❌ Invalid price format.\n\n"
-                            "Please enter one of these:\n\n"
-                            "• 500-700\n"
-                            "• 700-1000\n"
-                            "• under 300\n"
-                            "• above 1000\n"
-                            "• any"
-                        ),
-                        MAIN_KEYBOARD,
-                    )
-
-                finally:
-
-                    await bot.shutdown()
-
-            asyncio.run(send())
+            await bot.send_message(
+                chat_id=message.chat_id,
+                text=(
+                    "❌ Invalid price format.\n\n"
+                    "Examples:\n"
+                    "• <code>any</code>\n"
+                    "• <code>500-1000</code>\n"
+                    "• <code>under 500</code>\n"
+                    "• <code>above 2000</code>\n"
+                    "• <code>2000</code>"
+                ),
+                parse_mode="HTML",
+                reply_markup=MAIN_KEYBOARD,
+            )
 
             return
 
-        category = state.get(
-            "category"
+        category = (
+            state.get("category")
         )
 
         if not category:
 
-            cache.delete(
-                user_cache_key
+            set_user_state(
+                user_id,
+                {
+                    "step": CATEGORY_STEP
+                },
+            )
+
+            await send_category_menu(
+                bot,
+                message.chat_id,
             )
 
             return
 
-        cache.set(
-            user_cache_key,
+        set_user_state(
+            user_id,
             {
-                "step": "date",
+                "step": DATE_STEP,
                 "category": category,
                 "price": price_data,
             },
-            timeout=1800,
         )
 
-        async def send():
-
-            bot = Bot(
-                token=bot_record.bot_token
-            )
-
-            try:
-
-                await send_date_menu(
-                    bot,
-                    message.chat_id,
-                    category,
-                    price_data["label"],
-                )
-
-            finally:
-
-                await bot.shutdown()
-
-        asyncio.run(send())
+        await bot.send_message(
+            chat_id=message.chat_id,
+            text=(
+                f"✅ Category: <b>"
+                f"{escape(category)}"
+                f"</b>\n"
+                f"✅ Price: <b>"
+                f"{escape(price_data['label'])}"
+                f"</b>\n\n"
+                "📅 Finally, enter the date range.\n\n"
+                "Examples:\n"
+                "• <code>today</code>\n"
+                "• <code>7</code> → last 7 days\n"
+                "• <code>30</code> → last 30 days\n"
+                "• <code>25-08-2026</code> → particular date\n"
+                "• <code>any</code>"
+            ),
+            parse_mode="HTML",
+            reply_markup=MAIN_KEYBOARD,
+        )
 
         return
 
     # ========================================================
-    # STEP 3 - DATE
+    # DATE
     # ========================================================
 
-    if step == "date":
+    if step == DATE_STEP:
 
         date_data = parse_date_input(
             text
@@ -1751,74 +1818,71 @@ def handle_private_message(
 
         if not date_data:
 
-            async def send():
-
-                bot = Bot(
-                    token=bot_record.bot_token
-                )
-
-                try:
-
-                    await send_bot_message(
-                        bot,
-                        message.chat_id,
-                        (
-                            "❌ Invalid date format.\n\n"
-                            "Please enter:\n\n"
-                            "• today\n"
-                            "• 7  → last 7 days\n"
-                            "• 30 → last 30 days\n"
-                            "• 25-08-2026 → particular date\n"
-                            "• any"
-                        ),
-                        MAIN_KEYBOARD,
-                    )
-
-                finally:
-
-                    await bot.shutdown()
-
-            asyncio.run(send())
-
-            return
-
-        category = state.get(
-            "category"
-        )
-
-        price_data = state.get(
-            "price"
-        )
-
-        if not category or not price_data:
-
-            cache.delete(
-                user_cache_key
+            await bot.send_message(
+                chat_id=message.chat_id,
+                text=(
+                    "❌ Invalid date format.\n\n"
+                    "Examples:\n"
+                    "• <code>today</code>\n"
+                    "• <code>7</code>\n"
+                    "• <code>30</code>\n"
+                    "• <code>25-08-2026</code>\n"
+                    "• <code>any</code>"
+                ),
+                parse_mode="HTML",
+                reply_markup=MAIN_KEYBOARD,
             )
 
             return
 
-        async def send():
+        category = (
+            state.get("category")
+        )
 
-            bot = Bot(
-                token=bot_record.bot_token
+        price_data = (
+            state.get("price")
+        )
+
+        if (
+            not category
+            or not price_data
+        ):
+
+            set_user_state(
+                user_id,
+                {
+                    "step": CATEGORY_STEP
+                },
             )
 
-            try:
+            await send_category_menu(
+                bot,
+                message.chat_id,
+            )
 
-                await send_filtered_deals(
-                    bot,
-                    message.chat_id,
-                    category,
-                    price_data,
-                    date_data,
-                    user_cache_key,
-                )
+            return
 
-            finally:
-
-                await bot.shutdown()
-
-        asyncio.run(send())
+        await send_filtered_deals(
+            bot,
+            message.chat_id,
+            category,
+            price_data,
+            date_data,
+            user_id,
+        )
 
         return
+
+    # ========================================================
+    # UNKNOWN STATE
+    # ========================================================
+
+    clear_user_state(
+        user_id
+    )
+
+    await send_main_menu(
+        bot,
+        message.chat_id,
+        telegram_user.first_name,
+    )

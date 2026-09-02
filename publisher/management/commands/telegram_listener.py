@@ -5,6 +5,7 @@ from asgiref.sync import sync_to_async
 from django.core.management.base import BaseCommand
 
 from telegram import Bot
+from telegram.request import HTTPXRequest
 
 from publisher.models import TelegramBot
 
@@ -14,6 +15,7 @@ from publisher.services.user_tracking import (
 
 from publisher.services.direct_messages import (
     handle_private_message,
+    handle_callback_query,
 )
 
 
@@ -21,7 +23,15 @@ class Command(BaseCommand):
 
     help = "Listen for Telegram bot updates."
 
-    def handle(self, *args, **options):
+    # ========================================================
+    # HANDLE
+    # ========================================================
+
+    def handle(
+        self,
+        *args,
+        **options,
+    ):
 
         try:
 
@@ -47,30 +57,57 @@ class Command(BaseCommand):
     ):
 
         bot_id = bot_record.id
-        bot_token = bot_record.bot_token
-        bot_username = bot_record.username
+
+        bot_token = (
+            bot_record.bot_token
+        )
+
+        bot_username = (
+            bot_record.username
+        )
+
+        # ====================================================
+        # TELEGRAM REQUEST TIMEOUTS
+        # ====================================================
+
+        request = HTTPXRequest(
+            connect_timeout=30.0,
+            read_timeout=60.0,
+            write_timeout=60.0,
+            pool_timeout=30.0,
+        )
 
         bot = Bot(
-            token=bot_token
+            token=bot_token,
+            request=request,
         )
 
         offset = None
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"Listening: @{bot_username or 'unknown'}"
+                f"Listening: @{bot_username}"
             )
         )
 
         try:
 
+            # =================================================
+            # VERIFY BOT
+            # =================================================
+
             me = await bot.get_me()
 
             self.stdout.write(
                 self.style.SUCCESS(
-                    f"Connected: @{me.username}"
+                    f"Connected: @{me.username} "
+                    f"(ID: {me.id})"
                 )
             )
+
+            # =================================================
+            # POLLING
+            # =================================================
 
             while True:
 
@@ -82,6 +119,7 @@ class Command(BaseCommand):
 
                         allowed_updates=[
                             "message",
+                            "callback_query",
                             "chat_member",
                             "my_chat_member",
                         ],
@@ -101,10 +139,32 @@ class Command(BaseCommand):
 
                             try:
 
-                                await sync_to_async(
-                                    handle_private_message
-                                )(
+                                await handle_private_message(
                                     bot_record,
+                                    update,
+                                    bot,
+                                )
+
+                            except Exception as error:
+
+                                self.stdout.write(
+                                    self.style.ERROR(
+                                        "Message error "
+                                        f"for bot {bot_id}: "
+                                        f"{repr(error)}"
+                                    )
+                                )
+
+                        # =====================================
+                        # CALLBACK QUERY
+                        # =====================================
+
+                        elif update.callback_query:
+
+                            try:
+
+                                await handle_callback_query(
+                                    bot,
                                     update,
                                 )
 
@@ -112,9 +172,9 @@ class Command(BaseCommand):
 
                                 self.stdout.write(
                                     self.style.ERROR(
-                                        f"Private message error "
+                                        "Callback error "
                                         f"for bot {bot_id}: "
-                                        f"{error}"
+                                        f"{repr(error)}"
                                     )
                                 )
 
@@ -122,45 +182,46 @@ class Command(BaseCommand):
                         # CHAT MEMBER
                         # =====================================
 
-                        if update.chat_member:
+                        elif update.chat_member:
 
                             try:
 
-                                await sync_to_async(
-                                    handle_member_update
-                                )(
+                                # IMPORTANT:
+                                #
+                                # handle_member_update is now
+                                # an ASYNC function.
+                                #
+                                # DO NOT wrap it in
+                                # sync_to_async().
+                                #
+                                await handle_member_update(
                                     bot_record,
                                     update,
+                                    bot,
                                 )
 
                             except Exception as error:
 
                                 self.stdout.write(
                                     self.style.ERROR(
-                                        f"User handling error "
+                                        "Member handling error "
                                         f"for bot {bot_id}: "
-                                        f"{error}"
+                                        f"{repr(error)}"
                                     )
                                 )
 
                         # =====================================
-                        # BOT CHAT MEMBER
+                        # BOT'S OWN MEMBERSHIP
                         # =====================================
 
-                        if update.my_chat_member:
+                        elif update.my_chat_member:
 
-                            self.stdout.write(
-                                self.style.SUCCESS(
-                                    f"Bot membership update "
-                                    f"received for bot "
-                                    f"{bot_id}"
-                                )
-                            )
+                            # This update is about the bot
+                            # itself joining/leaving a chat.
+                            #
+                            # It is NOT treated as a user join.
 
-                            await self.handle_bot_chat_update(
-                                bot_record,
-                                update,
-                            )
+                            continue
 
                 except asyncio.CancelledError:
 
@@ -170,7 +231,8 @@ class Command(BaseCommand):
 
                     self.stdout.write(
                         self.style.ERROR(
-                            f"Bot {bot_id} error: {error}"
+                            f"Bot {bot_id} polling error: "
+                            f"{repr(error)}"
                         )
                     )
 
@@ -187,104 +249,21 @@ class Command(BaseCommand):
                 pass
 
     # ========================================================
-    # BOT MEMBERSHIP UPDATE
-    # ========================================================
-
-    async def handle_bot_chat_update(
-        self,
-        bot_record,
-        update,
-    ):
-
-        chat_member = update.my_chat_member
-
-        if not chat_member:
-            return
-
-        chat = chat_member.chat
-
-        new_status = (
-            chat_member
-            .new_chat_member
-            .status
-        )
-
-        active_statuses = {
-            "member",
-            "administrator",
-        }
-
-        inactive_statuses = {
-            "left",
-            "kicked",
-        }
-
-        if new_status in active_statuses:
-
-            await sync_to_async(
-                self.mark_destination_active
-            )(
-                bot_record,
-                chat,
-            )
-
-        elif new_status in inactive_statuses:
-
-            await sync_to_async(
-                self.mark_destination_inactive
-            )(
-                bot_record,
-                chat,
-            )
-
-    # ========================================================
-    # MARK ACTIVE
-    # ========================================================
-
-    def mark_destination_active(
-        self,
-        bot_record,
-        chat,
-    ):
-
-        from publisher.models import PublishedChannel
-
-        PublishedChannel.objects.filter(
-            bot=bot_record,
-            chat_id=chat.id,
-        ).update(
-            status="active"
-        )
-
-    # ========================================================
-    # MARK INACTIVE
-    # ========================================================
-
-    def mark_destination_inactive(
-        self,
-        bot_record,
-        chat,
-    ):
-
-        from publisher.models import PublishedChannel
-
-        PublishedChannel.objects.filter(
-            bot=bot_record,
-            chat_id=chat.id,
-        ).update(
-            status="inactive"
-        )
-
-    # ========================================================
     # RUN ALL ACTIVE BOTS
     # ========================================================
 
-    async def run_listener(self):
+    async def run_listener(
+        self,
+    ):
 
-        bots = await sync_to_async(list)(
-            TelegramBot.objects.filter(
+        bots = await sync_to_async(
+            list
+        )(
+            TelegramBot.objects
+            .filter(
                 status="active"
             )
+            .order_by("id")
         )
 
         if not bots:
@@ -307,13 +286,13 @@ class Command(BaseCommand):
 
         for bot_record in bots:
 
-            task = asyncio.create_task(
-                self.run_bot(
-                    bot_record
+            tasks.append(
+                asyncio.create_task(
+                    self.run_bot(
+                        bot_record
+                    )
                 )
             )
-
-            tasks.append(task)
 
         try:
 
@@ -323,17 +302,9 @@ class Command(BaseCommand):
 
         except asyncio.CancelledError:
 
-            self.stdout.write(
-                self.style.WARNING(
-                    "Listener tasks cancelled."
-                )
-            )
-
             for task in tasks:
 
-                if not task.done():
-
-                    task.cancel()
+                task.cancel()
 
             await asyncio.gather(
                 *tasks,
@@ -341,18 +312,3 @@ class Command(BaseCommand):
             )
 
             raise
-
-        finally:
-
-            for task in tasks:
-
-                if not task.done():
-
-                    task.cancel()
-
-            if tasks:
-
-                await asyncio.gather(
-                    *tasks,
-                    return_exceptions=True,
-                )

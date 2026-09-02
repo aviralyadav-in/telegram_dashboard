@@ -1,438 +1,250 @@
+import json
 import threading
-import secrets
+
 from django.contrib.auth.decorators import login_required
-
+from django.http import JsonResponse
 from django.shortcuts import render
-from django.contrib.auth import authenticate
-from django.contrib.auth.models import User
-
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from rest_framework import status
+from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.cache import never_cache
 
 from .scraper_service import (
     run_scraper,
-    stop_scraper,
     get_status,
+    stop_scraper,
 )
 
 
-# =========================================================
-# TEMPORARY LOGIN SESSIONS
-# =========================================================
-
-sessions = {}
-
-
-# =========================================================
+# ============================================================
 # SCRAPING PAGE
+# ============================================================
 
+@never_cache
+@login_required
+@require_GET
 def scraping_page(request):
+
     return render(
         request,
         "scraper/scraping.html"
     )
 
 
-# =========================================================
-# LOGIN
-# =========================================================
+# ============================================================
+# SCRAPING STATUS
+# ============================================================
 
-@api_view(["POST"])
-def login_view(request):
+@never_cache
+@login_required
+@require_GET
+def scraping_status(request):
 
-    email = request.data.get("email")
-    password = request.data.get("password")
+    status = get_status()
 
-    if not email or not password:
-        return Response(
-            {
-                "error": "Email and password are required"
-            },
-            status=status.HTTP_400_BAD_REQUEST
-        )
+    response = JsonResponse(status)
 
-    email = str(email).strip()
-
-    try:
-        user = User.objects.get(
-            email__iexact=email
-        )
-
-    except User.DoesNotExist:
-        return Response(
-            {
-                "error": "Invalid email or password"
-            },
-            status=status.HTTP_401_UNAUTHORIZED
-        )
-
-    authenticated_user = authenticate(
-        username=user.username,
-        password=password
+    # Prevent browser from caching old status
+    response["Cache-Control"] = (
+        "no-cache, no-store, must-revalidate"
     )
+    response["Pragma"] = "no-cache"
+    response["Expires"] = "0"
 
-    if authenticated_user is None:
-        return Response(
-            {
-                "error": "Invalid email or password"
-            },
-            status=status.HTTP_401_UNAUTHORIZED
-        )
-
-    token = secrets.token_hex(32)
-
-    sessions[token] = user.id
-
-    role = (
-        "admin"
-        if user.is_staff or user.is_superuser
-        else "user"
-    )
-
-    return Response(
-        {
-            "message": "Login successful",
-            "token": token,
-            "user": {
-                "id": user.id,
-                "username": user.username,
-                "email": user.email,
-                "is_staff": user.is_staff,
-                "is_superuser": user.is_superuser,
-                "role": role,
-            },
-        },
-        status=status.HTTP_200_OK
-    )
+    return response
 
 
-# =========================================================
-# CURRENT USER
-# =========================================================
-
-@api_view(["GET"])
-def auth_me(request):
-
-    auth_header = request.headers.get(
-        "Authorization",
-        ""
-    )
-
-    if not auth_header.startswith("Bearer "):
-        return Response(
-            {
-                "error": "Authentication required"
-            },
-            status=status.HTTP_401_UNAUTHORIZED
-        )
-
-    token = auth_header.replace(
-        "Bearer ",
-        "",
-        1
-    ).strip()
-
-    user_id = sessions.get(token)
-
-    if not user_id:
-        return Response(
-            {
-                "error": "Invalid or expired token"
-            },
-            status=status.HTTP_401_UNAUTHORIZED
-        )
-
-    try:
-        user = User.objects.get(
-            id=user_id
-        )
-
-    except User.DoesNotExist:
-
-        sessions.pop(
-            token,
-            None
-        )
-
-        return Response(
-            {
-                "error": "User not found"
-            },
-            status=status.HTTP_401_UNAUTHORIZED
-        )
-
-    role = (
-        "admin"
-        if user.is_staff or user.is_superuser
-        else "user"
-    )
-
-    return Response(
-        {
-            "id": user.id,
-            "username": user.username,
-            "email": user.email,
-            "is_staff": user.is_staff,
-            "is_superuser": user.is_superuser,
-            "role": role,
-        },
-        status=status.HTTP_200_OK
-    )
-
-
-# =========================================================
-# LOGOUT
-# =========================================================
-
-@api_view(["POST"])
-def logout_view(request):
-
-    auth_header = request.headers.get(
-        "Authorization",
-        ""
-    )
-
-    if auth_header.startswith("Bearer "):
-
-        token = auth_header.replace(
-            "Bearer ",
-            "",
-            1
-        ).strip()
-
-        sessions.pop(
-            token,
-            None
-        )
-
-    return Response(
-        {
-            "message": "Logout successful"
-        },
-        status=status.HTTP_200_OK
-    )
-
-
-# =========================================================
+# ============================================================
 # START SCRAPING
-# =========================================================
+# ============================================================
 
-@api_view(["POST"])
+@login_required
+@require_POST
 def start_scraping(request):
 
-    channel = request.data.get("channel")
-    limit = request.data.get("limit", 10)
+    # --------------------------------------------------------
+    # Check existing scraper
+    # --------------------------------------------------------
 
-    # -----------------------------------------------------
-    # CHANNEL VALIDATION
-    # -----------------------------------------------------
+    current_status = get_status()
 
-    if not channel:
+    if current_status["status"] in {
+        "starting",
+        "running",
+        "stopping",
+    }:
 
-        return Response(
+        return JsonResponse(
             {
-                "error": "Telegram channel is required"
+                "error": "Scraper is already running.",
+                "status": current_status,
             },
-            status=status.HTTP_400_BAD_REQUEST
+            status=409
         )
 
-    channel = str(channel).strip()
 
-    if not channel:
-
-        return Response(
-            {
-                "error": "Telegram channel cannot be empty"
-            },
-            status=status.HTTP_400_BAD_REQUEST
-        )
-
-    # Remove https://t.me/ if user enters full URL
-    if "t.me/" in channel:
-
-        channel = channel.rstrip("/").split(
-            "t.me/"
-        )[-1]
-
-    if channel.startswith("@"):
-
-        channel = channel[1:]
-
-    if not channel:
-
-        return Response(
-            {
-                "error": "Invalid Telegram channel"
-            },
-            status=status.HTTP_400_BAD_REQUEST
-        )
-
-    # -----------------------------------------------------
-    # LIMIT VALIDATION
-    # -----------------------------------------------------
+    # --------------------------------------------------------
+    # Read JSON body
+    # --------------------------------------------------------
 
     try:
 
-        limit = int(limit)
-
-    except (ValueError, TypeError):
-
-        return Response(
-            {
-                "error": "Number of messages must be a number"
-            },
-            status=status.HTTP_400_BAD_REQUEST
+        data = json.loads(
+            request.body.decode("utf-8")
         )
+
+    except (
+        json.JSONDecodeError,
+        UnicodeDecodeError
+    ):
+
+        return JsonResponse(
+            {
+                "error": "Invalid JSON request."
+            },
+            status=400
+        )
+
+
+    # --------------------------------------------------------
+    # Channel
+    # --------------------------------------------------------
+
+    channel = str(
+        data.get("channel", "")
+    ).strip()
+
+
+    if not channel:
+
+        return JsonResponse(
+            {
+                "error":
+                    "Telegram channel is required."
+            },
+            status=400
+        )
+
+
+    # --------------------------------------------------------
+    # Limit
+    # --------------------------------------------------------
+
+    try:
+
+        limit = int(
+            data.get("limit", 10)
+        )
+
+    except (
+        TypeError,
+        ValueError
+    ):
+
+        return JsonResponse(
+            {
+                "error":
+                    "Limit must be a valid number."
+            },
+            status=400
+        )
+
 
     if limit < 1 or limit > 100:
 
-        return Response(
+        return JsonResponse(
             {
-                "error": "Number of messages must be between 1 and 100"
+                "error":
+                    "Limit must be between 1 and 100."
             },
-            status=status.HTTP_400_BAD_REQUEST
+            status=400
         )
 
-    # -----------------------------------------------------
-    # CHECK CURRENT STATUS
-    # -----------------------------------------------------
 
-    try:
+    # --------------------------------------------------------
+    # Normalize Telegram channel
+    # --------------------------------------------------------
 
-        current_status = get_status()
+    if (
+        not channel.startswith("@")
+        and not channel.startswith("https://t.me/")
+        and not channel.startswith("http://t.me/")
+    ):
 
-    except Exception as error:
+        channel = "@" + channel
 
-        return Response(
-            {
-                "error": str(error)
-            },
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
 
-    current_state = current_status.get(
-        "status",
-        "idle"
-    )
+    # --------------------------------------------------------
+    # Start scraper in background thread
+    # --------------------------------------------------------
 
-    if current_state in {
-        "starting",
-        "running",
-        "stopping"
-    }:
-
-        return Response(
-            {
-                "error": "Scraper is already running",
-                "status": current_status
-            },
-            status=status.HTTP_409_CONFLICT
-        )
-
-    # -----------------------------------------------------
-    # START BACKGROUND SCRAPER
-    # -----------------------------------------------------
-
-    def background_job():
+    def scraper_worker():
 
         try:
 
             run_scraper(
-                channel,
-                limit
+                channel_name=channel,
+                limit=limit
             )
 
         except Exception as error:
 
             print(
-                "Scraper background error:",
+                "SCRAPER WORKER ERROR:",
                 error
             )
 
+
     thread = threading.Thread(
-        target=background_job,
+        target=scraper_worker,
         daemon=True
     )
 
     thread.start()
 
-    return Response(
+
+    # --------------------------------------------------------
+    # Response
+    # --------------------------------------------------------
+
+    return JsonResponse(
         {
-            "message": "Scraping started successfully",
-            "channel": channel,
-            "limit": limit
+            "message":
+                "Scraping started successfully.",
+
+            "status":
+                "starting",
+
+            "channel":
+                channel,
+
+            "limit":
+                limit,
         },
-        status=status.HTTP_202_ACCEPTED
+        status=202
     )
 
 
-# =========================================================
+# ============================================================
 # STOP SCRAPING
-# =========================================================
+# ============================================================
 
-@api_view(["POST"])
+@login_required
+@require_POST
 def stop_scraping(request):
 
     try:
 
-        current_status = get_status()
-
-        current_state = current_status.get(
-            "status"
-        )
-
-        if current_state not in {
-            "starting",
-            "running"
-        }:
-
-            return Response(
-                {
-                    "message": "Scraper is not currently running",
-                    "status": current_status
-                },
-                status=status.HTTP_200_OK
-            )
-
         result = stop_scraper()
 
-        return Response(
-            result,
-            status=status.HTTP_200_OK
+        return JsonResponse(
+            result
         )
 
     except Exception as error:
 
-        return Response(
+        return JsonResponse(
             {
-                "error": str(error)
+                "error":
+                    str(error)
             },
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
-
-
-# =========================================================
-# SCRAPING STATUS
-# =========================================================
-
-@api_view(["GET"])
-def scraping_status(request):
-
-    try:
-
-        result = get_status()
-
-        return Response(
-            result,
-            status=status.HTTP_200_OK
-        )
-
-    except Exception as error:
-
-        return Response(
-            {
-                "error": str(error)
-            },
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            status=500
         )

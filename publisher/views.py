@@ -1,6 +1,6 @@
 import asyncio
 from django.contrib.auth.decorators import login_required
-
+from django.core.paginator import Paginator
 from django.contrib import messages
 from django.db import transaction
 from django.http import JsonResponse
@@ -64,13 +64,27 @@ def channel_list(request):
         .order_by("-updated_at", "-id")[:200]
     )
 
-    channel_users = (
+    channel_users_queryset = (
         ChannelUser.objects
         .select_related(
             "channel",
             "user",
         )
         .order_by("-joined_at", "-id")[:200]
+    )
+
+    membership_paginator = Paginator(
+        channel_users_queryset,
+        5
+    )
+
+    membership_page_number = request.GET.get(
+        "membership_page",
+        1
+    )
+
+    channel_users = membership_paginator.get_page(
+        membership_page_number
     )
 
     activities = (

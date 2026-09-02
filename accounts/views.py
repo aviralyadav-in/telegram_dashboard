@@ -4,13 +4,12 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login, logout
+from django.views.decorators.cache import never_cache
 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-
-from django.views.decorators.cache import never_cache
 
 from .models import UserProfile
 from .permissions import admin_required
@@ -21,13 +20,20 @@ from .permissions import admin_required
 # ============================================================
 
 @never_cache
+@require_http_methods(["GET", "POST"])
 def login_page(request):
 
-    # Already logged in -> dashboard
+    # --------------------------------------------------------
+    # Already logged in
+    # --------------------------------------------------------
+
     if request.user.is_authenticated:
         return redirect("/")
 
-    # Normal Django form login
+    # --------------------------------------------------------
+    # LOGIN
+    # --------------------------------------------------------
+
     if request.method == "POST":
 
         username = request.POST.get(
@@ -39,6 +45,17 @@ def login_page(request):
             "password",
             ""
         )
+
+        if not username or not password:
+
+            return render(
+                request,
+                "registration/login.html",
+                {
+                    "error":
+                        "Username and password are required."
+                }
+            )
 
         user = authenticate(
             request,
@@ -68,11 +85,16 @@ def login_page(request):
                 }
             )
 
-        # Create Django session
+        # ----------------------------------------------------
+        # CREATE DJANGO SESSION
+        # ----------------------------------------------------
+
         login(request, user)
 
-        # Always go to dashboard.
-        # Do NOT use ?next= after login.
+        # ----------------------------------------------------
+        # ALWAYS DASHBOARD
+        # ----------------------------------------------------
+
         return redirect("/")
 
     response = render(
@@ -141,21 +163,21 @@ def api_login(request):
             status=403
         )
 
-    # ========================================================
+    # --------------------------------------------------------
     # CREATE DJANGO SESSION
-    # ========================================================
+    # --------------------------------------------------------
 
     login(request, user)
 
-    # ========================================================
-    # CREATE JWT TOKENS
-    # ========================================================
+    # --------------------------------------------------------
+    # CREATE JWT
+    # --------------------------------------------------------
 
     refresh = RefreshToken.for_user(user)
 
-    # ========================================================
-    # ADMIN / USER ROLE
-    # ========================================================
+    # --------------------------------------------------------
+    # ROLE
+    # --------------------------------------------------------
 
     is_admin = (
         user.is_staff
@@ -174,20 +196,24 @@ def api_login(request):
         )
     )
 
-    # Keep profile role synchronized
-    if is_admin and profile.role != "admin":
+    # Keep role synchronized
 
-        profile.role = "admin"
-        profile.save()
+    expected_role = (
+        "admin"
+        if is_admin
+        else "user"
+    )
 
-    elif not is_admin and profile.role != "user":
+    if profile.role != expected_role:
 
-        profile.role = "user"
-        profile.save()
+        profile.role = expected_role
+        profile.save(
+            update_fields=["role"]
+        )
 
-    # ========================================================
+    # --------------------------------------------------------
     # RESPONSE
-    # ========================================================
+    # --------------------------------------------------------
 
     return Response(
         {
@@ -224,23 +250,47 @@ def api_login(request):
                     user.is_superuser,
 
                 "role":
-                    "admin"
-                    if is_admin
-                    else "user",
+                    expected_role,
             }
         }
     )
 
 
 # ============================================================
-# LOGOUT API
+# JWT LOGOUT API
 # ============================================================
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def api_logout(request):
 
-    # Destroy Django session
+    # --------------------------------------------------------
+    # BLACKLIST REFRESH TOKEN IF PROVIDED
+    # --------------------------------------------------------
+
+    refresh_token = request.data.get(
+        "refresh"
+    )
+
+    if refresh_token:
+
+        try:
+
+            token = RefreshToken(
+                refresh_token
+            )
+
+            token.blacklist()
+
+        except Exception:
+            # Token may already be expired/blacklisted.
+            # Logout should still continue.
+            pass
+
+    # --------------------------------------------------------
+    # DESTROY DJANGO SESSION TOO
+    # --------------------------------------------------------
+
     logout(request)
 
     response = Response(
@@ -250,7 +300,10 @@ def api_logout(request):
         }
     )
 
-    # Prevent cached authenticated response
+    # --------------------------------------------------------
+    # PREVENT CACHE
+    # --------------------------------------------------------
+
     response["Cache-Control"] = (
         "no-cache, no-store, must-revalidate"
     )
@@ -266,26 +319,26 @@ def api_logout(request):
 # ============================================================
 
 @never_cache
-@require_http_methods(["POST", "GET"])
+@require_http_methods(["GET", "POST"])
 def logout_page(request):
 
-    # ========================================================
+    # --------------------------------------------------------
     # DESTROY DJANGO SESSION
-    # ========================================================
+    # --------------------------------------------------------
 
     logout(request)
 
-    # ========================================================
-    # ALWAYS REDIRECT TO LOGIN
-    # ========================================================
+    # --------------------------------------------------------
+    # REDIRECT LOGIN
+    # --------------------------------------------------------
 
     response = redirect(
         "/accounts/login/"
     )
 
-    # ========================================================
-    # PREVENT BROWSER CACHE
-    # ========================================================
+    # --------------------------------------------------------
+    # PREVENT BACK-CACHE
+    # --------------------------------------------------------
 
     response["Cache-Control"] = (
         "no-cache, no-store, must-revalidate"
@@ -299,7 +352,7 @@ def logout_page(request):
 
 
 # ============================================================
-# CURRENT USER
+# CURRENT USER API
 # ============================================================
 
 @api_view(["GET"])
@@ -325,6 +378,19 @@ def api_me(request):
         )
     )
 
+    expected_role = (
+        "admin"
+        if is_admin
+        else "user"
+    )
+
+    if profile.role != expected_role:
+
+        profile.role = expected_role
+        profile.save(
+            update_fields=["role"]
+        )
+
     return Response(
         {
             "id":
@@ -343,9 +409,7 @@ def api_me(request):
                 user.last_name,
 
             "role":
-                "admin"
-                if is_admin
-                else "user",
+                expected_role,
 
             "is_staff":
                 user.is_staff,
@@ -523,6 +587,10 @@ def add_user(request):
             "user"
         )
 
+        if role not in ["admin", "user"]:
+
+            role = "user"
+
         if not username or not password:
 
             return render(
@@ -564,22 +632,17 @@ def add_user(request):
         if role == "admin":
 
             user.is_staff = True
-            user.save()
-
-        profile, created = (
-            UserProfile.objects.get_or_create(
-                user=user,
-                defaults={
-                    "role":
-                        role
-                }
+            user.save(
+                update_fields=["is_staff"]
             )
+
+        UserProfile.objects.update_or_create(
+            user=user,
+            defaults={
+                "role":
+                    role
+            }
         )
-
-        if not created:
-
-            profile.role = role
-            profile.save()
 
         return redirect(
             "/accounts/users/"
@@ -648,33 +711,36 @@ def edit_user(request, user_id):
             ""
         )
 
+        if role not in ["admin", "user"]:
+
+            role = "user"
+
         if password:
 
             user.set_password(
                 password
             )
 
+        # Superuser must remain admin
+
         if user.is_superuser:
 
             user.is_staff = True
+            final_role = "admin"
 
         elif role == "admin":
 
             user.is_staff = True
+            final_role = "admin"
 
         else:
 
             user.is_staff = False
+            final_role = "user"
 
         user.save()
 
-        profile.role = (
-            "admin"
-            if user.is_staff
-            or user.is_superuser
-            else "user"
-        )
-
+        profile.role = final_role
         profile.save()
 
         return redirect(
@@ -710,7 +776,10 @@ def delete_user(request, user_id):
         id=user_id
     )
 
-    # Admin cannot delete himself
+    # --------------------------------------------------------
+    # ADMIN CANNOT DELETE HIMSELF
+    # --------------------------------------------------------
+
     if user.id == request.user.id:
 
         return redirect(

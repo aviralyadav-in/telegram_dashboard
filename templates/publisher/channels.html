@@ -2383,7 +2383,7 @@
 
                                 <th>User</th>
                                 <th>Telegram ID</th>
-                                <th>Language</th>
+                               
                                 <th>Last Seen</th>
 
                             </tr>
@@ -2452,25 +2452,7 @@
                                     </td>
 
 
-                                    <td>
-
-                                        {% if user.language_code %}
-
-                                            <span class="badge bg-light text-dark border">
-
-                                                {{ user.language_code }}
-
-                                            </span>
-
-                                        {% else %}
-
-                                            —
-
-                                        {% endif %}
-
-                                    </td>
-
-
+                            
                                     <td>
                                         {{ user.last_seen_at|default:"—" }}
                                     </td>
@@ -2648,6 +2630,119 @@
                     </table>
 
                 </div>
+
+            <!-- MEMBERSHIP PAGINATION -->
+
+            {% if channel_users.has_other_pages %}
+
+                <div class="d-flex justify-content-between align-items-center mt-3">
+
+                    <div
+                        class="text-muted"
+                        style="font-size:10px;"
+                    >
+                        Showing
+                        {{ channel_users.start_index }}
+                        –
+                        {{ channel_users.end_index }}
+                        of
+                        {{ channel_users.paginator.count }}
+                        membership records
+                    </div>
+
+
+                    <nav aria-label="Channel Membership pagination">
+
+                        <ul class="pagination pagination-sm mb-0">
+
+                            {% if channel_users.has_previous %}
+
+                                <li class="page-item">
+
+                                    <a
+                                        class="page-link"
+                                        href="?membership_page={{ channel_users.previous_page_number }}"
+                                    >
+                                        <i class="bi bi-chevron-left"></i>
+                                    </a>
+
+                                </li>
+
+                            {% else %}
+
+                                <li class="page-item disabled">
+
+                                    <span class="page-link">
+                                        <i class="bi bi-chevron-left"></i>
+                                    </span>
+
+                                </li>
+
+                            {% endif %}
+
+
+                            {% for num in channel_users.paginator.page_range %}
+
+                                {% if channel_users.number == num %}
+
+                                    <li class="page-item active">
+
+                                        <span class="page-link">
+                                            {{ num }}
+                                        </span>
+
+                                    </li>
+
+                                {% else %}
+
+                                    <li class="page-item">
+
+                                        <a
+                                            class="page-link"
+                                            href="?membership_page={{ num }}"
+                                        >
+                                            {{ num }}
+                                        </a>
+
+                                    </li>
+
+                                {% endif %}
+
+                            {% endfor %}
+
+
+                            {% if channel_users.has_next %}
+
+                                <li class="page-item">
+
+                                    <a
+                                        class="page-link"
+                                        href="?membership_page={{ channel_users.next_page_number }}"
+                                    >
+                                        <i class="bi bi-chevron-right"></i>
+                                    </a>
+
+                                </li>
+
+                            {% else %}
+
+                                <li class="page-item disabled">
+
+                                    <span class="page-link">
+                                        <i class="bi bi-chevron-right"></i>
+                                    </span>
+
+                                </li>
+
+                            {% endif %}
+
+                        </ul>
+
+                    </nav>
+
+                </div>
+
+            {% endif %}
 
             {% else %}
 
@@ -2897,140 +2992,6 @@
         </div>
 
     </div>
-
-
-    <!-- =========================================================
-         RECENT ACTIVITY
-    ========================================================== -->
-
-    <div class="channel-panel">
-
-        <div class="channel-panel-header">
-
-            <div class="channel-panel-heading">
-
-                <div class="channel-panel-icon">
-                    <i class="bi bi-activity"></i>
-                </div>
-
-                <div>
-
-                    <h5>
-                        Recent Activity
-                    </h5>
-
-                    <p>
-                        Latest bot, user, publishing and destination events.
-                    </p>
-
-                </div>
-
-            </div>
-
-
-            <a
-                href="{% url 'activity-history' %}"
-                class="btn btn-sm btn-outline-primary"
-            >
-
-                View All
-
-                <i class="bi bi-arrow-right ms-1"></i>
-
-            </a>
-
-        </div>
-
-
-        <div class="channel-panel-body">
-
-            {% if activities %}
-
-                <div class="table-wrap">
-
-                    <table class="table table-hover align-middle modern-table">
-
-                        <thead>
-
-                            <tr>
-
-                                <th>
-                                    Event
-                                </th>
-
-                                <th>
-                                    Message
-                                </th>
-
-                                <th>
-                                    Created
-                                </th>
-
-                            </tr>
-
-                        </thead>
-
-
-                        <tbody>
-
-                            {% for activity in activities %}
-
-                                <tr>
-
-                                    <td>
-
-                                        <span class="badge bg-primary">
-                                            {{ activity.event_type|title }}
-                                        </span>
-
-                                    </td>
-
-
-                                    <td>
-                                        {{ activity.message }}
-                                    </td>
-
-
-                                    <td>
-                                        {{ activity.created_at|default:"—" }}
-                                    </td>
-
-                                </tr>
-
-                            {% endfor %}
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-            {% else %}
-
-                <div class="empty-state">
-
-                    <div class="empty-icon">
-                        <i class="bi bi-activity"></i>
-                    </div>
-
-                    <h6>
-                        No activity yet
-                    </h6>
-
-                    <p>
-                        Telegram system events will appear here.
-                    </p>
-
-                </div>
-
-            {% endif %}
-
-        </div>
-
-    </div>
-
-
-</div>
 
 
 <!-- =========================================================

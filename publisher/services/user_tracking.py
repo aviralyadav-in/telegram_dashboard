@@ -1,4 +1,5 @@
-from asgiref.sync import async_to_sync
+from asgiref.sync import sync_to_async
+
 from django.db import transaction
 from django.utils import timezone
 
@@ -22,6 +23,7 @@ from publisher.telegram_bot import (
 # ============================================================
 
 def username_for_log(user):
+
     return (
         user.username
         or user.first_name
@@ -33,29 +35,47 @@ def username_for_log(user):
 # GET / CREATE TELEGRAM USER
 # ============================================================
 
-def get_or_create_telegram_user(telegram_user):
+def get_or_create_telegram_user(
+    telegram_user,
+):
 
     user_id = telegram_user.id
 
-    user, created = TelegramUser.objects.get_or_create(
-        user_id=user_id,
-        defaults={
-            "username": telegram_user.username,
-            "first_name": telegram_user.first_name,
-            "last_name": telegram_user.last_name,
-            "language_code": telegram_user.language_code,
-            "status": "allowed",
-            "last_seen_at": timezone.now(),
-        },
+    user, created = (
+        TelegramUser.objects.get_or_create(
+            user_id=user_id,
+            defaults={
+                "username": telegram_user.username,
+                "first_name": telegram_user.first_name,
+                "last_name": telegram_user.last_name,
+                "language_code": telegram_user.language_code,
+                "status": "allowed",
+                "last_seen_at": timezone.now(),
+            },
+        )
     )
 
     if not created:
 
-        user.username = telegram_user.username
-        user.first_name = telegram_user.first_name
-        user.last_name = telegram_user.last_name
-        user.language_code = telegram_user.language_code
-        user.last_seen_at = timezone.now()
+        user.username = (
+            telegram_user.username
+        )
+
+        user.first_name = (
+            telegram_user.first_name
+        )
+
+        user.last_name = (
+            telegram_user.last_name
+        )
+
+        user.language_code = (
+            telegram_user.language_code
+        )
+
+        user.last_seen_at = (
+            timezone.now()
+        )
 
         user.save(
             update_fields=[
@@ -71,10 +91,20 @@ def get_or_create_telegram_user(telegram_user):
 
 
 # ============================================================
-# TELEGRAM PERMISSION HELPER
+# ASYNC DATABASE WRAPPER
 # ============================================================
 
-def apply_telegram_permission(
+get_or_create_telegram_user_async = sync_to_async(
+    get_or_create_telegram_user,
+    thread_sensitive=True,
+)
+
+
+# ============================================================
+# TELEGRAM PERMISSION
+# ============================================================
+
+async def apply_telegram_permission(
     bot_record,
     destination,
     user,
@@ -92,9 +122,7 @@ def apply_telegram_permission(
 
     try:
 
-        async_to_sync(
-            set_user_message_permission
-        )(
+        await set_user_message_permission(
             bot_token=bot_record.bot_token,
             chat_id=destination.chat_id,
             user_id=user.user_id,
@@ -114,26 +142,36 @@ def apply_telegram_permission(
 
         print(
             "❌ PERMISSION ERROR:",
-            error,
+            repr(error),
         )
 
-        log_activity(
-            event_type="permission_error",
-            message=(
-                f"Could not update Telegram permission "
-                f"for user {user.user_id}: {error}"
-            ),
-            bot=bot_record,
-            destination=destination,
-            user=user,
-        )
+        try:
+
+            await sync_to_async(
+                log_activity,
+                thread_sensitive=True,
+            )(
+                event_type="permission_error",
+                message=(
+                    "Could not update Telegram "
+                    f"permission for user "
+                    f"{user.user_id}: {error}"
+                ),
+                bot=bot_record,
+                destination=destination,
+                user=user,
+            )
+
+        except Exception:
+
+            pass
 
 
 # ============================================================
-# WELCOME MESSAGE HELPER
+# WELCOME MESSAGE
 # ============================================================
 
-def send_user_welcome(
+async def send_user_welcome(
     bot_record,
     destination,
     user,
@@ -146,10 +184,12 @@ def send_user_welcome(
         return
 
     if not destination.send_welcome_message:
+
         print(
             "⏭️ WELCOME DISABLED:",
             destination.name,
         )
+
         return
 
     if not destination.chat_id:
@@ -160,9 +200,9 @@ def send_user_welcome(
         or "👋 Welcome! Thanks for joining us."
     )
 
-    # --------------------------------------------------------
+    # ========================================================
     # PLACEHOLDERS
-    # --------------------------------------------------------
+    # ========================================================
 
     message = (
         message
@@ -184,9 +224,7 @@ def send_user_welcome(
 
     try:
 
-        async_to_sync(
-            send_welcome_message
-        )(
+        await send_welcome_message(
             bot_token=bot_record.bot_token,
             chat_id=destination.chat_id,
             message=message,
@@ -199,16 +237,25 @@ def send_user_welcome(
             destination.name,
         )
 
-        log_activity(
-            event_type="welcome_message_sent",
-            message=(
-                f"Welcome message sent to "
-                f"{username_for_log(user)}."
-            ),
-            bot=bot_record,
-            destination=destination,
-            user=user,
-        )
+        try:
+
+            await sync_to_async(
+                log_activity,
+                thread_sensitive=True,
+            )(
+                event_type="welcome_message_sent",
+                message=(
+                    "Welcome message sent to "
+                    f"{username_for_log(user)}."
+                ),
+                bot=bot_record,
+                destination=destination,
+                user=user,
+            )
+
+        except Exception:
+
+            pass
 
     except Exception as error:
 
@@ -218,31 +265,43 @@ def send_user_welcome(
             "| DESTINATION:",
             destination.name,
             "| ERROR:",
-            error,
+            repr(error),
         )
 
-        log_activity(
-            event_type="welcome_message_error",
-            message=(
-                f"Welcome message failed for "
-                f"{username_for_log(user)}: {error}"
-            ),
-            bot=bot_record,
-            destination=destination,
-            user=user,
-        )
+        try:
+
+            await sync_to_async(
+                log_activity,
+                thread_sensitive=True,
+            )(
+                event_type="welcome_message_error",
+                message=(
+                    "Welcome message failed for "
+                    f"{username_for_log(user)}: {error}"
+                ),
+                bot=bot_record,
+                destination=destination,
+                user=user,
+            )
+
+        except Exception:
+
+            pass
 
 
 # ============================================================
 # HANDLE CHAT MEMBER UPDATE
 # ============================================================
 
-def handle_member_update(
+async def handle_member_update(
     bot_record,
     update,
+    bot=None,
 ):
 
-    member_update = update.chat_member
+    member_update = (
+        update.chat_member
+    )
 
     if not member_update:
         return
@@ -281,10 +340,7 @@ def handle_member_update(
     )
 
     # ========================================================
-    # IGNORE RESTRICTED → RESTRICTED
-    #
-    # Telegram can send several of these while a user joins.
-    # They must NOT create/update membership or send welcome.
+    # IGNORE restricted → restricted
     # ========================================================
 
     if (
@@ -306,14 +362,17 @@ def handle_member_update(
     # FIND DESTINATION
     # ========================================================
 
-    destination = (
-        PublishedChannel.objects
-        .filter(
-            bot=bot_record,
-            chat_id=chat.id,
-        )
-        .first()
-    )
+    destination = await sync_to_async(
+        lambda: (
+            PublishedChannel.objects
+            .filter(
+                bot=bot_record,
+                chat_id=chat.id,
+            )
+            .first()
+        ),
+        thread_sensitive=True,
+    )()
 
     if not destination:
 
@@ -325,11 +384,13 @@ def handle_member_update(
         return
 
     # ========================================================
-    # GET / CREATE TELEGRAM USER
+    # GET / CREATE USER
     # ========================================================
 
-    user, created = get_or_create_telegram_user(
-        telegram_user
+    user, created = (
+        await get_or_create_telegram_user_async(
+            telegram_user
+        )
     )
 
     username = username_for_log(user)
@@ -340,11 +401,14 @@ def handle_member_update(
 
     if created:
 
-        log_activity(
+        await sync_to_async(
+            log_activity,
+            thread_sensitive=True,
+        )(
             event_type="user_first_seen",
             message=(
                 f"User {username} was detected "
-                f"for the first time."
+                "for the first time."
             ),
             bot=bot_record,
             destination=destination,
@@ -372,282 +436,124 @@ def handle_member_update(
             joined_now,
         )
 
-        with transaction.atomic():
+        # ====================================================
+        # DATABASE OPERATION
+        # ====================================================
 
-            # =================================================
-            # GET / CREATE CHANNEL USER
-            # =================================================
+        result = await sync_to_async(
+            process_user_join,
+            thread_sensitive=True,
+        )(
+            destination,
+            user,
+            username,
+            bot_record,
+            old_status,
+            new_status,
+            joined_now,
+        )
 
-            channel_user, channel_created = (
-                ChannelUser.objects.get_or_create(
-                    channel=destination,
-                    user=user,
-                    defaults={
-                        "status": "active",
-                        "joined_at": joined_now,
-                        "left_at": None,
-                    },
-                )
+        # ====================================================
+        # PERMISSION
+        # ====================================================
+
+        permission_allowed = (
+            result["permission_allowed"]
+        )
+
+        permission_created = (
+            result["permission_created"]
+        )
+
+        channel_user_status = (
+            result["channel_user_status"]
+        )
+
+        # ====================================================
+        # APPLY TELEGRAM PERMISSION
+        # ====================================================
+
+        if destination.chat_type == "group":
+
+            await apply_telegram_permission(
+                bot_record,
+                destination,
+                user,
+                permission_allowed,
             )
 
-            # =================================================
-            # FIRST JOIN
-            # =================================================
+        # ====================================================
+        # LOG PERMISSION
+        # ====================================================
 
-            if channel_created:
+        if (
+            permission_created
+            and permission_allowed
+        ):
 
-                print(
-                    "🆕 NEW MEMBERSHIP:",
-                    channel_user.id,
-                )
-
-                log_activity(
-                    event_type="user_joined",
-                    message=(
-                        f"User {username} joined "
-                        f"{destination.name}."
-                    ),
-                    bot=bot_record,
-                    destination=destination,
-                    user=user,
-                )
-
-            # =================================================
-            # REJOIN
-            # =================================================
-
-            elif channel_user.status in {
-                "left",
-                "blocked",
-            }:
-
-                channel_user.status = "active"
-
-                # Current rejoin time
-                channel_user.joined_at = joined_now
-
-                # IMPORTANT:
-                # DO NOT clear left_at.
-                # Previous leave time is preserved.
-
-                channel_user.save(
-                    update_fields=[
-                        "status",
-                        "joined_at",
-                        "updated_at",
-                    ]
-                )
-
-                print(
-                    "🔄 REJOIN SAVED:",
-                    "ChannelUser ID =",
-                    channel_user.id,
-                    "| joined_at =",
-                    channel_user.joined_at,
-                    "| previous left_at =",
-                    channel_user.left_at,
-                )
-
-                log_activity(
-                    event_type="user_joined",
-                    message=(
-                        f"User {username} joined/rejoined "
-                        f"{destination.name}."
-                    ),
-                    bot=bot_record,
-                    destination=destination,
-                    user=user,
-                )
-
-            # =================================================
-            # ALREADY MEMBER
-            #
-            # member → member
-            # administrator → administrator
-            # creator → creator
-            #
-            # Don't change joined_at.
-            # Don't create duplicate welcome.
-            # =================================================
-
-            else:
-
-                print(
-                    "ℹ️ USER ALREADY ACTIVE:",
-                    username,
-                    "| DESTINATION:",
-                    destination.name,
-                )
-
-            # =================================================
-            # USER DESTINATION PERMISSION
-            # =================================================
-
-            permission, permission_created = (
-                UserDestinationPermission.objects
-                .get_or_create(
-                    user=user,
-                    destination=destination,
-                    defaults={
-                        "can_message": (
-                            destination.auto_allow_users
-                        ),
-                        "is_allowed": (
-                            destination.auto_allow_users
-                        ),
-                        "can_publish": False,
-                    },
-                )
+            await sync_to_async(
+                log_activity,
+                thread_sensitive=True,
+            )(
+                event_type="user_allowed",
+                message=(
+                    f"User {username} was automatically "
+                    f"allowed in {destination.name}."
+                ),
+                bot=bot_record,
+                destination=destination,
+                user=user,
             )
 
-            # =================================================
-            # NEW PERMISSION
-            # =================================================
+        # ====================================================
+        # WELCOME
+        # ====================================================
 
-            if permission_created:
+        actual_join = (
+            old_status not in {
+                "member",
+                "administrator",
+                "creator",
+            }
+        )
 
-                allowed = (
-                    destination.auto_allow_users
-                )
+        if actual_join:
 
-                if allowed:
-
-                    channel_user.status = "allowed"
-
-                else:
-
-                    channel_user.status = "active"
-
-                channel_user.save(
-                    update_fields=[
-                        "status",
-                        "updated_at",
-                    ]
-                )
-
-                # ---------------------------------------------
-                # GROUP ONLY
-                # ---------------------------------------------
-
-                if (
-                    destination.chat_type == "group"
-                ):
-
-                    apply_telegram_permission(
-                        bot_record,
-                        destination,
-                        user,
-                        allowed,
-                    )
-
-                if allowed:
-
-                    log_activity(
-                        event_type="user_allowed",
-                        message=(
-                            f"User {username} was automatically "
-                            f"allowed in {destination.name}."
-                        ),
-                        bot=bot_record,
-                        destination=destination,
-                        user=user,
-                    )
-
-            # =================================================
-            # EXISTING PERMISSION
-            # =================================================
-
-            else:
-
-                if permission.is_allowed:
-
-                    channel_user.status = "allowed"
-
-                else:
-
-                    channel_user.status = "active"
-
-                channel_user.save(
-                    update_fields=[
-                        "status",
-                        "updated_at",
-                    ]
-                )
-
-                # ---------------------------------------------
-                # RE-APPLY TELEGRAM PERMISSION
-                # ---------------------------------------------
-
-                if (
-                    destination.chat_type == "group"
-                ):
-
-                    apply_telegram_permission(
-                        bot_record,
-                        destination,
-                        user,
-                        permission.is_allowed,
-                    )
-
-            # =================================================
-            # WELCOME MESSAGE
-            #
-            # EVERY ACTUAL JOIN / REJOIN:
-            #
-            # left → member       ✅
-            # restricted → member ✅
-            # kicked → member     ✅
-            # new → member        ✅
-            #
-            # NOT:
-            #
-            # member → member             ❌
-            # administrator → member      ❌
-            # creator → member            ❌
-            # restricted → restricted     ❌
-            # =================================================
-
-            actual_join = (
-                old_status not in {
-                    "member",
-                    "administrator",
-                    "creator",
-                }
+            print(
+                "🎉 ACTUAL JOIN DETECTED - "
+                "SENDING WELCOME:",
+                username,
+                "| DESTINATION:",
+                destination.name,
             )
 
-            if actual_join:
+            await send_user_welcome(
+                bot_record,
+                destination,
+                user,
+            )
 
-                print(
-                    "🎉 ACTUAL JOIN DETECTED - SENDING WELCOME:",
-                    username,
-                    "| DESTINATION:",
-                    destination.name,
-                )
+        else:
 
-                send_user_welcome(
-                    bot_record,
-                    destination,
-                    user,
-                )
+            print(
+                "⏭️ NO WELCOME - "
+                "NOT A NEW JOIN:",
+                old_status,
+                "→",
+                new_status,
+                "| USER:",
+                username,
+                "| DESTINATION:",
+                destination.name,
+            )
 
-            else:
-
-                print(
-                    "⏭️ NO WELCOME - NOT A NEW JOIN:",
-                    old_status,
-                    "→",
-                    new_status,
-                    "| USER:",
-                    username,
-                    "| DESTINATION:",
-                    destination.name,
-                )
+        return
 
     # ========================================================
     # USER LEFT / KICKED
     # ========================================================
 
-    elif new_status in {
+    if new_status in {
         "left",
         "kicked",
     }:
@@ -663,9 +569,53 @@ def handle_member_update(
             left_now,
         )
 
+        await sync_to_async(
+            process_user_left,
+            thread_sensitive=True,
+        )(
+            destination,
+            user,
+            username,
+            bot_record,
+            left_now,
+        )
+
+        return
+
+    # ========================================================
+    # EVERYTHING ELSE
+    # ========================================================
+
+    print(
+        "⏭️ IGNORED STATUS CHANGE:",
+        old_status,
+        "→",
+        new_status,
+        "| USER:",
+        username,
+        "| DESTINATION:",
+        destination.name,
+    )
+
+
+# ============================================================
+# PROCESS USER JOIN - DATABASE ONLY
+# ============================================================
+
+def process_user_join(
+    destination,
+    user,
+    username,
+    bot_record,
+    old_status,
+    new_status,
+    joined_now,
+):
+
+    with transaction.atomic():
+
         # ====================================================
-        # GET EXISTING MEMBERSHIP
-        # OR CREATE LEFT RECORD
+        # CHANNEL USER
         # ====================================================
 
         channel_user, channel_created = (
@@ -673,76 +623,229 @@ def handle_member_update(
                 channel=destination,
                 user=user,
                 defaults={
-                    "status": "left",
-                    "joined_at": None,
-                    "left_at": left_now,
+                    "status": "active",
+                    "joined_at": joined_now,
+                    "left_at": None,
                 },
             )
         )
 
         # ====================================================
-        # EXISTING MEMBERSHIP
+        # FIRST JOIN
         # ====================================================
 
-        if not channel_created:
+        if channel_created:
 
-            channel_user.status = "left"
+            print(
+                "🆕 NEW MEMBERSHIP:",
+                channel_user.id,
+            )
 
-            # Always save current leave time
-            channel_user.left_at = left_now
+            log_activity(
+                event_type="user_joined",
+                message=(
+                    f"User {username} joined "
+                    f"{destination.name}."
+                ),
+                bot=bot_record,
+                destination=destination,
+                user=user,
+            )
+
+        # ====================================================
+        # REJOIN
+        # ====================================================
+
+        elif channel_user.status in {
+            "left",
+            "blocked",
+        }:
+
+            channel_user.status = "active"
+
+            channel_user.joined_at = joined_now
+
+            # Previous left_at intentionally preserved.
 
             channel_user.save(
                 update_fields=[
                     "status",
-                    "left_at",
+                    "joined_at",
+                    "updated_at",
+                ]
+            )
+
+            print(
+                "🔄 REJOIN SAVED:",
+                "ChannelUser ID =",
+                channel_user.id,
+                "| joined_at =",
+                channel_user.joined_at,
+                "| previous left_at =",
+                channel_user.left_at,
+            )
+
+            log_activity(
+                event_type="user_joined",
+                message=(
+                    f"User {username} joined/rejoined "
+                    f"{destination.name}."
+                ),
+                bot=bot_record,
+                destination=destination,
+                user=user,
+            )
+
+        # ====================================================
+        # ALREADY ACTIVE
+        # ====================================================
+
+        else:
+
+            print(
+                "ℹ️ USER ALREADY ACTIVE:",
+                username,
+                "| DESTINATION:",
+                destination.name,
+            )
+
+        # ====================================================
+        # PERMISSION
+        # ====================================================
+
+        permission, permission_created = (
+            UserDestinationPermission.objects
+            .get_or_create(
+                user=user,
+                destination=destination,
+                defaults={
+                    "can_message": (
+                        destination.auto_allow_users
+                    ),
+                    "is_allowed": (
+                        destination.auto_allow_users
+                    ),
+                    "can_publish": False,
+                },
+            )
+        )
+
+        # ====================================================
+        # NEW PERMISSION
+        # ====================================================
+
+        if permission_created:
+
+            allowed = (
+                destination.auto_allow_users
+            )
+
+            if allowed:
+
+                channel_user.status = "allowed"
+
+            else:
+
+                channel_user.status = "active"
+
+            channel_user.save(
+                update_fields=[
+                    "status",
                     "updated_at",
                 ]
             )
 
         # ====================================================
-        # CONFIRM DATABASE SAVE
+        # EXISTING PERMISSION
         # ====================================================
 
-        print(
-            "✅ LEFT SAVED:",
-            "ChannelUser ID =",
-            channel_user.id,
-            "| status =",
-            channel_user.status,
-            "| joined_at =",
-            channel_user.joined_at,
-            "| left_at =",
-            channel_user.left_at,
-        )
+        else:
 
-        # ====================================================
-        # NO WELCOME ON LEAVE
-        # ====================================================
+            if permission.is_allowed:
 
-        log_activity(
-            event_type="user_left",
-            message=(
-                f"User {username} left "
-                f"{destination.name}."
+                channel_user.status = "allowed"
+
+            else:
+
+                channel_user.status = "active"
+
+            channel_user.save(
+                update_fields=[
+                    "status",
+                    "updated_at",
+                ]
+            )
+
+        return {
+            "permission_allowed": (
+                permission.is_allowed
             ),
-            bot=bot_record,
-            destination=destination,
+            "permission_created": (
+                permission_created
+            ),
+            "channel_user_status": (
+                channel_user.status
+            ),
+        }
+
+
+# ============================================================
+# PROCESS USER LEFT - DATABASE ONLY
+# ============================================================
+
+def process_user_left(
+    destination,
+    user,
+    username,
+    bot_record,
+    left_now,
+):
+
+    channel_user, channel_created = (
+        ChannelUser.objects.get_or_create(
+            channel=destination,
             user=user,
+            defaults={
+                "status": "left",
+                "joined_at": None,
+                "left_at": left_now,
+            },
+        )
+    )
+
+    if not channel_created:
+
+        channel_user.status = "left"
+
+        channel_user.left_at = left_now
+
+        channel_user.save(
+            update_fields=[
+                "status",
+                "left_at",
+                "updated_at",
+            ]
         )
 
-    # ========================================================
-    # EVERYTHING ELSE
-    # ========================================================
+    print(
+        "✅ LEFT SAVED:",
+        "ChannelUser ID =",
+        channel_user.id,
+        "| status =",
+        channel_user.status,
+        "| joined_at =",
+        channel_user.joined_at,
+        "| left_at =",
+        channel_user.left_at,
+    )
 
-    else:
-
-        print(
-            "⏭️ IGNORED STATUS CHANGE:",
-            old_status,
-            "→",
-            new_status,
-            "| USER:",
-            username,
-            "| DESTINATION:",
-            destination.name,
-        )
+    log_activity(
+        event_type="user_left",
+        message=(
+            f"User {username} left "
+            f"{destination.name}."
+        ),
+        bot=bot_record,
+        destination=destination,
+        user=user,
+    )

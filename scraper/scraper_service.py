@@ -1,7 +1,7 @@
 import os
 import re
-import threading
 import random
+import threading
 
 from decimal import Decimal, InvalidOperation
 
@@ -20,10 +20,28 @@ from publisher.services.publishing import (
 )
 
 
+# ============================================================
+# USER AGENTS
+# ============================================================
+
 USER_AGENTS = [
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/138.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:141.0) Gecko/20100101 Firefox/141.0",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/18.0 Safari/605.1.15",
+
+    (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 "
+        "Chrome/138.0 Safari/537.36"
+    ),
+
+    (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; "
+        "rv:141.0) Gecko/20100101 Firefox/141.0"
+    ),
+
+    (
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+        "AppleWebKit/605.1.15 "
+        "Version/18.0 Safari/605.1.15"
+    ),
 ]
 
 
@@ -32,16 +50,34 @@ USER_AGENTS = [
 # ============================================================
 
 scraper_status = {
+
     "status": "idle",
+
     "channel": None,
+
     "limit": 0,
+
     "messages_scraped": 0,
+
     "messages_saved": 0,
+
     "current_deal": None,
+
     "error": None,
 }
 
+
+# ============================================================
+# THREAD LOCK
+# ============================================================
+
 scraper_lock = threading.Lock()
+
+
+# ============================================================
+# STOP EVENT
+# ============================================================
+
 stop_event = threading.Event()
 
 
@@ -52,17 +88,21 @@ stop_event = threading.Event()
 def update_status(**kwargs):
 
     with scraper_lock:
-        scraper_status.update(kwargs)
+
+        scraper_status.update(
+            kwargs
+        )
 
 
 def get_status():
 
     with scraper_lock:
+
         return scraper_status.copy()
 
 
 # ============================================================
-# DATABASE HELPERS
+# DATABASE - CHECK DUPLICATE
 # ============================================================
 
 @sync_to_async(thread_sensitive=True)
@@ -76,6 +116,10 @@ def deal_exists(
         channel=channel_name
     ).exists()
 
+
+# ============================================================
+# DATABASE - SAVE DEAL
+# ============================================================
 
 @sync_to_async(thread_sensitive=True)
 def save_deal(
@@ -92,14 +136,23 @@ def save_deal(
     with transaction.atomic():
 
         deal = Deal.objects.create(
+
             message_id=message_id,
+
             date=date,
+
             content=content,
+
             product_link=product_link,
+
             image_path=image_path,
+
             channel=channel_name,
+
             price=price,
+
             rating=rating,
+
             status="new",
         )
 
@@ -130,21 +183,26 @@ def save_deal(
 def extract_price(content):
 
     if not content:
+
         return None
 
     patterns = [
 
         # Deal Price: ₹999
-        r"deal\s*price\s*[:\-]?\s*₹?\s*([\d,]+(?:\.\d+)?)",
+        r"deal\s*price\s*[:\-]?\s*₹?\s*"
+        r"([\d,]+(?:\.\d+)?)",
 
         # Deal Price Rs 999
-        r"deal\s*price\s*[:\-]?\s*rs\.?\s*([\d,]+(?:\.\d+)?)",
+        r"deal\s*price\s*[:\-]?\s*rs\.?\s*"
+        r"([\d,]+(?:\.\d+)?)",
 
         # Price: ₹999
-        r"price\s*[:\-]?\s*₹?\s*([\d,]+(?:\.\d+)?)",
+        r"price\s*[:\-]?\s*₹?\s*"
+        r"([\d,]+(?:\.\d+)?)",
 
-        # Price Rs. 999
-        r"price\s*[:\-]?\s*rs\.?\s*([\d,]+(?:\.\d+)?)",
+        # Price Rs 999
+        r"price\s*[:\-]?\s*rs\.?\s*"
+        r"([\d,]+(?:\.\d+)?)",
 
         # ₹999
         r"₹\s*([\d,]+(?:\.\d+)?)",
@@ -162,6 +220,7 @@ def extract_price(content):
         )
 
         if not match:
+
             continue
 
         value = match.group(1)
@@ -194,15 +253,18 @@ def extract_price(content):
 def extract_rating(content):
 
     if not content:
+
         return None
 
     patterns = [
 
         # Rating: 4.5
-        r"rating\s*[:\-]?\s*([0-5](?:\.\d{1,2})?)",
+        r"rating\s*[:\-]?\s*"
+        r"([0-5](?:\.\d{1,2})?)",
 
         # Rating 4.5/5
-        r"rating\s*[:\-]?\s*([0-5](?:\.\d{1,2})?)\s*/\s*5",
+        r"rating\s*[:\-]?\s*"
+        r"([0-5](?:\.\d{1,2})?)\s*/\s*5",
 
         # 4.5 ⭐
         r"([0-5](?:\.\d{1,2})?)\s*⭐",
@@ -223,6 +285,7 @@ def extract_rating(content):
         )
 
         if not match:
+
             continue
 
         try:
@@ -250,12 +313,15 @@ def extract_rating(content):
 
 
 # ============================================================
-# PRODUCT LINK
+# PRODUCT LINK EXTRACTION
 # ============================================================
 
 def extract_link(message):
 
-    # Telegram button URL
+    # --------------------------------------------------------
+    # TELEGRAM BUTTON URL
+    # --------------------------------------------------------
+
     if message.buttons:
 
         for row in message.buttons:
@@ -272,7 +338,10 @@ def extract_link(message):
 
                     return url
 
-    # URL from message text
+    # --------------------------------------------------------
+    # URL FROM MESSAGE TEXT
+    # --------------------------------------------------------
+
     if message.text:
 
         links = re.findall(
@@ -296,6 +365,7 @@ def extract_link(message):
 def validate_product_link(url):
 
     if not url:
+
         return
 
     try:
@@ -303,22 +373,29 @@ def validate_product_link(url):
         import requests
 
         headers = {
-            "User-Agent": random.choice(
-                USER_AGENTS
-            )
+
+            "User-Agent":
+                random.choice(
+                    USER_AGENTS
+                )
         }
 
         requests.get(
+
             url,
+
             headers=headers,
+
             timeout=5,
+
             allow_redirects=True
         )
 
     except Exception:
 
-        # Product link validation should
-        # never stop scraping.
+        # Link validation should never
+        # stop the scraper.
+
         pass
 
 
@@ -329,12 +406,16 @@ def validate_product_link(url):
 def get_image_folder():
 
     folder = os.path.join(
+
         settings.MEDIA_ROOT,
+
         "images"
     )
 
     os.makedirs(
+
         folder,
+
         exist_ok=True
     )
 
@@ -352,16 +433,25 @@ async def scrape_channel(
 ):
 
     messages_scraped = 0
+
     messages_saved = 0
+
     current_deal = None
 
     update_status(
+
         status="running",
+
         channel=channel_name,
+
         limit=limit,
+
         messages_scraped=0,
+
         messages_saved=0,
+
         current_deal=None,
+
         error=None
     )
 
@@ -369,20 +459,22 @@ async def scrape_channel(
 
     try:
 
-        # ----------------------------------------------------
-        # GET TELEGRAM CHANNEL
-        # ----------------------------------------------------
+        # ====================================================
+        # TELEGRAM ENTITY
+        # ====================================================
 
         channel = await client.get_entity(
             channel_name
         )
 
-        # ----------------------------------------------------
-        # READ TELEGRAM MESSAGES
-        # ----------------------------------------------------
+        # ====================================================
+        # READ MESSAGES
+        # ====================================================
 
         async for message in client.iter_messages(
+
             channel,
+
             limit=int(limit)
         ):
 
@@ -393,14 +485,36 @@ async def scrape_channel(
             if stop_event.is_set():
 
                 update_status(
+
                     status="stopped",
-                    current_deal=current_deal
+
+                    channel=channel_name,
+
+                    limit=limit,
+
+                    current_deal=current_deal,
+
+                    messages_scraped=messages_scraped,
+
+                    messages_saved=messages_saved,
+
+                    error=None
                 )
 
-                break
+                return {
+
+                    "messages_scraped":
+                        messages_scraped,
+
+                    "messages_saved":
+                        messages_saved,
+
+                    "current_deal":
+                        current_deal,
+                }
 
             # ------------------------------------------------
-            # IGNORE EMPTY MESSAGES
+            # IGNORE EMPTY MESSAGE
             # ------------------------------------------------
 
             if not (
@@ -410,12 +524,24 @@ async def scrape_channel(
 
                 continue
 
+            # ------------------------------------------------
+            # CURRENT MESSAGE
+            # ------------------------------------------------
+
             current_deal = (
                 f"Message ID {message.id}"
             )
 
             update_status(
-                current_deal=current_deal
+
+                current_deal=
+                    current_deal,
+
+                messages_scraped=
+                    messages_scraped,
+
+                messages_saved=
+                    messages_saved
             )
 
             # ------------------------------------------------
@@ -423,13 +549,16 @@ async def scrape_channel(
             # ------------------------------------------------
 
             exists = await deal_exists(
+
                 channel_name,
+
                 message.id
             )
 
             if exists:
 
                 print(
+
                     f"Duplicate skipped: "
                     f"{message.id}"
                 )
@@ -441,35 +570,42 @@ async def scrape_channel(
             # ------------------------------------------------
 
             content = (
+
                 message.text
+
                 if message.text
+
                 else ""
             )
 
             # Remove markdown **
             content = re.sub(
+
                 r"\*\*",
+
                 "",
+
                 content
             )
 
             # ------------------------------------------------
-            # EXTRACT PRICE + RATING
+            # PRICE
             # ------------------------------------------------
 
-            extracted_price = (
-                extract_price(
-                    content
-                )
+            extracted_price = extract_price(
+                content
             )
 
-            extracted_rating = (
-                extract_rating(
-                    content
-                )
+            # ------------------------------------------------
+            # RATING
+            # ------------------------------------------------
+
+            extracted_rating = extract_rating(
+                content
             )
 
             print(
+
                 f"[DEAL DATA] "
                 f"Message {message.id} | "
                 f"Price: {extracted_price} | "
@@ -489,78 +625,68 @@ async def scrape_channel(
             )
 
             # ------------------------------------------------
-            # IMAGE / MEDIA DOWNLOAD
+            # IMAGE
             # ------------------------------------------------
 
             image_path = ""
 
-            if message.media:
+            if message.photo:
 
                 safe_channel_name = re.sub(
+
                     r"[^A-Za-z0-9_-]",
+
                     "_",
+
                     channel_name
                 )
 
                 image_name = (
+
                     f"{safe_channel_name}_"
                     f"{message.id}.jpg"
                 )
 
                 image_file = os.path.join(
+
                     image_folder,
+
                     image_name
                 )
 
                 try:
 
                     downloaded_path = (
+
                         await message.download_media(
+
                             file=image_file
                         )
                     )
 
                     if downloaded_path:
 
-                        if (
-                            message.photo
-                            or str(
-                                downloaded_path
-                            ).lower().endswith(
-                                (
-                                    ".jpg",
-                                    ".jpeg",
-                                    ".png",
-                                    ".webp"
-                                )
-                            )
-                        ):
+                        image_path = (
 
-                            image_path = (
-                                f"images/{image_name}"
-                            )
+                            f"images/"
+                            f"{image_name}"
+                        )
 
-                            print(
-                                "[IMAGE DEBUG] "
-                                f"Saved image path: "
-                                f"{image_path}"
-                            )
+                        print(
 
-                        else:
-
-                            print(
-                                "[IMAGE DEBUG] "
-                                "Media is not an image "
-                                f"for message "
-                                f"{message.id}"
-                            )
+                            "[IMAGE DEBUG] "
+                            f"Saved image path: "
+                            f"{image_path}"
+                        )
 
                 except Exception as error:
 
                     print(
-                        "Image/media download error "
-                        f"for message {message.id}: ",
-                        error
+
+                        "Image download error "
+                        f"for message "
+                        f"{message.id}: "
+                        f"{error}"
                     )
 
             # ------------------------------------------------
@@ -570,26 +696,42 @@ async def scrape_channel(
             try:
 
                 await save_deal(
+
                     message_id=message.id,
+
                     date=message.date,
+
                     content=content,
+
                     product_link=product_link,
+
                     image_path=image_path,
+
                     channel_name=channel_name,
+
                     price=extracted_price,
+
                     rating=extracted_rating,
                 )
 
                 messages_scraped += 1
+
                 messages_saved += 1
 
                 update_status(
-                    messages_scraped=messages_scraped,
-                    messages_saved=messages_saved,
-                    current_deal=current_deal
+
+                    messages_scraped=
+                        messages_scraped,
+
+                    messages_saved=
+                        messages_saved,
+
+                    current_deal=
+                        current_deal
                 )
 
                 print(
+
                     f"Deal saved successfully: "
                     f"{message.id}"
                 )
@@ -597,6 +739,7 @@ async def scrape_channel(
             except Exception as error:
 
                 print(
+
                     "Database save error for "
                     f"message {message.id}: "
                     f"{error}"
@@ -604,55 +747,85 @@ async def scrape_channel(
 
                 continue
 
-        # ----------------------------------------------------
+        # ====================================================
         # COMPLETED
-        # ----------------------------------------------------
+        # ====================================================
 
         if not stop_event.is_set():
 
             update_status(
+
                 status="completed",
+
                 channel=channel_name,
+
                 limit=limit,
+
                 current_deal=current_deal,
+
                 messages_scraped=messages_scraped,
+
                 messages_saved=messages_saved,
+
                 error=None
             )
 
         return {
-            "messages_scraped": messages_scraped,
-            "messages_saved": messages_saved,
-            "current_deal": current_deal
+
+            "messages_scraped":
+                messages_scraped,
+
+            "messages_saved":
+                messages_saved,
+
+            "current_deal":
+                current_deal
         }
 
-    # --------------------------------------------------------
-    # TELEGRAM FLOOD WAIT
-    # --------------------------------------------------------
+    # ========================================================
+    # FLOOD WAIT
+    # ========================================================
 
     except FloodWaitError as error:
 
         update_status(
+
             status="error",
+
+            channel=channel_name,
+
             error=(
                 "Telegram flood wait: "
                 f"{error.seconds} seconds"
-            )
+            ),
+
+            current_deal=current_deal,
+
+            messages_scraped=messages_scraped,
+
+            messages_saved=messages_saved
         )
 
         raise
 
-    # --------------------------------------------------------
+    # ========================================================
     # GENERAL ERROR
-    # --------------------------------------------------------
+    # ========================================================
 
     except Exception as error:
 
         update_status(
+
             status="error",
+
+            channel=channel_name,
+
             error=str(error),
+
             current_deal=current_deal,
+
             messages_scraped=messages_scraped,
+
             messages_saved=messages_saved
         )
 
@@ -660,7 +833,7 @@ async def scrape_channel(
 
 
 # ============================================================
-# START SCRAPER
+# RUN SCRAPER
 # ============================================================
 
 def run_scraper(
@@ -669,40 +842,93 @@ def run_scraper(
 ):
 
     api_id = getattr(
+
         settings,
+
         "TELEGRAM_API_ID",
+
         None
     )
 
     api_hash = getattr(
+
         settings,
+
         "TELEGRAM_API_HASH",
+
         None
     )
 
+    session_name = getattr(
+
+        settings,
+
+        "TELEGRAM_SESSION_NAME",
+
+        "django_scraper_session"
+    )
+
+    # --------------------------------------------------------
+    # VALIDATE TELEGRAM CREDENTIALS
+    # --------------------------------------------------------
+
     if not api_id or not api_hash:
 
+        update_status(
+
+            status="error",
+
+            channel=channel_name,
+
+            error=(
+                "Telegram API credentials "
+                "are not configured."
+            )
+        )
+
         raise ValueError(
+
             "Telegram API credentials "
             "are not configured."
         )
 
-    # New scraping job
+    # --------------------------------------------------------
+    # RESET STOP EVENT
+    # --------------------------------------------------------
+
     stop_event.clear()
 
+    # --------------------------------------------------------
+    # INITIAL STATUS
+    # --------------------------------------------------------
+
     update_status(
+
         status="starting",
+
         channel=channel_name,
+
         limit=limit,
+
         messages_scraped=0,
+
         messages_saved=0,
+
         current_deal=None,
+
         error=None
     )
 
+    # --------------------------------------------------------
+    # TELEGRAM CLIENT
+    # --------------------------------------------------------
+
     client = TelegramClient(
-        "django_scraper_session",
+
+        session_name,
+
         int(api_id),
+
         api_hash
     )
 
@@ -711,10 +937,15 @@ def run_scraper(
         with client:
 
             result = (
+
                 client.loop.run_until_complete(
+
                     scrape_channel(
+
                         client,
+
                         channel_name,
+
                         limit
                     )
                 )
@@ -725,12 +956,38 @@ def run_scraper(
     except Exception as error:
 
         update_status(
+
             status="error",
+
             channel=channel_name,
+
+            limit=limit,
+
             error=str(error)
         )
 
+        print(
+            "Scraper error:",
+            error
+        )
+
         raise
+
+    finally:
+
+        # ----------------------------------------------------
+        # Make sure client is disconnected
+        # ----------------------------------------------------
+
+        try:
+
+            if client.is_connected():
+
+                client.disconnect()
+
+        except Exception:
+
+            pass
 
 
 # ============================================================
@@ -741,25 +998,42 @@ def stop_scraper():
 
     current = get_status()
 
+    # --------------------------------------------------------
+    # NOT RUNNING
+    # --------------------------------------------------------
+
     if current["status"] not in {
+
         "starting",
+
         "running"
     }:
 
         return {
-            "message": (
-                "Scraper is not currently running."
-            ),
-            "status": current
+
+            "message":
+                "Scraper is not currently running.",
+
+            "status":
+                current
         }
+
+    # --------------------------------------------------------
+    # SET STOP EVENT
+    # --------------------------------------------------------
 
     stop_event.set()
 
     update_status(
+
         status="stopping"
     )
 
     return {
-        "message": "Scraper stop requested.",
-        "status": "stopping"
+
+        "message":
+            "Scraper stop requested.",
+
+        "status":
+            "stopping"
     }

@@ -1839,11 +1839,12 @@
                                     <th>
                                         Date
                                     </th>
+{% if request.user.is_staff %}
 
                                     <th>
                                         Actions
                                     </th>
-
+{% endif %}
                                 </tr>
 
                             </thead>
@@ -2131,6 +2132,7 @@
 
 
                                     <!-- ACTIONS -->
+{% if request.user.is_staff %}
 
                                     <td>
 
@@ -2173,7 +2175,7 @@
                                         </div>
 
                                     </td>
-
+{% endif %}
                                 </tr>
 
                             {% endfor %}

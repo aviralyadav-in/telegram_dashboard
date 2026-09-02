@@ -1,6 +1,7 @@
 import os
 
 from django.conf import settings
+
 from telegram import (
     Bot,
     ChatPermissions,
@@ -8,22 +9,63 @@ from telegram import (
     InlineKeyboardMarkup,
 )
 
+from telegram.request import HTTPXRequest
+
+
+# ============================================================
+# REQUEST CONFIGURATION
+# ============================================================
+
+def get_telegram_request():
+
+    return HTTPXRequest(
+        connect_timeout=30.0,
+        read_timeout=60.0,
+        write_timeout=60.0,
+        pool_timeout=30.0,
+    )
+
+
+# ============================================================
+# CREATE BOT
+# ============================================================
+
+def create_telegram_bot(
+    bot_token,
+):
+
+    if not bot_token:
+
+        raise ValueError(
+            "Bot token is required."
+        )
+
+    request = get_telegram_request()
+
+    return Bot(
+        token=bot_token,
+        request=request,
+    )
+
 
 # ============================================================
 # VERIFY BOT
 # ============================================================
 
-async def verify_bot_token(bot_token):
+async def verify_bot_token(
+    bot_token,
+):
 
-    if not bot_token:
-        raise ValueError("Bot token is required.")
-
-    bot = Bot(token=bot_token)
+    bot = create_telegram_bot(
+        bot_token
+    )
 
     try:
+
         return await bot.get_me()
 
     finally:
+
         await bot.shutdown()
 
 
@@ -31,27 +73,43 @@ async def verify_bot_token(bot_token):
 # FIND TELEGRAM CHAT
 # ============================================================
 
-async def find_telegram_chat(bot_token, username):
+async def find_telegram_chat(
+    bot_token,
+    username,
+):
 
     if not bot_token:
-        raise ValueError("Bot token is required.")
+
+        raise ValueError(
+            "Bot token is required."
+        )
 
     if not username:
-        raise ValueError("Telegram username is required.")
 
-    username = str(username).strip()
+        raise ValueError(
+            "Telegram username is required."
+        )
+
+    username = str(
+        username
+    ).strip()
 
     if not username.startswith("@"):
+
         username = "@" + username
 
-    bot = Bot(token=bot_token)
+    bot = create_telegram_bot(
+        bot_token
+    )
 
     try:
+
         return await bot.get_chat(
             chat_id=username
         )
 
     finally:
+
         await bot.shutdown()
 
 
@@ -59,23 +117,39 @@ async def find_telegram_chat(bot_token, username):
 # TEST TELEGRAM CHAT
 # ============================================================
 
-async def test_telegram_chat(bot_token, chat_id):
+async def test_telegram_chat(
+    bot_token,
+    chat_id,
+):
 
     if not bot_token:
-        raise ValueError("Bot token is required.")
+
+        raise ValueError(
+            "Bot token is required."
+        )
 
     if not chat_id:
-        raise ValueError("Chat ID is required.")
 
-    bot = Bot(token=bot_token)
+        raise ValueError(
+            "Chat ID is required."
+        )
+
+    bot = create_telegram_bot(
+        bot_token
+    )
 
     try:
+
         return await bot.send_message(
             chat_id=chat_id,
-            text="✅ Telegram Deals Publisher test message.",
+            text=(
+                "✅ Telegram Deals Publisher "
+                "test message."
+            ),
         )
 
     finally:
+
         await bot.shutdown()
 
 
@@ -83,17 +157,56 @@ async def test_telegram_chat(bot_token, chat_id):
 # IMAGE PATH
 # ============================================================
 
-def get_image_path(image_path):
+def get_image_path(
+    image_path,
+):
 
     if not image_path:
+
         return None
 
-    if os.path.isabs(image_path):
+    if os.path.isabs(
+        image_path
+    ):
+
         return image_path
 
     return os.path.join(
         settings.MEDIA_ROOT,
         image_path,
+    )
+
+
+# ============================================================
+# FIND MY DEALS KEYBOARD
+# ============================================================
+
+async def get_find_deals_keyboard(
+    bot,
+):
+
+    me = await bot.get_me()
+
+    if not me.username:
+
+        raise ValueError(
+            "Telegram bot username could not be determined."
+        )
+
+    private_bot_url = (
+        f"https://t.me/{me.username}"
+        "?start=find_deals"
+    )
+
+    return InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton(
+                    text="🔎 Find My Deals",
+                    url=private_bot_url,
+                )
+            ]
+        ]
     )
 
 
@@ -109,62 +222,44 @@ async def publish_to_telegram(
 ):
 
     if not bot_token:
+
         raise ValueError(
             "Telegram bot token is not configured."
         )
 
     if not channel_username:
+
         raise ValueError(
             "Telegram chat ID/username is required."
         )
 
-    bot = Bot(token=bot_token)
-
-    # --------------------------------------------------------
-    # FIND IMAGE
-    # --------------------------------------------------------
-
-    actual_image_path = get_image_path(
-        image_path
-    )
-
-    # --------------------------------------------------------
-    # FIND MY DEALS BUTTON
-    # --------------------------------------------------------
-    #
-    # User clicks this button from the channel.
-    # Telegram opens the bot private chat.
-    #
-    # Bot username:
-    # @my_deals_publisher_bot
-    #
-    # ?start=find_deals is passed to /start
-    # --------------------------------------------------------
-
-    find_deals_button = InlineKeyboardMarkup(
-        [
-            [
-                InlineKeyboardButton(
-                    text="🔎 Find My Deals",
-                    url=(
-                        "https://t.me/"
-                        "my_deals_publisher_bot"
-                        "?start=find_deals"
-                    ),
-                )
-            ]
-        ]
+    bot = create_telegram_bot(
+        bot_token
     )
 
     try:
 
-        # ----------------------------------------------------
-        # SEND IMAGE DEAL
-        # ----------------------------------------------------
+        actual_image_path = (
+            get_image_path(
+                image_path
+            )
+        )
+
+        find_deals_keyboard = (
+            await get_find_deals_keyboard(
+                bot
+            )
+        )
+
+        # ====================================================
+        # IMAGE DEAL
+        # ====================================================
 
         if (
             actual_image_path
-            and os.path.isfile(actual_image_path)
+            and os.path.isfile(
+                actual_image_path
+            )
         ):
 
             with open(
@@ -176,17 +271,17 @@ async def publish_to_telegram(
                     chat_id=channel_username,
                     photo=photo,
                     caption=content or "",
-                    reply_markup=find_deals_button,
+                    reply_markup=find_deals_keyboard,
                 )
 
-        # ----------------------------------------------------
-        # SEND TEXT DEAL
-        # ----------------------------------------------------
+        # ====================================================
+        # TEXT DEAL
+        # ====================================================
 
         return await bot.send_message(
             chat_id=channel_username,
             text=content or "",
-            reply_markup=find_deals_button,
+            reply_markup=find_deals_keyboard,
         )
 
     finally:
@@ -205,19 +300,24 @@ async def send_welcome_message(
 ):
 
     if not bot_token:
+
         raise ValueError(
             "Telegram bot token is not configured."
         )
 
     if not chat_id:
+
         raise ValueError(
             "Telegram chat ID is required."
         )
 
     if not message:
+
         return None
 
-    bot = Bot(token=bot_token)
+    bot = create_telegram_bot(
+        bot_token
+    )
 
     try:
 
@@ -232,7 +332,7 @@ async def send_welcome_message(
 
 
 # ============================================================
-# USER PERMISSIONS
+# FULL CHAT PERMISSIONS
 # ============================================================
 
 def get_full_chat_permissions():
@@ -250,6 +350,10 @@ def get_full_chat_permissions():
         can_add_web_page_previews=True,
     )
 
+
+# ============================================================
+# RESTRICTED CHAT PERMISSIONS
+# ============================================================
 
 def get_restricted_chat_permissions():
 
@@ -279,21 +383,26 @@ async def set_user_message_permission(
 ):
 
     if not bot_token:
+
         raise ValueError(
             "Bot token is required."
         )
 
     if not chat_id:
+
         raise ValueError(
             "Chat ID is required."
         )
 
     if not user_id:
+
         raise ValueError(
             "Telegram user ID is required."
         )
 
-    bot = Bot(token=bot_token)
+    bot = create_telegram_bot(
+        bot_token
+    )
 
     permissions = (
         get_full_chat_permissions()
